@@ -96,8 +96,8 @@
   </div>
 
   <script>
-    const GAS_WEB_APP_URL = "วาง_WEB_APP_URL_ของ_GAS_ที่นี่";
-    const LIFF_ID = "วาง_LIFF_ID_ที่นี่";
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzavJ88xJPcMo3rBcE8FtA2mI0ctkSxnqN5Xj8ObEGPXqRC2kE2tMRig2CQ9PAhQ_yijQ/exec";
+    const LIFF_ID = "2011319319-1bUfgtSJ";
     let liffUserId = "", base64Image = "";
 
     // ข้อมูลแมป ชั้น -> LINE

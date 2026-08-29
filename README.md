@@ -96,7 +96,7 @@
   </div>
 
   <script>
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzavJ88xJPcMo3rBcE8FtA2mI0ctkSxnqN5Xj8ObEGPXqRC2kE2tMRig2CQ9PAhQ_yijQ/exec";
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxUK2_MCCjW8TrCTjNHJj3AxvJQ2-w1tjHX5Cw6guNxallTCyvUKWqTB2dPtvzZtYbD/exec";
     const LIFF_ID = "2011319319-1bUfgtSJ";
     let liffUserId = "", base64Image = "";
 

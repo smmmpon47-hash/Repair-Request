@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -146,22 +147,48 @@
       }
     }
 
+    // ฟังก์ชันบีบอัดขนาดรูปภาพก่อนส่ง ป้องกัน Data Crash
     function previewImage(event) {
       const file = event.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
-          document.getElementById('previewImg').src = e.target.result;
-          document.getElementById('imagePreview').style.display = 'block';
-          document.getElementById('attachBtnText').innerHTML = '🔄 เปลี่ยนรูปถ่าย';
-          base64Image = e.target.result;
+          const img = new Image();
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            const max_size = 800;
+
+            if (width > height) {
+              if (width > max_size) {
+                height *= max_size / width;
+                width = max_size;
+              }
+            } else {
+              if (height > max_size) {
+                width *= max_size / height;
+                height = max_size;
+              }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            base64Image = canvas.toDataURL('image/jpeg', 0.7);
+            document.getElementById('previewImg').src = base64Image;
+            document.getElementById('imagePreview').style.display = 'block';
+            document.getElementById('attachBtnText').innerHTML = '🔄 เปลี่ยนรูปถ่าย';
+          };
+          img.src = e.target.result;
         };
         reader.readAsDataURL(file);
       }
     }
 
     function closeLiff() {
-      if (liff.isOpenForWindow) liff.closeWindow();
+      if (liff.isOpenForWindow()) liff.closeWindow();
     }
 
     document.getElementById('repairForm').addEventListener('submit', function(e) {
@@ -181,13 +208,11 @@
         userId: liffUserId
       };
 
-      // ใช้ XMLHttpRequest ส่งข้ามโดเมนโดยตรง ไม่ติด CORS Block
       const xhr = new XMLHttpRequest();
       xhr.open("POST", GAS_WEB_APP_URL, true);
       xhr.setRequestHeader("Content-Type", "text/plain;charset=utf-8");
       
       xhr.onreadystatechange = function() {
-        // เมื่อส่งเสร็จไม่ว่าจะสถานะใด ให้ถือว่าส่งสำเร็จและปิดหน้าต่าง
         if (xhr.readyState === 4) {
           alert("บันทึกข้อมูลแจ้งซ่อมเรียบร้อยแล้ว!");
           if (liff.isOpenForWindow()) {

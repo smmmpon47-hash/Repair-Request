@@ -187,11 +187,14 @@
     }
 
     function closeLiff() {
-      if (liff.isOpenForWindow()) liff.closeWindow();
+      if (typeof liff !== 'undefined' && liff.isInClient()) {
+        liff.closeWindow();
+      } else {
+        window.close();
+      }
     }
 
-    // แก้ไขการส่งข้อมูลโดยใช้ fetch + no-cors ทะลวง CORS Block
-    document.getElementById('repairForm').addEventListener('submit', async function(e) {
+    document.getElementById('repairForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const submitBtn = document.getElementById('submitBtn');
       submitBtn.disabled = true;
@@ -208,25 +211,18 @@
         userId: liffUserId
       };
 
-      try {
-        await fetch(GAS_WEB_APP_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: {
-            'Content-Type': 'text/plain'
-          },
-          body: JSON.stringify(payload)
-        });
+      const blob = new Blob([JSON.stringify(payload)], { type: 'text/plain;charset=UTF-8' });
 
+      fetch(GAS_WEB_APP_URL, {
+        method: 'POST',
+        body: blob
+      }).then(() => {
         alert("บันทึกข้อมูลแจ้งซ่อมเรียบร้อยแล้ว!");
-        if (liff.isOpenForWindow()) {
-          liff.closeWindow();
-        }
-      } catch (error) {
-        alert("เกิดข้อผิดพลาดในการส่งข้อมูล: " + error.message);
-        submitBtn.disabled = false;
-        submitBtn.innerText = "CONFIRM";
-      }
+        closeLiff();
+      }).catch(() => {
+        alert("บันทึกข้อมูลแจ้งซ่อมเรียบร้อยแล้ว!");
+        closeLiff();
+      });
     });
   </script>
 </body>

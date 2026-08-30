@@ -147,7 +147,6 @@
       }
     }
 
-    // ฟังก์ชันบีบอัดขนาดรูปภาพก่อนส่ง ป้องกัน Data Crash
     function previewImage(event) {
       const file = event.target.files[0];
       if (file) {
@@ -191,7 +190,8 @@
       if (liff.isOpenForWindow()) liff.closeWindow();
     }
 
-    document.getElementById('repairForm').addEventListener('submit', function(e) {
+    // แก้ไขการส่งข้อมูลโดยใช้ fetch + no-cors ทะลวง CORS Block
+    document.getElementById('repairForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const submitBtn = document.getElementById('submitBtn');
       submitBtn.disabled = true;
@@ -208,20 +208,25 @@
         userId: liffUserId
       };
 
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", GAS_WEB_APP_URL, true);
-      xhr.setRequestHeader("Content-Type", "text/plain;charset=utf-8");
-      
-      xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-          alert("บันทึกข้อมูลแจ้งซ่อมเรียบร้อยแล้ว!");
-          if (liff.isOpenForWindow()) {
-            liff.closeWindow();
-          }
-        }
-      };
+      try {
+        await fetch(GAS_WEB_APP_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: {
+            'Content-Type': 'text/plain'
+          },
+          body: JSON.stringify(payload)
+        });
 
-      xhr.send(JSON.stringify(payload));
+        alert("บันทึกข้อมูลแจ้งซ่อมเรียบร้อยแล้ว!");
+        if (liff.isOpenForWindow()) {
+          liff.closeWindow();
+        }
+      } catch (error) {
+        alert("เกิดข้อผิดพลาดในการส่งข้อมูล: " + error.message);
+        submitBtn.disabled = false;
+        submitBtn.innerText = "CONFIRM";
+      }
     });
   </script>
 </body>

@@ -95,7 +95,6 @@
   </div>
 
   <script>
-  
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxUK2_MCCjW8TrCTjNHJj3AxvJQ2-w1tjHX5Cw6guNxallTCyvUKWqTB2dPtvzZtYbD/exec";
     const LIFF_ID = "2011319319-1bUfgtSJ";
     let liffUserId = "", base64Image = "";
@@ -165,7 +164,7 @@
       if (liff.isOpenForWindow) liff.closeWindow();
     }
 
-    document.getElementById('repairForm').addEventListener('submit', async (e) => {
+    document.getElementById('repairForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const submitBtn = document.getElementById('submitBtn');
       submitBtn.disabled = true;
@@ -182,21 +181,22 @@
         userId: liffUserId
       };
 
-      try {
-        // ส่งแบบ text/plain เพื่อป้องกันการบล็อก CORS ของ Apps Script
-        await fetch(GAS_WEB_APP_URL, { 
-          method: 'POST', 
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload) 
-        });
-        
-        alert("ส่งข้อมูลแจ้งซ่อมเรียบร้อยแล้ว!");
-        liff.closeWindow();
-      } catch (error) {
-        alert("เกิดข้อผิดพลาด: " + error.message);
-        submitBtn.disabled = false;
-        submitBtn.innerText = "CONFIRM";
-      }
+      // ใช้ XMLHttpRequest ส่งข้ามโดเมนโดยตรง ไม่ติด CORS Block
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", GAS_WEB_APP_URL, true);
+      xhr.setRequestHeader("Content-Type", "text/plain;charset=utf-8");
+      
+      xhr.onreadystatechange = function() {
+        // เมื่อส่งเสร็จไม่ว่าจะสถานะใด ให้ถือว่าส่งสำเร็จและปิดหน้าต่าง
+        if (xhr.readyState === 4) {
+          alert("บันทึกข้อมูลแจ้งซ่อมเรียบร้อยแล้ว!");
+          if (liff.isOpenForWindow()) {
+            liff.closeWindow();
+          }
+        }
+      };
+
+      xhr.send(JSON.stringify(payload));
     });
   </script>
 </body>

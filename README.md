@@ -1,4 +1,3 @@
-
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -96,6 +95,7 @@
   </div>
 
   <script>
+    // ⚠️ เปลี่ยนเป็น Web App URL ล่าสุดของบอทตัวรวมร่างตรงนี้
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxUK2_MCCjW8TrCTjNHJj3AxvJQ2-w1tjHX5Cw6guNxallTCyvUKWqTB2dPtvzZtYbD/exec";
     const LIFF_ID = "2011319319-1bUfgtSJ";
     let liffUserId = "", base64Image = "";
@@ -120,7 +120,6 @@
     }
     main();
 
-    // ฟังก์ชันเปลี่ยน LINE อัตโนมัติตามชั้น
     function updateLineOptions() {
       const floorSelect = document.getElementById('floorSelect');
       const lineSelect = document.getElementById('lineSelect');
@@ -139,7 +138,6 @@
       }
     }
 
-    // สแกน QR Code ผ่าน LIFF
     function scanMachineQR() {
       if (liff.scanCodeV2) {
         liff.scanCodeV2().then(result => {
@@ -150,7 +148,6 @@
       }
     }
 
-    // แสดงพรีวิวรูป + เปลี่ยนเป็น Base64
     function previewImage(event) {
       const file = event.target.files[0];
       if (file) {
@@ -187,8 +184,15 @@
       };
 
       try {
-        await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
-        alert("แจ้งซ่อมเรียบร้อยแล้ว!");
+        // แก้ไขจุดสำคัญ: ใช้ mode: 'no-cors' เพื่อไม่ให้เด้ง Load failed
+        await fetch(GAS_WEB_APP_URL, { 
+          method: 'POST', 
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify(payload) 
+        });
+        
+        alert("ส่งข้อมูลแจ้งซ่อมเรียบร้อยแล้ว!");
         liff.closeWindow();
       } catch (error) {
         alert("เกิดข้อผิดพลาด: " + error.message);

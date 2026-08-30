@@ -95,12 +95,11 @@
   </div>
 
   <script>
-    // ⚠️ เปลี่ยนเป็น Web App URL ล่าสุดของบอทตัวรวมร่างตรงนี้
+  
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxUK2_MCCjW8TrCTjNHJj3AxvJQ2-w1tjHX5Cw6guNxallTCyvUKWqTB2dPtvzZtYbD/exec";
     const LIFF_ID = "2011319319-1bUfgtSJ";
     let liffUserId = "", base64Image = "";
 
-    // ข้อมูลแมป ชั้น -> LINE
     const lineData = {
       "ชั้น 3": ["B", "C"],
       "ชั้น 4": ["D", "E", "F", "G"]
@@ -184,11 +183,10 @@
       };
 
       try {
-        // แก้ไขจุดสำคัญ: ใช้ mode: 'no-cors' เพื่อไม่ให้เด้ง Load failed
+        // ส่งแบบ text/plain เพื่อป้องกันการบล็อก CORS ของ Apps Script
         await fetch(GAS_WEB_APP_URL, { 
           method: 'POST', 
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain' },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(payload) 
         });
         

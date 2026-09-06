@@ -120,9 +120,10 @@
       "ชั้น 4": ["D", "E", "F", "อะไหล่ชั้น 4"]
     };
 
+    // ปรับการเรียก LIFF Init ให้ถูกต้องและรองรับการทำงานแบบ Async
     async function main() {
       try {
-        if (LIFF_ID && LIFF_ID !== "2011319319-1bUfgtSJ") {
+        if (LIFF_ID) {
           await liff.init({ liffId: LIFF_ID });
           if (liff.isLoggedIn()) {
             const profile = await liff.getProfile();
@@ -132,7 +133,9 @@
             liff.login();
           }
         }
-      } catch (err) { console.error("LIFF Init Error:", err); }
+      } catch (err) { 
+        console.error("LIFF Init Error:", err); 
+      }
     }
     main();
 
@@ -154,7 +157,6 @@
       }
     }
 
-    // ค้นหาชื่อเครื่องจักรจากชีต MachineMaster ผ่าน Apps Script
     let searchTimeout = null;
     function lookupMachineName() {
       const code = document.getElementById('machineCodeInput').value.trim();
@@ -190,17 +192,30 @@
       }, 500);
     }
 
-    // สแกน QR Code ผ่าน LIFF
-    function scanMachineQR() {
-      if (typeof liff !== "undefined" && liff.scanCodeV2) {
-        liff.scanCodeV2().then(result => {
-          if (result.value) {
+    // ปรับการสแกน QR Code ให้รอ liff.init() และรองรับ scanCodeV2
+    async function scanMachineQR() {
+      if (typeof liff === "undefined") {
+        alert("ไม่พบ LIFF SDK");
+        return;
+      }
+
+      try {
+        if (!liff.isLoggedIn() && !liff.isInClient()) {
+          alert("กรุณาเปิดทำงานผ่านแอปพลิเคชัน LINE");
+          return;
+        }
+
+        if (liff.scanCodeV2) {
+          const result = await liff.scanCodeV2();
+          if (result && result.value) {
             document.getElementById('machineCodeInput').value = result.value;
             lookupMachineName();
           }
-        }).catch(err => alert("ไม่สามารถเปิดกล้องสแกนได้: " + err.message));
-      } else {
-        alert("อุปกรณ์ของคุณไม่รองรับการสแกน QR ผ่าน LIFF");
+        } else {
+          alert("อุปกรณ์หรือเวอร์ชัน LINE ของคุณไม่รองรับการสแกน QR Code");
+        }
+      } catch (err) {
+        alert("ไม่สามารถเปิดกล้องสแกนได้: " + err.message);
       }
     }
 
@@ -230,7 +245,6 @@
       submitBtn.disabled = true;
       submitBtn.innerText = "กำลังส่งข้อมูล...";
 
-      // แยกส่งรหัสและชื่อเครื่องจักรออกจากกัน
       const payload = {
         action: 'CREATE_REPAIR_JOB',
         floor: document.getElementById('floorSelect').value,

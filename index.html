@@ -230,16 +230,14 @@
       submitBtn.disabled = true;
       submitBtn.innerText = "กำลังส่งข้อมูล...";
 
-      const machineCode = document.getElementById('machineCodeInput').value.trim();
-      const machineName = document.getElementById('machineNameInput').value.trim();
-      const fullMachineText = machineName ? `${machineCode} (${machineName})` : machineCode;
-
+      // แยกส่งรหัสและชื่อเครื่องจักรออกจากกัน
       const payload = {
         action: 'CREATE_REPAIR_JOB',
         floor: document.getElementById('floorSelect').value,
         line: document.getElementById('lineSelect').value,
         reporter: document.getElementById('reporterInput').value,
-        machine: fullMachineText,
+        machineCode: document.getElementById('machineCodeInput').value.trim(),
+        machineName: document.getElementById('machineNameInput').value.trim(),
         issue: document.getElementById('issueInput').value,
         image: base64Image || "",
         userId: liffUserId

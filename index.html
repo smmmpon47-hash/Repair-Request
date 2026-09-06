@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบแจ้งซ่อมเครื่องจักร - LIFF</title>
+  <title>ระบบแจ้งซ่อมและสแกนปฏิบัติงาน - LIFF</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -13,6 +13,7 @@
     body { background-color: #f0f2f5; color: #333; padding: 16px; display: flex; justify-content: center; }
     .form-container { background: #ffffff; width: 100%; max-width: 480px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); padding: 24px 20px; }
     .header-title { text-align: center; font-size: 22px; font-weight: 600; color: #1DB954; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #eef2f5; }
+    .header-tech { color: #2980B9; border-bottom-color: #eef2f5; }
     .form-group { margin-bottom: 16px; }
     .form-label { display: block; font-size: 14px; font-weight: 500; color: #444; margin-bottom: 6px; }
     .form-control, select, textarea { width: 100%; padding: 12px 14px; font-size: 15px; border: 1px solid #dcdfe6; border-radius: 10px; background-color: #f8fafc; outline: none; transition: all 0.2s; }
@@ -29,113 +30,160 @@
     .btn { flex: 1; padding: 13px; font-size: 16px; font-weight: 600; border-radius: 10px; border: none; cursor: pointer; text-align: center; }
     .btn-cancel { background-color: #f1f5f9; color: #64748b; }
     .btn-confirm { background-color: #1DB954; color: #ffffff; box-shadow: 0 4px 12px rgba(29, 185, 84, 0.3); }
-    .btn-confirm:disabled { background-color: #a7f3d0; cursor: not-allowed; }
+    .btn-start-tech { background-color: #2980B9; color: #ffffff; box-shadow: 0 4px 12px rgba(41, 128, 185, 0.3); }
+    .btn-confirm:disabled, .btn-start-tech:disabled { background-color: #cbd5e1; cursor: not-allowed; }
     .status-text { font-size: 12px; margin-top: 4px; color: #64748b; }
+    
+    /* การ์ดสรุปข้อมูลสั้นสำหรับช่าง */
+    .job-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+    .job-card-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+    .job-card-label { font-weight: 500; color: #64748b; }
+    .job-card-val { font-weight: 600; color: #1e293b; }
   </style>
 </head>
 <body>
 
   <div class="form-container">
-    <div class="header-title">🛠️ ฟอร์มแจ้งซ่อมเครื่องจักร</div>
+    
+    <!-- 1. VIEW ผู้แจ้งซ่อม (โหมดปกติ) -->
+    <div id="userReportView">
+      <div class="header-title">🛠️ ฟอร์มแจ้งซ่อมเครื่องจักร</div>
 
-    <form id="repairForm">
-      <!-- 1. ชั้น -->
-      <div class="form-group">
-        <label class="form-label" for="floorSelect">ชั้น</label>
-        <select id="floorSelect" required onchange="updateLineOptions()">
-          <option value="">-- กรุณาเลือกชั้น --</option>
-          <option value="ชั้น 3">ชั้น 3</option>
-          <option value="ชั้น 4">ชั้น 4</option>
-        </select>
+      <form id="repairForm">
+        <div class="form-group">
+          <label class="form-label" for="floorSelect">ชั้น</label>
+          <select id="floorSelect" required onchange="updateLineOptions()">
+            <option value="">-- กรุณาเลือกชั้น --</option>
+            <option value="ชั้น 3">ชั้น 3</option>
+            <option value="ชั้น 4">ชั้น 4</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="lineSelect">LINE (สายการผลิต)</label>
+          <select id="lineSelect" required disabled>
+            <option value="">-- กรุณาเลือกชั้นก่อน --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="reporterInput">ผู้แจ้ง</label>
+          <input type="text" id="reporterInput" class="form-control" placeholder="กำลังโหลดชื่อผู้แจ้ง..." required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="machineCodeInput">รหัสเครื่องจักร</label>
+          <div class="input-with-btn">
+            <input type="text" id="machineCodeInput" class="form-control" placeholder="พิมพ์/สแกนรหัสเครื่องจักร" required oninput="lookupMachineName()">
+            <button type="button" class="btn-qr" onclick="scanMachineQR()">
+              <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v2h-3v-2zm-3 0h2v3h-2v-3zm3 3h3v5h-2v-3h-1v-2zm-3 2h2v3h-2v-3zm0 3h5v2h-5v-2z"/></svg>
+              สแกน QR
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="machineNameInput">ชื่อเครื่องจักร</label>
+          <input type="text" id="machineNameInput" class="form-control" placeholder="จะแสดงอัตโนมัติเมื่อระบุรหัสถูกต้อง" readonly>
+          <div id="machineStatus" class="status-text"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="issueInput">อาการที่เสีย</label>
+          <textarea id="issueInput" class="form-control" rows="3" placeholder="ระบุอาการเสีย หรือปัญหาที่พบ..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">แนบรูปภาพ (ถ่ายรูป หรือเลือกไฟล์)</label>
+          <div class="file-attach-wrapper">
+            <input type="file" id="imageInput" style="display:none;" accept="image/*" onchange="previewImage(event)">
+            <label for="imageInput" class="file-attach-btn" id="attachBtnText">📷 ถ่ายรูป / เลือกรูปภาพ</label>
+            <div class="image-preview" id="imagePreview">
+              <img id="previewImg" src="" alt="Preview">
+            </div>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button type="button" class="btn btn-cancel" onclick="closeLiff()">CANCEL</button>
+          <button type="submit" class="btn btn-confirm" id="submitBtn">CONFIRM</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- 2. VIEW ช่างซ่อมสแกนเปิดงานหน้าเครื่อง (โหมดช่าง) -->
+    <div id="techStartView" style="display: none;">
+      <div class="header-title header-tech">⚡ ยืนยันเริ่มปฏิบัติงานซ่อม</div>
+
+      <div class="job-card">
+        <div class="job-card-row">
+          <span class="job-card-label">รหัสงาน:</span>
+          <span class="job-card-val" id="displayJobId">-</span>
+        </div>
+        <div class="job-card-row">
+          <span class="job-card-label">ช่างผู้รับงาน:</span>
+          <span class="job-card-val" id="displayTechName">กำลังดึงข้อมูล...</span>
+        </div>
       </div>
 
-      <!-- 2. LINE -->
       <div class="form-group">
-        <label class="form-label" for="lineSelect">LINE (สายการผลิต)</label>
-        <select id="lineSelect" required disabled>
-          <option value="">-- กรุณาเลือกชั้นก่อน --</option>
-        </select>
-      </div>
-
-      <!-- 3. ผู้แจ้ง -->
-      <div class="form-group">
-        <label class="form-label" for="reporterInput">ผู้แจ้ง</label>
-        <input type="text" id="reporterInput" class="form-control" placeholder="กำลังโหลดชื่อผู้แจ้ง..." required>
-      </div>
-
-      <!-- 4. รหัสเครื่องจักร + ปุ่ม QR -->
-      <div class="form-group">
-        <label class="form-label" for="machineCodeInput">รหัสเครื่องจักร</label>
+        <label class="form-label">สแกนยืนยันรหัสเครื่องจักรหน้างาน</label>
         <div class="input-with-btn">
-          <input type="text" id="machineCodeInput" class="form-control" placeholder="พิมพ์/สแกนรหัสเครื่องจักร" required oninput="lookupMachineName()">
-          <button type="button" class="btn-qr" onclick="scanMachineQR()">
-            <svg viewBox="0 0 24 24">
-              <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v2h-3v-2zm-3 0h2v3h-2v-3zm3 3h3v5h-2v-3h-1v-2zm-3 2h2v3h-2v-3zm0 3h5v2h-5v-2z"/>
-            </svg>
-            สแกน QR
+          <input type="text" id="techMachineScanInput" class="form-control" placeholder="สแกน QR ที่ติดอยู่บนเครื่องจักร" required>
+          <button type="button" class="btn-qr" style="background:#2980B9;" onclick="scanTechMachineQR()">
+            <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v2h-3v-2zm-3 0h2v3h-2v-3zm3 3h3v5h-2v-3h-1v-2zm-3 2h2v3h-2v-3zm0 3h5v2h-5v-2z"/></svg>
+            สแกน
           </button>
         </div>
       </div>
 
-      <!-- 5. ชื่อเครื่องจักร (ดึงอัตโนมัติ) -->
-      <div class="form-group">
-        <label class="form-label" for="machineNameInput">ชื่อเครื่องจักร</label>
-        <input type="text" id="machineNameInput" class="form-control" placeholder="จะแสดงอัตโนมัติเมื่อระบุรหัสถูกต้อง" readonly>
-        <div id="machineStatus" class="status-text"></div>
-      </div>
-
-      <!-- 6. อาการที่เสีย -->
-      <div class="form-group">
-        <label class="form-label" for="issueInput">อาการที่เสีย</label>
-        <textarea id="issueInput" class="form-control" rows="3" placeholder="ระบุอาการเสีย หรือปัญหาที่พบ..." required></textarea>
-      </div>
-
-      <!-- 7. แนบรูปภาพ -->
-      <div class="form-group">
-        <label class="form-label">แนบรูปภาพ (ถ่ายรูป หรือเลือกไฟล์)</label>
-        <div class="file-attach-wrapper">
-          <input type="file" id="imageInput" style="display:none;" accept="image/*" onchange="previewImage(event)">
-          <label for="imageInput" class="file-attach-btn" id="attachBtnText">📷 ถ่ายรูป / เลือกรูปภาพ</label>
-          <div class="image-preview" id="imagePreview">
-            <img id="previewImg" src="" alt="Preview">
-          </div>
-        </div>
-      </div>
-
-      <!-- ปุ่ม CANCEL และ CONFIRM -->
       <div class="button-group">
-        <button type="button" class="btn btn-cancel" onclick="closeLiff()">CANCEL</button>
-        <button type="submit" class="btn btn-confirm" id="submitBtn">CONFIRM</button>
+        <button type="button" class="btn btn-cancel" onclick="closeLiff()">ยกเลิก</button>
+        <button type="button" class="btn btn-start-tech" id="techStartBtn" onclick="submitTechStart()">▶️ บันทึกเวลาเริ่มซ่อมจริง</button>
       </div>
-    </form>
+    </div>
+
   </div>
 
   <script>
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyLm1LVkTiwK3PCvPSt3PFA1ifb76KCRsWxC1SkaLdDC-ginxy0RHWstWpHgDytaBmm/exec";
     const LIFF_ID = "2011319319-1bUfgtSJ";
-    let liffUserId = "", base64Image = "";
+    let liffUserId = "", liffUserName = "", base64Image = "";
+    let currentJobId = "";
 
     const lineData = {
       "ชั้น 3": ["B", "C", "อะไล่ชั้น 3"],
       "ชั้น 4": ["D", "E", "F", "อะไหล่ชั้น 4"]
     };
 
-    // ปรับการเรียก LIFF Init ให้ถูกต้องและรองรับการทำงานแบบ Async
     async function main() {
+      // 1. อ่าน Parameter จาก URL ว่ามี jobId หรือไม่
+      const urlParams = new URLSearchParams(window.location.search);
+      currentJobId = urlParams.get('jobId') || "";
+
+      // 2. ถ้ามี jobId สลับไปหน้าของช่างทันที
+      if (currentJobId) {
+        document.getElementById('userReportView').style.display = 'none';
+        document.getElementById('techStartView').style.display = 'block';
+        document.getElementById('displayJobId').innerText = currentJobId;
+      }
+
+      // 3. เริ่มทำงาน LIFF
       try {
-        if (LIFF_ID) {
+        if (LIFF_ID && LIFF_ID !== "2011319319-1bUfgtSJ") {
           await liff.init({ liffId: LIFF_ID });
           if (liff.isLoggedIn()) {
             const profile = await liff.getProfile();
             liffUserId = profile.userId;
-            document.getElementById('reporterInput').value = profile.displayName || "";
+            liffUserName = profile.displayName || "ไม่ระบุชื่อ";
+            
+            document.getElementById('reporterInput').value = liffUserName;
+            document.getElementById('displayTechName').innerText = liffUserName;
           } else {
             liff.login();
           }
         }
-      } catch (err) { 
-        console.error("LIFF Init Error:", err); 
-      }
+      } catch (err) { console.error("LIFF Init Error:", err); }
     }
     main();
 
@@ -192,30 +240,28 @@
       }, 500);
     }
 
-    // ปรับการสแกน QR Code ให้รอ liff.init() และรองรับ scanCodeV2
-    async function scanMachineQR() {
-      if (typeof liff === "undefined") {
-        alert("ไม่พบ LIFF SDK");
-        return;
-      }
-
-      try {
-        if (!liff.isLoggedIn() && !liff.isInClient()) {
-          alert("กรุณาเปิดทำงานผ่านแอปพลิเคชัน LINE");
-          return;
-        }
-
-        if (liff.scanCodeV2) {
-          const result = await liff.scanCodeV2();
-          if (result && result.value) {
+    function scanMachineQR() {
+      if (typeof liff !== "undefined" && liff.scanCodeV2) {
+        liff.scanCodeV2().then(result => {
+          if (result.value) {
             document.getElementById('machineCodeInput').value = result.value;
             lookupMachineName();
           }
-        } else {
-          alert("อุปกรณ์หรือเวอร์ชัน LINE ของคุณไม่รองรับการสแกน QR Code");
-        }
-      } catch (err) {
-        alert("ไม่สามารถเปิดกล้องสแกนได้: " + err.message);
+        }).catch(err => alert("ไม่สามารถเปิดกล้องสแกนได้: " + err.message));
+      } else {
+        alert("อุปกรณ์ของคุณไม่รองรับการสแกน QR ผ่าน LIFF");
+      }
+    }
+
+    function scanTechMachineQR() {
+      if (typeof liff !== "undefined" && liff.scanCodeV2) {
+        liff.scanCodeV2().then(result => {
+          if (result.value) {
+            document.getElementById('techMachineScanInput').value = result.value;
+          }
+        }).catch(err => alert("ไม่สามารถเปิดกล้องสแกนได้: " + err.message));
+      } else {
+        alert("อุปกรณ์ของคุณไม่รองรับการสแกน QR ผ่าน LIFF");
       }
     }
 
@@ -239,6 +285,49 @@
       }
     }
 
+    // ฟังก์ชันส่งข้อมูลสำหรับช่างสแกนเริ่มงานหน้าเครื่อง
+    async function submitTechStart() {
+      const machineScanCode = document.getElementById('techMachineScanInput').value.trim();
+      if (!machineScanCode) {
+        alert("กรุณาสแกนหรือกรอกรหัสเครื่องจักรหน้างานเพื่อยืนยัน");
+        return;
+      }
+
+      const techStartBtn = document.getElementById('techStartBtn');
+      techStartBtn.disabled = true;
+      techStartBtn.innerText = "กำลังบันทึกเวลา...";
+
+      const payload = {
+        action: 'START_REPAIR_JOB',
+        jobId: currentJobId,
+        techName: liffUserName,
+        machineCode: machineScanCode,
+        userId: liffUserId
+      };
+
+      try {
+        const res = await fetch(GAS_WEB_APP_URL, {
+          method: 'POST',
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+
+        if (result.status === "success") {
+          alert("บันทึกเวลาเริ่มซ่อมจริงเรียบร้อยแล้ว!");
+          closeLiff();
+        } else {
+          alert("เกิดข้อผิดพลาด: " + (result.error || "ไม่สามารถบันทึกได้"));
+        }
+      } catch (err) {
+        alert("เกิดข้อผิดพลาดในการเชื่อมต่อ: " + err.message);
+      } finally {
+        techStartBtn.disabled = false;
+        techStartBtn.innerText = "▶️ บันทึกเวลาเริ่มซ่อมจริง";
+      }
+    }
+
+    // ฟังก์ชันส่งฟอร์มแจ้งซ่อม (ฝั่งผู้แจ้งซ่อม)
     document.getElementById('repairForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const submitBtn = document.getElementById('submitBtn');
@@ -268,16 +357,7 @@
 
         if (result.status === "success") {
           alert("แจ้งซ่อมเรียบร้อยแล้ว! รหัสงาน: " + (result.jobId || ""));
-          if (typeof liff !== "undefined" && liff.isInClient()) {
-            liff.closeWindow();
-          } else {
-            document.getElementById('repairForm').reset();
-            document.getElementById('machineNameInput').value = '';
-            document.getElementById('machineStatus').innerText = '';
-            document.getElementById('imagePreview').style.display = 'none';
-            document.getElementById('attachBtnText').innerHTML = '📷 ถ่ายรูป / เลือกรูปภาพ';
-            base64Image = "";
-          }
+          closeLiff();
         } else {
           alert("เกิดข้อผิดพลาด: " + (result.error || "ไม่สามารถบันทึกได้"));
         }

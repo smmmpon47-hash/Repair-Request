@@ -54,9 +54,57 @@
     #scannerModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 999; justify-content: center; align-items: center; flex-direction: column; padding: 20px; }
     #reader { width: 100%; max-width: 400px; background: #fff; border-radius: 12px; overflow: hidden; }
     .btn-close-scan { margin-top: 15px; padding: 10px 24px; background: #e53e3e; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; }
+
+    /* ===== TAB 3: งานของฉัน (ช่าง) ===== */
+    .tech-summary { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .tech-stat { background: #f8fafc; border-radius: 10px; padding: 10px 6px; text-align: center; border-left: 4px solid #cbd5e1; }
+    .tech-stat.accepted { border-color: #a855f7; }
+    .tech-stat.progress { border-color: #3b82f6; }
+    .tech-stat.done { border-color: #22c55e; }
+    .tech-stat-value { font-size: 20px; font-weight: 700; color: #1e293b; }
+    .tech-stat-title { font-size: 11px; color: #64748b; }
+    .tech-job-item { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; margin-bottom: 10px; font-size: 13px; }
+    .tech-job-header { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:7px; border-bottom:1px solid #f1f5f9; padding-bottom:5px; }
+    .tech-job-id { font-weight:600; color:#334155; }
+    .tech-badge { padding:2px 8px; border-radius:12px; font-size:11px; font-weight:500; white-space:nowrap; }
+    .tech-badge-accepted { background:#f3e8ff; color:#7e22ce; }
+    .tech-badge-progress { background:#dbeafe; color:#1e40af; }
+    .tech-badge-done { background:#dcfce7; color:#166534; }
+    .tech-detail-row { color:#475569; margin-bottom:3px; line-height:1.5; }
+    .tech-actions { display:flex; gap:7px; margin-top:10px; }
+    .tech-action-btn { flex:1; border:none; border-radius:8px; padding:9px 6px; font-family:'Kanit',sans-serif; font-size:12px; font-weight:600; cursor:pointer; }
+    .tech-detail-btn { background:#f1f5f9; color:#475569; }
+    .tech-start-btn { background:#1DB954; color:#fff; }
+    .tech-finish-btn { background:#1f2937; color:#fff; }
+    .tech-note { text-align:center; color:#94a3b8; font-size:11px; margin-top:14px; line-height:1.5; }
+    .tech-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1000; justify-content:center; align-items:center; padding:20px; }
+    .tech-modal.show { display:flex; }
+    .tech-modal-box { background:#fff; width:100%; max-width:420px; border-radius:14px; padding:16px; max-height:90vh; overflow:auto; }
+    .tech-modal-title { font-size:17px; font-weight:600; margin-bottom:12px; }
+    .tech-result-btn { width:100%; text-align:left; border:1px solid #e2e8f0; background:#fff; border-radius:8px; padding:11px; margin-bottom:7px; font-family:'Kanit',sans-serif; font-size:13px; cursor:pointer; }
+    .tech-result-btn:hover { border-color:#1DB954; background:#f8fffa; }
+    .tech-close-btn { width:100%; border:none; background:#f1f5f9; color:#64748b; border-radius:8px; padding:10px; font-family:'Kanit',sans-serif; font-size:13px; font-weight:600; cursor:pointer; margin-top:5px; }
+
   </style>
 </head>
 <body>
+
+
+  <!-- Modal เลือกผลการซ่อม -->
+  <div id="finishResultModal" class="tech-modal" onclick="if(event.target===this) closeFinishResult()">
+    <div class="tech-modal-box">
+      <div class="tech-modal-title">✅ ปิดงานซ่อม</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:10px;">เลือกผลการซ่อม</div>
+
+      <button class="tech-result-btn" onclick="chooseFinishResult('ซ่อมเสร็จ ใช้งานได้')">✅ ซ่อมเสร็จ ใช้งานได้</button>
+      <button class="tech-result-btn" onclick="chooseFinishResult('ซ่อมชั่วคราว')">🟡 ซ่อมชั่วคราว</button>
+      <button class="tech-result-btn" onclick="chooseFinishResult('รออะไหล่')">🔩 รออะไหล่</button>
+      <button class="tech-result-btn" onclick="chooseFinishResult('ซ่อมไม่ได้')">🔴 ซ่อมไม่ได้</button>
+      <button class="tech-result-btn" onclick="chooseFinishResult('ส่งต่อช่างอื่น')">🔄 ส่งต่อช่างอื่น</button>
+
+      <button class="tech-close-btn" onclick="closeFinishResult()">ยกเลิก</button>
+    </div>
+  </div>
 
   <div id="scannerModal">
     <div id="reader"></div>
@@ -68,6 +116,7 @@
     <div class="nav-tabs">
       <button class="tab-btn active" onclick="switchTab('report')">🛠️ แจ้งซ่อม</button>
       <button class="tab-btn" onclick="switchTab('dashboard')">📊 ดูสถานะงาน</button>
+      <button class="tab-btn" onclick="switchTab('technician')">👨‍🔧 งานของฉัน</button>
     </div>
 
     <!-- TAB 1: ฟอร์มแจ้งซ่อม -->
@@ -155,6 +204,85 @@
       </div>
     </div>
 
+
+    <!-- TAB 3: หน้าช่าง / งานของฉัน
+         ตอนนี้เปิดให้เห็นเพื่อทดสอบหน้าตาและ flow ก่อน
+         ขั้นต่อไปค่อยผูกกับ Apps Script + ตรวจสิทธิ์ว่าใครเป็นช่าง -->
+    <div id="tabTechnician" style="display: none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-size:14px; font-weight:600; color:#475569;">👨‍🔧 งานของฉัน</span>
+        <button onclick="loadTechnicianJobs()" style="border:none; background:#e2e8f0; padding:4px 10px; border-radius:6px; font-size:12px; cursor:pointer;">🔄 รีเฟรช</button>
+      </div>
+
+      <div class="tech-summary">
+        <div class="tech-stat accepted">
+          <div class="tech-stat-value" id="techCountAccepted">2</div>
+          <div class="tech-stat-title">รับงานแล้ว</div>
+        </div>
+        <div class="tech-stat progress">
+          <div class="tech-stat-value" id="techCountProgress">1</div>
+          <div class="tech-stat-title">กำลังซ่อม</div>
+        </div>
+        <div class="tech-stat done">
+          <div class="tech-stat-value" id="techCountDone">5</div>
+          <div class="tech-stat-title">ปิดงานแล้ว</div>
+        </div>
+      </div>
+
+      <div id="technicianJobList">
+
+        <div class="tech-job-item">
+          <div class="tech-job-header">
+            <span class="tech-job-id">JOB-260905-001</span>
+            <span class="tech-badge tech-badge-accepted">🟣 รับงานแล้ว</span>
+          </div>
+          <div class="tech-detail-row"><b>พื้นที่:</b> ชั้น 3</div>
+          <div class="tech-detail-row"><b>เครื่องจักร:</b> เครื่องจักร A-103 (A-103)</div>
+          <div class="tech-detail-row"><b>อาการ:</b> ปุ่ม Start กดไม่ได้ เครื่องไม่ทำงาน</div>
+          <div class="tech-detail-row" style="font-size:11px;color:#94a3b8;">ผู้แจ้ง: สมชาย | 05/09/2026 09:15</div>
+          <div class="tech-actions">
+            <button class="tech-action-btn tech-detail-btn" onclick="showTechDetail('JOB-260905-001')">ดูรายละเอียด</button>
+            <button class="tech-action-btn tech-start-btn" onclick="startTechJob('JOB-260905-001')">▶️ เริ่มงาน</button>
+          </div>
+        </div>
+
+        <div class="tech-job-item">
+          <div class="tech-job-header">
+            <span class="tech-job-id">JOB-260905-004</span>
+            <span class="tech-badge tech-badge-progress">🔵 กำลังซ่อม</span>
+          </div>
+          <div class="tech-detail-row"><b>พื้นที่:</b> ชั้น 4</div>
+          <div class="tech-detail-row"><b>เครื่องจักร:</b> เครื่องจักร B-204 (B-204)</div>
+          <div class="tech-detail-row"><b>อาการ:</b> มีเสียงผิดปกติบริเวณชุดมอเตอร์</div>
+          <div class="tech-detail-row" style="font-size:11px;color:#94a3b8;">ผู้แจ้ง: สมหญิง | เริ่มงาน 05/09/2026 13:42</div>
+          <div class="tech-actions">
+            <button class="tech-action-btn tech-detail-btn" onclick="showTechDetail('JOB-260905-004')">ดูรายละเอียด</button>
+            <button class="tech-action-btn tech-finish-btn" onclick="openFinishResult('JOB-260905-004')">✅ ปิดงาน</button>
+          </div>
+        </div>
+
+        <div class="tech-job-item">
+          <div class="tech-job-header">
+            <span class="tech-job-id">JOB-260904-018</span>
+            <span class="tech-badge tech-badge-done">🟢 ซ่อมเสร็จแล้ว</span>
+          </div>
+          <div class="tech-detail-row"><b>พื้นที่:</b> ชั้น 3</div>
+          <div class="tech-detail-row"><b>เครื่องจักร:</b> เครื่องจักร C-015 (C-015)</div>
+          <div class="tech-detail-row"><b>อาการ:</b> สายพานหย่อนและมีเสียงดัง</div>
+          <div class="tech-detail-row" style="font-size:11px;color:#94a3b8;">ปิดงาน 04/09/2026 16:20 | ซ่อมเสร็จ ใช้งานได้</div>
+          <div class="tech-actions">
+            <button class="tech-action-btn tech-detail-btn" onclick="showTechDetail('JOB-260904-018')">ดูรายละเอียด</button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="tech-note">
+        หน้านี้เป็น Preview สำหรับทดสอบ UX ก่อนเชื่อม Apps Script จริง<br>
+        ตอนเชื่อมจริง รายการจะดึงเฉพาะงานที่ช่างคนนั้นรับผิดชอบ
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -182,15 +310,23 @@
       const tabs = document.querySelectorAll('.tab-btn');
       tabs.forEach(btn => btn.classList.remove('active'));
 
+      document.getElementById('tabReport').style.display = 'none';
+      document.getElementById('tabDashboard').style.display = 'none';
+      document.getElementById('tabTechnician').style.display = 'none';
+
       if (tabName === 'report') {
         tabs[0].classList.add('active');
         document.getElementById('tabReport').style.display = 'block';
-        document.getElementById('tabDashboard').style.display = 'none';
-      } else {
+
+      } else if (tabName === 'dashboard') {
         tabs[1].classList.add('active');
-        document.getElementById('tabReport').style.display = 'none';
         document.getElementById('tabDashboard').style.display = 'block';
         loadDashboardData();
+
+      } else if (tabName === 'technician') {
+        tabs[2].classList.add('active');
+        document.getElementById('tabTechnician').style.display = 'block';
+        loadTechnicianJobs();
       }
     }
 
@@ -236,6 +372,68 @@
       } catch (err) {
         container.innerHTML = '<div style="text-align: center; color: #ef4444; padding: 20px;">ไม่สามารถดึงข้อมูลได้</div>';
       }
+    }
+
+    /* =========================================================
+       TECHNICIAN PAGE
+       ตอนนี้ใช้ข้อมูลตัวอย่างเพื่อให้ทดสอบหน้าช่างได้ทันที
+       ขั้นต่อไปจะเปลี่ยน loadTechnicianJobs() ให้ดึงจาก Apps Script
+       ========================================================= */
+
+    async function loadTechnicianJobs() {
+      // ยังไม่ยิง Backend ในขั้น Preview
+      // เมื่อพร้อมเชื่อมจริง:
+      // GET ?action=getMyTechnicianJobs&userId=liffUserId
+
+      console.log("Technician preview loaded for:", liffUserId);
+    }
+
+    function showTechDetail(jobId) {
+      alert(
+        "รายละเอียด " + jobId +
+        "\\n\\nขั้นต่อไปสามารถแสดง:\\n" +
+        "- รูปที่ผู้แจ้งแนบ\\n" +
+        "- อาการเสีย\\n" +
+        "- Timeline รับงาน/เริ่มงาน/ปิดงาน\\n" +
+        "- ประวัติการซ่อมของเครื่อง"
+      );
+    }
+
+    function startTechJob(jobId) {
+      if (!confirm("ต้องการเริ่มงาน " + jobId + " ใช่ไหม?")) return;
+
+      alert(
+        "Preview เท่านั้น\\n\\n" +
+        "JOB: " + jobId +
+        "\\nสถานะ → กำลังดำเนินการ\\n" +
+        "บันทึก StartedBy + StartedAt"
+      );
+    }
+
+    let finishJobId = "";
+
+    function openFinishResult(jobId) {
+      finishJobId = jobId;
+      document.getElementById('finishResultModal').style.display = 'flex';
+    }
+
+    function closeFinishResult() {
+      document.getElementById('finishResultModal').style.display = 'none';
+      finishJobId = "";
+    }
+
+    function chooseFinishResult(result) {
+      const jobId = finishJobId;
+      closeFinishResult();
+
+      if (!jobId) return;
+
+      alert(
+        "Preview เท่านั้น\\n\\n" +
+        "JOB: " + jobId +
+        "\\nผลการซ่อม: " + result +
+        "\\nบันทึก FinishedAt"
+      );
     }
 
     function startBarcodeScanner(inputId) {

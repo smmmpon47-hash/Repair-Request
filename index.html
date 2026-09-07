@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบแจ้งซ่อมและสแกนปฏิบัติงาน - LIFF</title>
+
+  <title>ระบบแจ้งซ่อม</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,9 +34,13 @@
       width: 100%;
       max-width: 480px;
       border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
       padding: 20px 16px;
     }
+
+    /* =========================
+       TAB MENU
+    ========================= */
 
     .nav-tabs {
       display: flex;
@@ -51,7 +56,7 @@
       padding: 10px 4px;
       border: none;
       background: transparent;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: #64748b;
       border-radius: 8px;
@@ -65,6 +70,10 @@
       color: #1DB954;
       box-shadow: 0 2px 6px rgba(0,0,0,0.06);
     }
+
+    /* =========================
+       FORM
+    ========================= */
 
     .form-group {
       margin-bottom: 14px;
@@ -182,55 +191,37 @@
       color: #ffffff;
     }
 
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 16px;
+    /* =========================
+       MY JOBS
+    ========================= */
+
+    .myjobs-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
     }
 
-    .stat-card {
-      background: #f8fafc;
-      border-radius: 10px;
-      padding: 12px;
-      border-left: 4px solid #cbd5e1;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    .myjobs-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #475569;
     }
 
-    .stat-card.pending {
-      border-color: #eab308;
-    }
-
-    .stat-card.progress {
-      border-color: #3b82f6;
-    }
-
-    .stat-card.cancel {
-      border-color: #ef4444;
-    }
-
-    .stat-card.done {
-      border-color: #22c55e;
-    }
-
-    .stat-title {
+    .refresh-btn {
+      border: none;
+      background: #e2e8f0;
+      padding: 5px 10px;
+      border-radius: 7px;
       font-size: 12px;
-      color: #64748b;
-      font-weight: 500;
-    }
-
-    .stat-value {
-      font-size: 20px;
-      font-weight: 700;
-      color: #1e293b;
-      margin-top: 2px;
+      cursor: pointer;
     }
 
     .job-item {
       background: #ffffff;
       border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 12px;
+      border-radius: 12px;
+      padding: 14px;
       margin-bottom: 10px;
       font-size: 13px;
     }
@@ -238,22 +229,35 @@
     .job-header {
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      gap: 8px;
       font-weight: 600;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
+      padding-bottom: 7px;
       border-bottom: 1px solid #f1f5f9;
-      padding-bottom: 4px;
+    }
+
+    .job-id {
+      color: #334155;
+      font-size: 13px;
     }
 
     .job-badge {
-      padding: 2px 8px;
+      padding: 3px 9px;
       border-radius: 12px;
       font-size: 11px;
       font-weight: 500;
+      white-space: nowrap;
     }
 
     .badge-pending {
       background: #fef9c3;
       color: #854d0e;
+    }
+
+    .badge-accepted {
+      background: #ede9fe;
+      color: #6d28d9;
     }
 
     .badge-progress {
@@ -266,10 +270,89 @@
       color: #166534;
     }
 
+    .badge-waiting {
+      background: #fff7ed;
+      color: #c2410c;
+    }
+
+    .badge-cannot {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .badge-forward {
+      background: #f3e8ff;
+      color: #7e22ce;
+    }
+
     .job-detail-row {
       color: #475569;
-      margin-bottom: 2px;
+      margin-bottom: 4px;
+      line-height: 1.5;
     }
+
+    .job-detail-row b {
+      color: #334155;
+    }
+
+    .job-time {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed #e2e8f0;
+      color: #64748b;
+      font-size: 11px;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #94a3b8;
+      padding: 35px 10px;
+      font-size: 13px;
+    }
+
+    .loading-state {
+      text-align: center;
+      color: #94a3b8;
+      padding: 25px 10px;
+      font-size: 13px;
+    }
+
+    .error-state {
+      text-align: center;
+      color: #ef4444;
+      padding: 25px 10px;
+      font-size: 13px;
+    }
+
+    /* =========================
+       TAB 3 PLACEHOLDER
+    ========================= */
+
+    .coming-soon {
+      text-align: center;
+      padding: 50px 15px;
+      color: #94a3b8;
+    }
+
+    .coming-soon-icon {
+      font-size: 45px;
+      margin-bottom: 10px;
+    }
+
+    .coming-soon-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: #64748b;
+    }
+
+    .coming-soon-text {
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
+    /* =========================
+       SCANNER
+    ========================= */
 
     #scannerModal {
       display: none;
@@ -309,6 +392,10 @@
 
 <body>
 
+  <!-- =========================
+       BARCODE SCANNER
+  ========================= -->
+
   <div id="scannerModal">
     <div id="reader"></div>
     <button
@@ -319,9 +406,15 @@
     </button>
   </div>
 
+
   <div class="form-container">
 
+    <!-- =========================
+         3 TABS
+    ========================= -->
+
     <div class="nav-tabs">
+
       <button
         class="tab-btn active"
         onclick="switchTab('report')">
@@ -330,12 +423,23 @@
 
       <button
         class="tab-btn"
-        onclick="switchTab('dashboard')">
-        📊 ดูสถานะงาน
+        onclick="switchTab('myjobs')">
+        📊 งานที่ฉันแจ้ง
       </button>
+
+      <button
+        class="tab-btn"
+        onclick="switchTab('technician')">
+        👨‍🔧 งานของฉัน
+      </button>
+
     </div>
 
-    <!-- TAB 1: ฟอร์มแจ้งซ่อม -->
+
+    <!-- =====================================================
+         TAB 1 : แจ้งซ่อม
+         ===================================================== -->
+
     <div id="tabReport">
 
       <form id="repairForm">
@@ -350,6 +454,7 @@
           </select>
         </div>
 
+
         <div class="form-group">
           <label class="form-label">ผู้แจ้ง</label>
 
@@ -361,8 +466,12 @@
             required>
         </div>
 
+
         <div class="form-group">
-          <label class="form-label">รหัสเครื่องจักร</label>
+
+          <label class="form-label">
+            รหัสเครื่องจักร
+          </label>
 
           <div class="input-with-btn">
 
@@ -389,8 +498,12 @@
           </div>
         </div>
 
+
         <div class="form-group">
-          <label class="form-label">ชื่อเครื่องจักร</label>
+
+          <label class="form-label">
+            ชื่อเครื่องจักร
+          </label>
 
           <input
             type="text"
@@ -401,23 +514,34 @@
 
           <div
             id="machineStatus"
-            style="font-size: 11px; margin-top: 2px;">
+            style="font-size:11px;margin-top:2px;">
           </div>
+
         </div>
 
+
         <div class="form-group">
-          <label class="form-label">อาการที่เสีย</label>
+
+          <label class="form-label">
+            อาการที่เสีย
+          </label>
 
           <textarea
             id="issueInput"
             class="form-control"
             rows="3"
             placeholder="ระบุอาการเสีย..."
-            required></textarea>
+            required>
+          </textarea>
+
         </div>
 
+
         <div class="form-group">
-          <label class="form-label">แนบรูปภาพ</label>
+
+          <label class="form-label">
+            แนบรูปภาพ
+          </label>
 
           <input
             type="file"
@@ -430,7 +554,9 @@
             for="imageInput"
             class="file-attach-btn"
             id="attachBtnText">
+
             📷 ถ่ายรูป / เลือกรูปภาพ
+
           </label>
 
           <div
@@ -440,8 +566,11 @@
             <img
               id="previewImg"
               src="">
+
           </div>
+
         </div>
+
 
         <div class="button-group">
 
@@ -449,105 +578,86 @@
             type="button"
             class="btn btn-cancel"
             onclick="closeLiff()">
+
             ยกเลิก
+
           </button>
 
           <button
             type="submit"
             class="btn btn-confirm"
             id="submitBtn">
+
             ส่งแจ้งซ่อม
+
           </button>
 
         </div>
 
       </form>
+
     </div>
 
 
-    <!-- TAB 2: Dashboard สถานะงาน -->
+    <!-- =====================================================
+         TAB 2 : งานที่ฉันแจ้ง
+         ===================================================== -->
+
     <div
-      id="tabDashboard"
-      style="display: none;">
+      id="tabMyJobs"
+      style="display:none;">
 
-      <div
-        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <div class="myjobs-header">
 
-        <span
-          style="font-size: 14px; font-weight: 600; color: #475569;">
-          ภาพรวมการแจ้งซ่อม
+        <span class="myjobs-title">
+          📊 รายการงานที่ฉันแจ้ง
         </span>
 
         <button
-          onclick="loadDashboardData()"
-          style="border: none; background: #e2e8f0; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;">
+          class="refresh-btn"
+          onclick="loadMyJobs()">
+
           🔄 รีเฟรช
+
         </button>
 
       </div>
 
-      <div class="stats-grid">
 
-        <div class="stat-card pending">
-          <div class="stat-title">
-            รอดำเนินการ ⏳
-          </div>
+      <div id="myJobsContainer">
 
-          <div
-            class="stat-value"
-            id="countPending">
-            0
-          </div>
-        </div>
-
-        <div class="stat-card progress">
-          <div class="stat-title">
-            กำลังดำเนินการ 👨‍🔧
-          </div>
-
-          <div
-            class="stat-value"
-            id="countProgress">
-            0
-          </div>
-        </div>
-
-        <div class="stat-card done">
-          <div class="stat-title">
-            เสร็จสิ้น ✅
-          </div>
-
-          <div
-            class="stat-value"
-            id="countDone">
-            0
-          </div>
-        </div>
-
-        <div class="stat-card cancel">
-          <div class="stat-title">
-            ไม่ซ่อม / ยกเลิก ❌
-          </div>
-
-          <div
-            class="stat-value"
-            id="countCancel">
-            0
-          </div>
-        </div>
-
-      </div>
-
-      <div
-        style="font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 8px;">
-        รายการใบงานล่าสุด
-      </div>
-
-      <div id="jobListContainer">
-        <div
-          style="text-align: center; color: #94a3b8; padding: 20px;">
+        <div class="loading-state">
           กำลังโหลดข้อมูล...
         </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         TAB 3 : งานของฉัน
+         ยังไม่ทำรอบนี้
+         ===================================================== -->
+
+    <div
+      id="tabTechnician"
+      style="display:none;">
+
+      <div class="coming-soon">
+
+        <div class="coming-soon-icon">
+          👨‍🔧
+        </div>
+
+        <div class="coming-soon-title">
+          งานของฉัน
+        </div>
+
+        <div class="coming-soon-text">
+          หน้าสำหรับช่างกำลังจัดทำ
+        </div>
+
       </div>
 
     </div>
@@ -557,19 +667,35 @@
 
   <script>
 
+    /* =====================================================
+       CONFIG
+       ===================================================== */
+
     const GAS_WEB_APP_URL =
       "https://script.google.com/macros/s/AKfycbyLm1LVkTiwK3PCvPSt3PFA1ifb76KCRsWxC1SkaLdDC-ginxy0RHWstWpHgDytaBmm/exec";
 
     const LIFF_ID =
       "2011319319-1bUfgtSJ";
 
+
+    /* =====================================================
+       GLOBAL
+       ===================================================== */
+
     let liffUserId = "";
     let liffUserName = "";
+
     let base64Image = "";
 
     let html5QrCode = null;
     let activeTargetInputId = "";
 
+    let searchTimeout = null;
+
+
+    /* =====================================================
+       LIFF INIT
+       ===================================================== */
 
     async function main() {
 
@@ -579,18 +705,27 @@
           liffId: LIFF_ID
         });
 
+
         if (liff.isLoggedIn()) {
 
-          const profile = await liff.getProfile();
+          const profile =
+            await liff.getProfile();
 
-          liffUserId = profile.userId;
+          liffUserId =
+            profile.userId || "";
 
           liffUserName =
-            profile.displayName || "ไม่ระบุชื่อ";
+            profile.displayName ||
+            "ไม่ระบุชื่อ";
 
+
+          /*
+           * คงพฤติกรรมหน้าเดิม
+           */
           document.getElementById(
             'reporterInput'
           ).value = liffUserName;
+
 
         } else {
 
@@ -609,17 +744,35 @@
 
     }
 
+
     window.onload = main;
 
+
+    /* =====================================================
+       SWITCH TAB
+       ===================================================== */
 
     function switchTab(tabName) {
 
       const tabs =
         document.querySelectorAll('.tab-btn');
 
-      tabs.forEach(btn =>
-        btn.classList.remove('active')
-      );
+      tabs.forEach(btn => {
+        btn.classList.remove('active');
+      });
+
+
+      document.getElementById(
+        'tabReport'
+      ).style.display = 'none';
+
+      document.getElementById(
+        'tabMyJobs'
+      ).style.display = 'none';
+
+      document.getElementById(
+        'tabTechnician'
+      ).style.display = 'none';
 
 
       if (tabName === 'report') {
@@ -630,69 +783,82 @@
           'tabReport'
         ).style.display = 'block';
 
-        document.getElementById(
-          'tabDashboard'
-        ).style.display = 'none';
+      }
 
-      } else {
+
+      else if (tabName === 'myjobs') {
 
         tabs[1].classList.add('active');
 
         document.getElementById(
-          'tabReport'
-        ).style.display = 'none';
-
-        document.getElementById(
-          'tabDashboard'
+          'tabMyJobs'
         ).style.display = 'block';
 
-        loadDashboardData();
+        loadMyJobs();
+
+      }
+
+
+      else if (tabName === 'technician') {
+
+        tabs[2].classList.add('active');
+
+        document.getElementById(
+          'tabTechnician'
+        ).style.display = 'block';
 
       }
 
     }
 
 
-    async function loadDashboardData() {
+    /* =====================================================
+       TAB 2
+       LOAD MY JOBS
+       ===================================================== */
+
+    async function loadMyJobs() {
 
       const container =
         document.getElementById(
-          'jobListContainer'
+          'myJobsContainer'
         );
 
-      container.innerHTML =
-        '<div style="text-align: center; color: #94a3b8; padding: 20px;">กำลังโหลดข้อมูล...</div>';
+
+      if (!liffUserId) {
+
+        container.innerHTML = `
+          <div class="error-state">
+            ไม่พบ LINE User ID
+          </div>
+        `;
+
+        return;
+
+      }
+
+
+      container.innerHTML = `
+        <div class="loading-state">
+          🔄 กำลังโหลดรายการงาน...
+        </div>
+      `;
 
 
       try {
 
-        const res = await fetch(
-          `${GAS_WEB_APP_URL}?action=getDashboard`
-        );
+        const url =
+          GAS_WEB_APP_URL +
+          "?action=getMyRepairJobs&userId=" +
+          encodeURIComponent(liffUserId);
+
+
+        const res =
+          await fetch(url);
+
 
         const data =
           await res.json();
-
-
-        document.getElementById(
-          'countPending'
-        ).innerText =
-          data.stats.pending || 0;
-
-        document.getElementById(
-          'countProgress'
-        ).innerText =
-          data.stats.progress || 0;
-
-        document.getElementById(
-          'countDone'
-        ).innerText =
-          data.stats.done || 0;
-
-        document.getElementById(
-          'countCancel'
-        ).innerText =
-          data.stats.cancel || 0;
 
 
         if (
@@ -700,90 +866,27 @@
           data.jobs.length === 0
         ) {
 
-          container.innerHTML =
-            '<div style="text-align: center; color: #94a3b8; padding: 20px;">ไม่มีรายการแจ้งซ่อม</div>';
+          container.innerHTML = `
+            <div class="empty-state">
+              <div style="font-size:35px;margin-bottom:8px;">
+                📭
+              </div>
+
+              ยังไม่มีงานแจ้งซ่อมของคุณ
+            </div>
+          `;
 
           return;
+
         }
 
 
-        let html = '';
+        let html = "";
 
 
         data.jobs.forEach(job => {
 
-          let badgeClass =
-            'badge-pending';
-
-
-          if (
-            job.status ===
-            'กำลังดำเนินการ'
-          ) {
-
-            badgeClass =
-              'badge-progress';
-
-          }
-
-
-          if (
-            job.status === 'เสร็จสิ้น' ||
-            job.status ===
-            'ดำเนินการแล้วเสร็จ'
-          ) {
-
-            badgeClass =
-              'badge-done';
-
-          }
-
-
-          html += `
-            <div class="job-item">
-
-              <div class="job-header">
-
-                <span>
-                  ${job.jobId}
-                </span>
-
-                <span
-                  class="job-badge ${badgeClass}">
-                  ${job.status}
-                </span>
-
-              </div>
-
-              <div class="job-detail-row">
-                <b>พื้นที่:</b>
-                ${job.floor || "-"}
-              </div>
-
-              <div class="job-detail-row">
-                <b>เครื่องจักร:</b>
-                ${job.machineName}
-                (${job.machineCode})
-              </div>
-
-              <div class="job-detail-row">
-                <b>อาการ:</b>
-                ${job.issue || "-"}
-              </div>
-
-              <div
-                class="job-detail-row"
-                style="font-size:11px; color:#94a3b8; margin-top:4px;">
-
-                ผู้แจ้ง:
-                ${job.reporter}
-                |
-                ${job.date}
-
-              </div>
-
-            </div>
-          `;
+          html += createMyJobCard(job);
 
         });
 
@@ -793,18 +896,240 @@
 
       } catch (err) {
 
-        container.innerHTML =
-          '<div style="text-align: center; color: #ef4444; padding: 20px;">ไม่สามารถดึงข้อมูลได้</div>';
+        console.error(
+          "loadMyJobs Error:",
+          err
+        );
+
+
+        container.innerHTML = `
+          <div class="error-state">
+            ⚠️ ไม่สามารถดึงรายการงานได้
+            <br>
+            <span style="font-size:11px;">
+              กรุณาลองกดรีเฟรชอีกครั้ง
+            </span>
+          </div>
+        `;
 
       }
 
     }
 
 
+    /* =====================================================
+       CREATE JOB CARD
+       ===================================================== */
+
+    function createMyJobCard(job) {
+
+      const status =
+        job.status || "รอดำเนินการ";
+
+
+      let badgeClass =
+        "badge-pending";
+
+
+      if (status === "รับงานแล้ว") {
+
+        badgeClass =
+          "badge-accepted";
+
+      }
+
+
+      else if (
+        status === "กำลังดำเนินการ"
+      ) {
+
+        badgeClass =
+          "badge-progress";
+
+      }
+
+
+      else if (
+        status === "เสร็จสิ้น"
+      ) {
+
+        badgeClass =
+          "badge-done";
+
+      }
+
+
+      else if (
+        status === "รออะไหล่"
+      ) {
+
+        badgeClass =
+          "badge-waiting";
+
+      }
+
+
+      else if (
+        status === "ซ่อมไม่ได้"
+      ) {
+
+        badgeClass =
+          "badge-cannot";
+
+      }
+
+
+      else if (
+        status === "ส่งต่อช่างอื่น"
+      ) {
+
+        badgeClass =
+          "badge-forward";
+
+      }
+
+
+      let timeHtml = "";
+
+
+      if (
+        job.startDate ||
+        job.startTime ||
+        job.finishDate ||
+        job.finishTime
+      ) {
+
+        timeHtml = `
+          <div class="job-time">
+
+            ${
+              job.startDate || job.startTime
+                ? `🟢 เริ่มงาน: ${
+                    job.startDate || "-"
+                  } ${
+                    job.startTime || ""
+                  }`
+                : ""
+            }
+
+            ${
+              job.finishDate || job.finishTime
+                ? `<br>🔵 เสร็จงาน: ${
+                    job.finishDate || "-"
+                  } ${
+                    job.finishTime || ""
+                  }`
+                : ""
+            }
+
+          </div>
+        `;
+
+      }
+
+
+      return `
+
+        <div class="job-item">
+
+          <div class="job-header">
+
+            <span class="job-id">
+              ${escapeHtml(job.jobId || "-")}
+            </span>
+
+            <span class="job-badge ${badgeClass}">
+              ${escapeHtml(status)}
+            </span>
+
+          </div>
+
+
+          <div class="job-detail-row">
+            <b>📍 ชั้น:</b>
+            ${escapeHtml(job.floor || "-")}
+          </div>
+
+
+          <div class="job-detail-row">
+            <b>⚙️ เครื่องจักร:</b>
+            ${escapeHtml(job.machineCode || "-")}
+            ${
+              job.machineName
+                ? ` (${escapeHtml(job.machineName)})`
+                : ""
+            }
+          </div>
+
+
+          <div class="job-detail-row">
+            <b>📝 อาการ:</b>
+            ${escapeHtml(job.issue || "-")}
+          </div>
+
+
+          <div class="job-detail-row">
+            <b>👨‍🔧 ช่าง:</b>
+            ${escapeHtml(job.techName || "ยังไม่มีช่างรับงาน")}
+          </div>
+
+
+          ${
+            job.result
+              ? `
+                <div class="job-detail-row">
+                  <b>🔧 ผลการซ่อม:</b>
+                  ${escapeHtml(job.result)}
+                </div>
+              `
+              : ""
+          }
+
+
+          <div class="job-detail-row"
+               style="font-size:11px;color:#94a3b8;margin-top:7px;">
+
+            แจ้งเมื่อ:
+            ${escapeHtml(job.date || "-")}
+            ${job.time ? " " + escapeHtml(job.time) : ""}
+
+          </div>
+
+
+          ${timeHtml}
+
+        </div>
+
+      `;
+
+    }
+
+
+    /* =====================================================
+       ESCAPE HTML
+       ===================================================== */
+
+    function escapeHtml(value) {
+
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+    }
+
+
+    /* =====================================================
+       BARCODE
+       ===================================================== */
+
     function startBarcodeScanner(inputId) {
 
       activeTargetInputId =
         inputId;
+
 
       document.getElementById(
         'scannerModal'
@@ -820,26 +1145,33 @@
 
 
       const config = {
+
         fps: 20,
+
         qrbox: {
           width: 300,
           height: 120
         }
+
       };
 
 
       html5QrCode.start(
+
         {
           facingMode: "environment"
         },
+
         config,
+
         (decodedText) => {
 
           if (activeTargetInputId) {
 
             document.getElementById(
               activeTargetInputId
-            ).value = decodedText;
+            ).value =
+              decodedText;
 
 
             if (
@@ -853,9 +1185,11 @@
 
           }
 
+
           stopBarcodeScanner();
 
         }
+
       ).catch(err => {
 
         alert(
@@ -898,8 +1232,9 @@
     }
 
 
-    let searchTimeout = null;
-
+    /* =====================================================
+       MACHINE LOOKUP
+       ===================================================== */
 
     function lookupMachineName() {
 
@@ -923,9 +1258,8 @@
 
       if (!code) {
 
-        nameInput.value = '';
-
-        statusText.innerText = '';
+        nameInput.value = "";
+        statusText.innerText = "";
 
         return;
 
@@ -933,7 +1267,7 @@
 
 
       statusText.innerText =
-        '🔍 กำลังค้นหา...';
+        "🔍 กำลังค้นหา...";
 
 
       clearTimeout(
@@ -942,58 +1276,68 @@
 
 
       searchTimeout =
-        setTimeout(
-          async () => {
+        setTimeout(async () => {
 
-            try {
+          try {
 
-              const res =
-                await fetch(
-                  `${GAS_WEB_APP_URL}?action=getMachineName&code=${encodeURIComponent(code)}`
-                );
-
-
-              const data =
-                await res.json();
+            const res =
+              await fetch(
+                GAS_WEB_APP_URL +
+                "?action=getMachineName&code=" +
+                encodeURIComponent(code)
+              );
 
 
-              if (data.name) {
-
-                nameInput.value =
-                  data.name;
-
-                statusText.innerText =
-                  '✅ พบข้อมูล';
-
-                statusText.style.color =
-                  '#1DB954';
-
-              } else {
-
-                nameInput.value = '';
-
-                statusText.innerText =
-                  '❌ ไม่พบรหัสนี้';
-
-                statusText.style.color =
-                  '#e53e3e';
-
-              }
+            const data =
+              await res.json();
 
 
-            } catch (err) {
+            if (data.name) {
+
+              nameInput.value =
+                data.name;
 
               statusText.innerText =
-                '⚠️ ดึงข้อมูลไม่ได้';
+                "✅ พบข้อมูล";
+
+              statusText.style.color =
+                "#1DB954";
 
             }
 
-          },
-          500
-        );
+            else {
+
+              nameInput.value = "";
+
+              statusText.innerText =
+                "❌ ไม่พบรหัสนี้";
+
+              statusText.style.color =
+                "#e53e3e";
+
+            }
+
+
+          } catch (err) {
+
+            console.error(err);
+
+            statusText.innerText =
+              "⚠️ ดึงข้อมูลไม่ได้";
+
+            statusText.style.color =
+              "#e53e3e";
+
+          }
+
+        }, 500);
 
     }
 
+
+    /* =====================================================
+       IMAGE
+       ===================================================== */
 
     function previewImage(e) {
 
@@ -1035,6 +1379,10 @@
     }
 
 
+    /* =====================================================
+       CLOSE LIFF
+       ===================================================== */
+
     function closeLiff() {
 
       if (
@@ -1048,6 +1396,10 @@
 
     }
 
+
+    /* =====================================================
+       SUBMIT REPAIR
+       ===================================================== */
 
     document
       .getElementById('repairForm')
@@ -1064,7 +1416,8 @@
             );
 
 
-          submitBtn.disabled = true;
+          submitBtn.disabled =
+            true;
 
           submitBtn.innerText =
             "กำลังส่ง...";
@@ -1135,18 +1488,27 @@
                 "แจ้งซ่อมเรียบร้อย!"
               );
 
+
               closeLiff();
 
-            } else {
+            }
+
+            else {
 
               alert(
-                "เกิดข้อผิดพลาด"
+                "เกิดข้อผิดพลาด: " +
+                (
+                  result.error ||
+                  "ไม่สามารถบันทึกงานได้"
+                )
               );
 
             }
 
 
           } catch (err) {
+
+            console.error(err);
 
             alert(
               "เกิดข้อผิดพลาดในการเชื่อมต่อ"

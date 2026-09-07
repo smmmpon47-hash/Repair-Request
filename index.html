@@ -198,7 +198,7 @@
     }
     window.onload = main;
 
-    /* --- ฟังก์ชันสแกน บาร์โค้ด 13 หลัก / QR Code --- */
+    /* --- ฟังก์ชันสแกน บาร์โค้ด 13 หลัก / QR Code (ปรับปรุงความแม่นยำ) --- */
     function startBarcodeScanner(inputId) {
       activeTargetInputId = inputId;
       document.getElementById('scannerModal').style.display = 'flex';
@@ -208,14 +208,12 @@
       }
 
       const config = { 
-        fps: 15, 
-        qrbox: { width: 280, height: 180 }, // ทรงผืนผ้า เหมาะกับบาร์โค้ดแท่ง 13 หลัก
-        formatsToSupport: [ 
-          Html5QrcodeSupportedFormats.EAN_13, 
-          Html5QrcodeSupportedFormats.EAN_8, 
-          Html5QrcodeSupportedFormats.CODE_128, 
-          Html5QrcodeSupportedFormats.QR_CODE 
-        ]
+        fps: 20, 
+        qrbox: { width: 300, height: 120 }, // กรอบแนวนอนแคบเพื่อโฟกัสเส้นบาร์โค้ด
+        aspectRatio: 1.0,
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true // ดึงการจับ Barcode จากฮาร์ดแวร์มือถือ
+        }
       };
 
       html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)

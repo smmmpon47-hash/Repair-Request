@@ -34,7 +34,6 @@
     .btn-confirm:disabled, .btn-start-tech:disabled { background-color: #cbd5e1; cursor: not-allowed; }
     .status-text { font-size: 12px; margin-top: 4px; color: #64748b; }
     
-    /* การ์ดสรุปข้อมูลสั้นสำหรับช่าง */
     .job-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 20px; }
     .job-card-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
     .job-card-label { font-weight: 500; color: #64748b; }
@@ -45,7 +44,7 @@
 
   <div class="form-container">
     
-    <!-- 1. VIEW ผู้แจ้งซ่อม (โหมดปกติ) -->
+    <!-- 1. VIEW ผู้แจ้งซ่อม -->
     <div id="userReportView">
       <div class="header-title">🛠️ ฟอร์มแจ้งซ่อมเครื่องจักร</div>
 
@@ -111,7 +110,7 @@
       </form>
     </div>
 
-    <!-- 2. VIEW ช่างซ่อมสแกนเปิดงานหน้าเครื่อง (โหมดช่าง) -->
+    <!-- 2. VIEW ช่างซ่อมสแกนเปิดงานหน้าเครื่อง -->
     <div id="techStartView" style="display: none;">
       <div class="header-title header-tech">⚡ ยืนยันเริ่มปฏิบัติงานซ่อม</div>
 
@@ -147,9 +146,10 @@
 
   <script>
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyLm1LVkTiwK3PCvPSt3PFA1ifb76KCRsWxC1SkaLdDC-ginxy0RHWstWpHgDytaBmm/exec";
-    const LIFF_ID = "2011319319-1bUfgtSJ";
+    const LIFF_ID = "2011319319-1bUfgtSJ"; // 👈 ใส่ LIFF ID ตรงนี้
     let liffUserId = "", liffUserName = "", base64Image = "";
     let currentJobId = "";
+    let isLiffReady = false;
 
     const lineData = {
       "ชั้น 3": ["B", "C", "อะไล่ชั้น 3"],
@@ -157,35 +157,38 @@
     };
 
     async function main() {
-      // 1. อ่าน Parameter จาก URL ว่ามี jobId หรือไม่
       const urlParams = new URLSearchParams(window.location.search);
       currentJobId = urlParams.get('jobId') || "";
 
-      // 2. ถ้ามี jobId สลับไปหน้าของช่างทันที
       if (currentJobId) {
         document.getElementById('userReportView').style.display = 'none';
         document.getElementById('techStartView').style.display = 'block';
         document.getElementById('displayJobId').innerText = currentJobId;
       }
 
-      // 3. เริ่มทำงาน LIFF
       try {
-        if (LIFF_ID && LIFF_ID !== "2011319319-1bUfgtSJ") {
-          await liff.init({ liffId: LIFF_ID });
-          if (liff.isLoggedIn()) {
-            const profile = await liff.getProfile();
-            liffUserId = profile.userId;
-            liffUserName = profile.displayName || "ไม่ระบุชื่อ";
-            
-            document.getElementById('reporterInput').value = liffUserName;
-            document.getElementById('displayTechName').innerText = liffUserName;
-          } else {
-            liff.login();
-          }
+        // บังคับ Init LIFF
+        await liff.init({ liffId: LIFF_ID });
+        isLiffReady = true;
+
+        if (liff.isLoggedIn()) {
+          const profile = await liff.getProfile();
+          liffUserId = profile.userId;
+          liffUserName = profile.displayName || "ไม่ระบุชื่อ";
+          
+          document.getElementById('reporterInput').value = liffUserName;
+          document.getElementById('displayTechName').innerText = liffUserName;
+        } else {
+          liff.login();
         }
-      } catch (err) { console.error("LIFF Init Error:", err); }
+      } catch (err) {
+        console.error("LIFF Init Error:", err);
+        alert("ไม่สามารถเริ่มต้นระบบ LIFF ได้: " + err.message);
+      }
     }
-    main();
+    
+    // เรียกใช้ main ทันทีที่โหลดหน้า
+    window.onload = main;
 
     function updateLineOptions() {
       const floorSelect = document.getElementById('floorSelect');
@@ -240,28 +243,42 @@
       }, 500);
     }
 
-    function scanMachineQR() {
-      if (typeof liff !== "undefined" && liff.scanCodeV2) {
-        liff.scanCodeV2().then(result => {
+    async function scanMachineQR() {
+      if (!isLiffReady) {
+        alert("ระบบกำลังโหลดกรุณารอสักครู่...");
+        return;
+      }
+      try {
+        if (liff.scanCodeV2) {
+          const result = await liff.scanCodeV2();
           if (result.value) {
             document.getElementById('machineCodeInput').value = result.value;
             lookupMachineName();
           }
-        }).catch(err => alert("ไม่สามารถเปิดกล้องสแกนได้: " + err.message));
-      } else {
-        alert("อุปกรณ์ของคุณไม่รองรับการสแกน QR ผ่าน LIFF");
+        } else {
+          alert("อุปกรณ์ของคุณไม่รองรับการสแกน QR ผ่าน LIFF (เปิดในแอป LINE เท่านั้น)");
+        }
+      } catch (err) {
+        alert("เกิดข้อผิดพลาดในการสแกน: " + err.message);
       }
     }
 
-    function scanTechMachineQR() {
-      if (typeof liff !== "undefined" && liff.scanCodeV2) {
-        liff.scanCodeV2().then(result => {
+    async function scanTechMachineQR() {
+      if (!isLiffReady) {
+        alert("ระบบกำลังโหลดกรุณารอสักครู่...");
+        return;
+      }
+      try {
+        if (liff.scanCodeV2) {
+          const result = await liff.scanCodeV2();
           if (result.value) {
             document.getElementById('techMachineScanInput').value = result.value;
           }
-        }).catch(err => alert("ไม่สามารถเปิดกล้องสแกนได้: " + err.message));
-      } else {
-        alert("อุปกรณ์ของคุณไม่รองรับการสแกน QR ผ่าน LIFF");
+        } else {
+          alert("อุปกรณ์ของคุณไม่รองรับการสแกน QR ผ่าน LIFF (เปิดในแอป LINE เท่านั้น)");
+        }
+      } catch (err) {
+        alert("เกิดข้อผิดพลาดในการสแกน: " + err.message);
       }
     }
 
@@ -285,7 +302,6 @@
       }
     }
 
-    // ฟังก์ชันส่งข้อมูลสำหรับช่างสแกนเริ่มงานหน้าเครื่อง
     async function submitTechStart() {
       const machineScanCode = document.getElementById('techMachineScanInput').value.trim();
       if (!machineScanCode) {
@@ -327,7 +343,6 @@
       }
     }
 
-    // ฟังก์ชันส่งฟอร์มแจ้งซ่อม (ฝั่งผู้แจ้งซ่อม)
     document.getElementById('repairForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const submitBtn = document.getElementById('submitBtn');

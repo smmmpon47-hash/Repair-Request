@@ -14,12 +14,10 @@
     body { background-color: #f0f2f5; color: #333; padding: 12px; display: flex; justify-content: center; }
     .form-container { background: #ffffff; width: 100%; max-width: 480px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); padding: 20px 16px; }
     
-    /* Navigation Bar ด้านบน */
     .nav-tabs { display: flex; gap: 8px; margin-bottom: 20px; background: #eef2f5; padding: 4px; border-radius: 12px; }
     .tab-btn { flex: 1; padding: 10px 4px; border: none; background: transparent; font-size: 14px; font-weight: 600; color: #64748b; border-radius: 8px; cursor: pointer; transition: all 0.2s; text-align: center; }
     .tab-btn.active { background: #ffffff; color: #1DB954; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
 
-    .header-title { text-align: center; font-size: 20px; font-weight: 600; color: #1DB954; margin-bottom: 16px; }
     .form-group { margin-bottom: 14px; }
     .form-label { display: block; font-size: 13px; font-weight: 500; color: #444; margin-bottom: 4px; }
     .form-control, select, textarea { width: 100%; padding: 10px 12px; font-size: 14px; border: 1px solid #dcdfe6; border-radius: 8px; background-color: #f8fafc; outline: none; }
@@ -36,7 +34,6 @@
     .btn-cancel { background-color: #f1f5f9; color: #64748b; }
     .btn-confirm { background-color: #1DB954; color: #ffffff; }
 
-    /* Dashboard Style (สไตล์การ์ดสรุปสถานะ) */
     .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
     .stat-card { background: #f8fafc; border-radius: 10px; padding: 12px; border-left: 4px solid #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
     .stat-card.pending { border-color: #eab308; }
@@ -46,7 +43,6 @@
     .stat-title { font-size: 12px; color: #64748b; font-weight: 500; }
     .stat-value { font-size: 20px; font-weight: 700; color: #1e293b; margin-top: 2px; }
 
-    /* Job List Style */
     .job-item { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; margin-bottom: 10px; font-size: 13px; }
     .job-header { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 6px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; }
     .job-badge { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; }
@@ -69,8 +65,7 @@
 
   <div class="form-container">
     
-    <!-- เมนูสลับหน้า (Tabs) -->
-    <div class="nav-tabs" id="mainNavTabs">
+    <div class="nav-tabs">
       <button class="tab-btn active" onclick="switchTab('report')">🛠️ แจ้งซ่อม</button>
       <button class="tab-btn" onclick="switchTab('dashboard')">📊 ดูสถานะงาน</button>
     </div>
@@ -80,17 +75,10 @@
       <form id="repairForm">
         <div class="form-group">
           <label class="form-label">ชั้น</label>
-          <select id="floorSelect" required onchange="updateLineOptions()">
+          <select id="floorSelect" required>
             <option value="">-- กรุณาเลือกชั้น --</option>
             <option value="ชั้น 3">ชั้น 3</option>
             <option value="ชั้น 4">ชั้น 4</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">LINE (สายการผลิต)</label>
-          <select id="lineSelect" required disabled>
-            <option value="">-- กรุณาเลือกชั้นก่อน --</option>
           </select>
         </div>
 
@@ -142,7 +130,6 @@
         <button onclick="loadDashboardData()" style="border: none; background: #e2e8f0; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;">🔄 รีเฟรช</button>
       </div>
 
-      <!-- สรุปตัวเลขสถานะ -->
       <div class="stats-grid">
         <div class="stat-card pending">
           <div class="stat-title">รอดำเนินการ ⏳</div>
@@ -162,30 +149,9 @@
         </div>
       </div>
 
-      <!-- รายการใบงาน -->
       <div style="font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 8px;">รายการใบงานล่าสุด</div>
       <div id="jobListContainer">
         <div style="text-align: center; color: #94a3b8; padding: 20px;">กำลังโหลดข้อมูล...</div>
-      </div>
-    </div>
-
-    <!-- VIEW ช่างสแกนเปิดงาน (กรณีเปิดผ่านลิงก์ Job) -->
-    <div id="techStartView" style="display: none;">
-      <div class="header-title" style="color:#2980B9;">⚡ ยืนยันเริ่มปฏิบัติงานซ่อม</div>
-      <div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 13px;">
-        <div><b>รหัสงาน:</b> <span id="displayJobId">-</span></div>
-        <div><b>ช่างผู้รับงาน:</b> <span id="displayTechName">-</span></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">สแกนรหัสเครื่องจักรหน้างาน</label>
-        <div class="input-with-btn">
-          <input type="text" id="techMachineScanInput" class="form-control" placeholder="สแกน QR / บาร์โค้ด" required>
-          <button type="button" class="btn-qr" style="background:#2980B9;" onclick="startBarcodeScanner('techMachineScanInput')">สแกน</button>
-        </div>
-      </div>
-      <div class="button-group">
-        <button type="button" class="btn btn-cancel" onclick="closeLiff()">ยกเลิก</button>
-        <button type="button" class="btn btn-confirm" style="background:#2980B9;" id="techStartBtn" onclick="submitTechStart()">▶️ บันทึกเวลาเริ่มซ่อม</button>
       </div>
     </div>
 
@@ -195,21 +161,9 @@
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyLm1LVkTiwK3PCvPSt3PFA1ifb76KCRsWxC1SkaLdDC-ginxy0RHWstWpHgDytaBmm/exec";
     const LIFF_ID = "2011319319-1bUfgtSJ";
     let liffUserId = "", liffUserName = "", base64Image = "";
-    let currentJobId = "", html5QrCode = null, activeTargetInputId = "";
-
-    const lineData = { "ชั้น 3": ["B", "C", "อะไล่ชั้น 3"], "ชั้น 4": ["D", "E", "F", "อะไหล่ชั้น 4"] };
+    let html5QrCode = null, activeTargetInputId = "";
 
     async function main() {
-      const urlParams = new URLSearchParams(window.location.search);
-      currentJobId = urlParams.get('jobId') || "";
-
-      if (currentJobId) {
-        document.getElementById('mainNavTabs').style.display = 'none';
-        document.getElementById('tabReport').style.display = 'none';
-        document.getElementById('techStartView').style.display = 'block';
-        document.getElementById('displayJobId').innerText = currentJobId;
-      }
-
       try {
         await liff.init({ liffId: LIFF_ID });
         if (liff.isLoggedIn()) {
@@ -217,7 +171,6 @@
           liffUserId = profile.userId;
           liffUserName = profile.displayName || "ไม่ระบุชื่อ";
           document.getElementById('reporterInput').value = liffUserName;
-          document.getElementById('displayTechName').innerText = liffUserName;
         } else {
           liff.login();
         }
@@ -225,7 +178,6 @@
     }
     window.onload = main;
 
-    // ระบบสลับ Tab
     function switchTab(tabName) {
       const tabs = document.querySelectorAll('.tab-btn');
       tabs.forEach(btn => btn.classList.remove('active'));
@@ -238,11 +190,10 @@
         tabs[1].classList.add('active');
         document.getElementById('tabReport').style.display = 'none';
         document.getElementById('tabDashboard').style.display = 'block';
-        loadDashboardData(); // โหลดข้อมูล Dashboard
+        loadDashboardData();
       }
     }
 
-    // ดึงข้อมูล Dashboard จาก Google Apps Script
     async function loadDashboardData() {
       const container = document.getElementById('jobListContainer');
       container.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 20px;">กำลังโหลดข้อมูล...</div>';
@@ -251,13 +202,11 @@
         const res = await fetch(`${GAS_WEB_APP_URL}?action=getDashboard`);
         const data = await res.json();
 
-        // อัปเดตตัวเลขการ์ดสรุป
         document.getElementById('countPending').innerText = data.stats.pending || 0;
         document.getElementById('countProgress').innerText = data.stats.progress || 0;
         document.getElementById('countDone').innerText = data.stats.done || 0;
         document.getElementById('countCancel').innerText = data.stats.cancel || 0;
 
-        // วาดรายการใบงาน
         if (!data.jobs || data.jobs.length === 0) {
           container.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 20px;">ไม่มีรายการแจ้งซ่อม</div>';
           return;
@@ -267,7 +216,7 @@
         data.jobs.forEach(job => {
           let badgeClass = 'badge-pending';
           if (job.status === 'กำลังดำเนินการ') badgeClass = 'badge-progress';
-          if (job.status === 'ดำเนินการแล้วเสร็จ') badgeClass = 'badge-done';
+          if (job.status === 'เสร็จสิ้น' || job.status === 'ดำเนินการแล้วเสร็จ') badgeClass = 'badge-done';
 
           html += `
             <div class="job-item">
@@ -275,8 +224,9 @@
                 <span>${job.jobId}</span>
                 <span class="job-badge ${badgeClass}">${job.status}</span>
               </div>
+              <div class="job-detail-row"><b>พื้นที่:</b> ${job.floor || "-"}</div>
               <div class="job-detail-row"><b>เครื่องจักร:</b> ${job.machineName} (${job.machineCode})</div>
-              <div class="job-detail-row"><b>อาการ:</b> ${job.issue}</div>
+              <div class="job-detail-row"><b>อาการ:</b> ${job.issue || "-"}</div>
               <div class="job-detail-row" style="font-size:11px; color:#94a3b8; margin-top:4px;">ผู้แจ้ง: ${job.reporter} | ${job.date}</div>
             </div>
           `;
@@ -288,18 +238,12 @@
       }
     }
 
-    /* --- สแกนบาร์โค้ด / QR Code --- */
     function startBarcodeScanner(inputId) {
       activeTargetInputId = inputId;
       document.getElementById('scannerModal').style.display = 'flex';
       if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
 
-      const config = { 
-        fps: 20, 
-        qrbox: { width: 300, height: 120 },
-        experimentalFeatures: { useBarCodeDetectorIfSupported: true }
-      };
-
+      const config = { fps: 20, qrbox: { width: 300, height: 120 } };
       html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
         if (activeTargetInputId) {
           document.getElementById(activeTargetInputId).value = decodedText;
@@ -314,20 +258,6 @@
         html5QrCode.stop().then(() => { document.getElementById('scannerModal').style.display = 'none'; });
       } else {
         document.getElementById('scannerModal').style.display = 'none';
-      }
-    }
-
-    function updateLineOptions() {
-      const floor = document.getElementById('floorSelect').value;
-      const lineSelect = document.getElementById('lineSelect');
-      lineSelect.innerHTML = '';
-      if (floor && lineData[floor]) {
-        lineSelect.disabled = false;
-        lineSelect.appendChild(new Option('-- เลือก LINE --', ''));
-        lineData[floor].forEach(l => lineSelect.appendChild(new Option('LINE ' + l, 'LINE ' + l)));
-      } else {
-        lineSelect.disabled = true;
-        lineSelect.appendChild(new Option('-- กรุณาเลือกชั้นก่อน --', ''));
       }
     }
 
@@ -377,7 +307,6 @@
       const payload = {
         action: 'CREATE_REPAIR_JOB',
         floor: document.getElementById('floorSelect').value,
-        line: document.getElementById('lineSelect').value,
         reporter: document.getElementById('reporterInput').value,
         machineCode: document.getElementById('machineCodeInput').value.trim(),
         machineName: document.getElementById('machineNameInput').value.trim(),

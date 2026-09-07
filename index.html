@@ -8,48 +8,60 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- ไลบรารีสำหรับสแกน Barcode 13 หลักโดยเฉพาะ -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Kanit', sans-serif; }
-    body { background-color: #f0f2f5; color: #333; padding: 16px; display: flex; justify-content: center; }
-    .form-container { background: #ffffff; width: 100%; max-width: 480px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); padding: 24px 20px; }
-    .header-title { text-align: center; font-size: 22px; font-weight: 600; color: #1DB954; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #eef2f5; }
-    .header-tech { color: #2980B9; border-bottom-color: #eef2f5; }
-    .form-group { margin-bottom: 16px; }
-    .form-label { display: block; font-size: 14px; font-weight: 500; color: #444; margin-bottom: 6px; }
-    .form-control, select, textarea { width: 100%; padding: 12px 14px; font-size: 15px; border: 1px solid #dcdfe6; border-radius: 10px; background-color: #f8fafc; outline: none; transition: all 0.2s; }
-    .form-control:focus, select:focus, textarea:focus { border-color: #1DB954; background-color: #fff; box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.15); }
-    .form-control[readonly] { background-color: #e2e8f0; color: #475569; cursor: not-allowed; }
+    body { background-color: #f0f2f5; color: #333; padding: 12px; display: flex; justify-content: center; }
+    .form-container { background: #ffffff; width: 100%; max-width: 480px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); padding: 20px 16px; }
+    
+    /* Navigation Bar ด้านบน */
+    .nav-tabs { display: flex; gap: 8px; margin-bottom: 20px; background: #eef2f5; padding: 4px; border-radius: 12px; }
+    .tab-btn { flex: 1; padding: 10px 4px; border: none; background: transparent; font-size: 14px; font-weight: 600; color: #64748b; border-radius: 8px; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .tab-btn.active { background: #ffffff; color: #1DB954; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+
+    .header-title { text-align: center; font-size: 20px; font-weight: 600; color: #1DB954; margin-bottom: 16px; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 13px; font-weight: 500; color: #444; margin-bottom: 4px; }
+    .form-control, select, textarea { width: 100%; padding: 10px 12px; font-size: 14px; border: 1px solid #dcdfe6; border-radius: 8px; background-color: #f8fafc; outline: none; }
+    .form-control[readonly] { background-color: #e2e8f0; color: #475569; }
     .input-with-btn { display: flex; gap: 8px; }
     .input-with-btn input { flex: 1; }
-    .btn-qr { background: #06C755; color: #ffffff; border: none; border-radius: 10px; padding: 0 14px; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; box-shadow: 0 2px 6px rgba(6, 199, 85, 0.3); }
-    .btn-qr svg { width: 18px; height: 18px; fill: currentColor; }
-    .file-attach-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 12px; border: 2px dashed #cbd5e1; border-radius: 10px; background-color: #f8fafc; color: #64748b; font-size: 14px; font-weight: 500; cursor: pointer; }
-    .image-preview { margin-top: 10px; display: none; width: 100%; max-height: 200px; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; }
+    .btn-qr { background: #06C755; color: #ffffff; border: none; border-radius: 8px; padding: 0 12px; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+    .btn-qr svg { width: 16px; height: 16px; fill: currentColor; }
+    .file-attach-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 10px; border: 2px dashed #cbd5e1; border-radius: 8px; background-color: #f8fafc; color: #64748b; font-size: 13px; cursor: pointer; }
+    .image-preview { margin-top: 8px; display: none; width: 100%; max-height: 180px; border-radius: 8px; overflow: hidden; }
     .image-preview img { width: 100%; height: 100%; object-fit: cover; }
-    .button-group { display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #f1f5f9; }
-    .btn { flex: 1; padding: 13px; font-size: 16px; font-weight: 600; border-radius: 10px; border: none; cursor: pointer; text-align: center; }
+    .button-group { display: flex; gap: 10px; margin-top: 20px; }
+    .btn { flex: 1; padding: 12px; font-size: 15px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; text-align: center; }
     .btn-cancel { background-color: #f1f5f9; color: #64748b; }
-    .btn-confirm { background-color: #1DB954; color: #ffffff; box-shadow: 0 4px 12px rgba(29, 185, 84, 0.3); }
-    .btn-start-tech { background-color: #2980B9; color: #ffffff; box-shadow: 0 4px 12px rgba(41, 128, 185, 0.3); }
-    .btn-confirm:disabled, .btn-start-tech:disabled { background-color: #cbd5e1; cursor: not-allowed; }
-    .status-text { font-size: 12px; margin-top: 4px; color: #64748b; }
-    
-    .job-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 20px; }
-    .job-card-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
-    .job-card-label { font-weight: 500; color: #64748b; }
-    .job-card-val { font-weight: 600; color: #1e293b; }
+    .btn-confirm { background-color: #1DB954; color: #ffffff; }
 
-    /* Modal กล้องสแกน Barcode */
+    /* Dashboard Style (สไตล์การ์ดสรุปสถานะ) */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .stat-card { background: #f8fafc; border-radius: 10px; padding: 12px; border-left: 4px solid #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .stat-card.pending { border-color: #eab308; }
+    .stat-card.progress { border-color: #3b82f6; }
+    .stat-card.cancel { border-color: #ef4444; }
+    .stat-card.done { border-color: #22c55e; }
+    .stat-title { font-size: 12px; color: #64748b; font-weight: 500; }
+    .stat-value { font-size: 20px; font-weight: 700; color: #1e293b; margin-top: 2px; }
+
+    /* Job List Style */
+    .job-item { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; margin-bottom: 10px; font-size: 13px; }
+    .job-header { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 6px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; }
+    .job-badge { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+    .badge-pending { background: #fef9c3; color: #854d0e; }
+    .badge-progress { background: #dbeafe; color: #1e40af; }
+    .badge-done { background: #dcfce7; color: #166534; }
+    .job-detail-row { color: #475569; margin-bottom: 2px; }
+
     #scannerModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 999; justify-content: center; align-items: center; flex-direction: column; padding: 20px; }
     #reader { width: 100%; max-width: 400px; background: #fff; border-radius: 12px; overflow: hidden; }
-    .btn-close-scan { margin-top: 15px; padding: 10px 24px; background: #e53e3e; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
+    .btn-close-scan { margin-top: 15px; padding: 10px 24px; background: #e53e3e; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; }
   </style>
 </head>
 <body>
 
-  <!-- Modal สำหรับกล้องสแกน Barcode 13 หลัก -->
   <div id="scannerModal">
     <div id="reader"></div>
     <button type="button" class="btn-close-scan" onclick="stopBarcodeScanner()">ปิดกล้อง</button>
@@ -57,13 +69,17 @@
 
   <div class="form-container">
     
-    <!-- 1. VIEW ผู้แจ้งซ่อม -->
-    <div id="userReportView">
-      <div class="header-title">🛠️ ฟอร์มแจ้งซ่อมเครื่องจักร</div>
+    <!-- เมนูสลับหน้า (Tabs) -->
+    <div class="nav-tabs" id="mainNavTabs">
+      <button class="tab-btn active" onclick="switchTab('report')">🛠️ แจ้งซ่อม</button>
+      <button class="tab-btn" onclick="switchTab('dashboard')">📊 ดูสถานะงาน</button>
+    </div>
 
+    <!-- TAB 1: ฟอร์มแจ้งซ่อม -->
+    <div id="tabReport">
       <form id="repairForm">
         <div class="form-group">
-          <label class="form-label" for="floorSelect">ชั้น</label>
+          <label class="form-label">ชั้น</label>
           <select id="floorSelect" required onchange="updateLineOptions()">
             <option value="">-- กรุณาเลือกชั้น --</option>
             <option value="ชั้น 3">ชั้น 3</option>
@@ -72,19 +88,19 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="lineSelect">LINE (สายการผลิต)</label>
+          <label class="form-label">LINE (สายการผลิต)</label>
           <select id="lineSelect" required disabled>
             <option value="">-- กรุณาเลือกชั้นก่อน --</option>
           </select>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="reporterInput">ผู้แจ้ง</label>
+          <label class="form-label">ผู้แจ้ง</label>
           <input type="text" id="reporterInput" class="form-control" placeholder="กำลังโหลดชื่อผู้แจ้ง..." required>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="machineCodeInput">รหัสเครื่องจักร</label>
+          <label class="form-label">รหัสเครื่องจักร</label>
           <div class="input-with-btn">
             <input type="text" id="machineCodeInput" class="form-control" placeholder="พิมพ์/สแกนรหัสเครื่องจักร" required oninput="lookupMachineName()">
             <button type="button" class="btn-qr" onclick="startBarcodeScanner('machineCodeInput')">
@@ -95,63 +111,81 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="machineNameInput">ชื่อเครื่องจักร</label>
-          <input type="text" id="machineNameInput" class="form-control" placeholder="จะแสดงอัตโนมัติเมื่อระบุรหัสถูกต้อง" readonly>
-          <div id="machineStatus" class="status-text"></div>
+          <label class="form-label">ชื่อเครื่องจักร</label>
+          <input type="text" id="machineNameInput" class="form-control" placeholder="จะแสดงอัตโนมัติ" readonly>
+          <div id="machineStatus" style="font-size: 11px; margin-top: 2px;"></div>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="issueInput">อาการที่เสีย</label>
-          <textarea id="issueInput" class="form-control" rows="3" placeholder="ระบุอาการเสีย หรือปัญหาที่พบ..." required></textarea>
+          <label class="form-label">อาการที่เสีย</label>
+          <textarea id="issueInput" class="form-control" rows="3" placeholder="ระบุอาการเสีย..." required></textarea>
         </div>
 
         <div class="form-group">
-          <label class="form-label">แนบรูปภาพ (ถ่ายรูป หรือเลือกไฟล์)</label>
-          <div class="file-attach-wrapper">
-            <input type="file" id="imageInput" style="display:none;" accept="image/*" onchange="previewImage(event)">
-            <label for="imageInput" class="file-attach-btn" id="attachBtnText">📷 ถ่ายรูป / เลือกรูปภาพ</label>
-            <div class="image-preview" id="imagePreview">
-              <img id="previewImg" src="" alt="Preview">
-            </div>
-          </div>
+          <label class="form-label">แนบรูปภาพ</label>
+          <input type="file" id="imageInput" style="display:none;" accept="image/*" onchange="previewImage(event)">
+          <label for="imageInput" class="file-attach-btn" id="attachBtnText">📷 ถ่ายรูป / เลือกรูปภาพ</label>
+          <div class="image-preview" id="imagePreview"><img id="previewImg" src=""></div>
         </div>
 
         <div class="button-group">
-          <button type="button" class="btn btn-cancel" onclick="closeLiff()">CANCEL</button>
-          <button type="submit" class="btn btn-confirm" id="submitBtn">CONFIRM</button>
+          <button type="button" class="btn btn-cancel" onclick="closeLiff()">ยกเลิก</button>
+          <button type="submit" class="btn btn-confirm" id="submitBtn">ส่งแจ้งซ่อม</button>
         </div>
       </form>
     </div>
 
-    <!-- 2. VIEW ช่างซ่อมสแกนเปิดงานหน้าเครื่อง -->
+    <!-- TAB 2: Dashboard สถานะงาน -->
+    <div id="tabDashboard" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span style="font-size: 14px; font-weight: 600; color: #475569;">ภาพรวมการแจ้งซ่อม</span>
+        <button onclick="loadDashboardData()" style="border: none; background: #e2e8f0; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer;">🔄 รีเฟรช</button>
+      </div>
+
+      <!-- สรุปตัวเลขสถานะ -->
+      <div class="stats-grid">
+        <div class="stat-card pending">
+          <div class="stat-title">รอดำเนินการ ⏳</div>
+          <div class="stat-value" id="countPending">0</div>
+        </div>
+        <div class="stat-card progress">
+          <div class="stat-title">กำลังดำเนินการ 👨‍🔧</div>
+          <div class="stat-value" id="countProgress">0</div>
+        </div>
+        <div class="stat-card done">
+          <div class="stat-title">เสร็จสิ้น ✅</div>
+          <div class="stat-value" id="countDone">0</div>
+        </div>
+        <div class="stat-card cancel">
+          <div class="stat-title">ไม่ซ่อม / ยกเลิก ❌</div>
+          <div class="stat-value" id="countCancel">0</div>
+        </div>
+      </div>
+
+      <!-- รายการใบงาน -->
+      <div style="font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 8px;">รายการใบงานล่าสุด</div>
+      <div id="jobListContainer">
+        <div style="text-align: center; color: #94a3b8; padding: 20px;">กำลังโหลดข้อมูล...</div>
+      </div>
+    </div>
+
+    <!-- VIEW ช่างสแกนเปิดงาน (กรณีเปิดผ่านลิงก์ Job) -->
     <div id="techStartView" style="display: none;">
-      <div class="header-title header-tech">⚡ ยืนยันเริ่มปฏิบัติงานซ่อม</div>
-
-      <div class="job-card">
-        <div class="job-card-row">
-          <span class="job-card-label">รหัสงาน:</span>
-          <span class="job-card-val" id="displayJobId">-</span>
-        </div>
-        <div class="job-card-row">
-          <span class="job-card-label">ช่างผู้รับงาน:</span>
-          <span class="job-card-val" id="displayTechName">กำลังดึงข้อมูล...</span>
-        </div>
+      <div class="header-title" style="color:#2980B9;">⚡ ยืนยันเริ่มปฏิบัติงานซ่อม</div>
+      <div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 13px;">
+        <div><b>รหัสงาน:</b> <span id="displayJobId">-</span></div>
+        <div><b>ช่างผู้รับงาน:</b> <span id="displayTechName">-</span></div>
       </div>
-
       <div class="form-group">
-        <label class="form-label">สแกนยืนยันรหัสเครื่องจักรหน้างาน</label>
+        <label class="form-label">สแกนรหัสเครื่องจักรหน้างาน</label>
         <div class="input-with-btn">
-          <input type="text" id="techMachineScanInput" class="form-control" placeholder="สแกน QR / บาร์โค้ดหน้าเครื่อง" required>
-          <button type="button" class="btn-qr" style="background:#2980B9;" onclick="startBarcodeScanner('techMachineScanInput')">
-            <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v2h-3v-2zm-3 0h2v3h-2v-3zm3 3h3v5h-2v-3h-1v-2zm-3 2h2v3h-2v-3zm0 3h5v2h-5v-2z"/></svg>
-            สแกน
-          </button>
+          <input type="text" id="techMachineScanInput" class="form-control" placeholder="สแกน QR / บาร์โค้ด" required>
+          <button type="button" class="btn-qr" style="background:#2980B9;" onclick="startBarcodeScanner('techMachineScanInput')">สแกน</button>
         </div>
       </div>
-
       <div class="button-group">
         <button type="button" class="btn btn-cancel" onclick="closeLiff()">ยกเลิก</button>
-        <button type="button" class="btn btn-start-tech" id="techStartBtn" onclick="submitTechStart()">▶️ บันทึกเวลาเริ่มซ่อมจริง</button>
+        <button type="button" class="btn btn-confirm" style="background:#2980B9;" id="techStartBtn" onclick="submitTechStart()">▶️ บันทึกเวลาเริ่มซ่อม</button>
       </div>
     </div>
 
@@ -161,21 +195,17 @@
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyLm1LVkTiwK3PCvPSt3PFA1ifb76KCRsWxC1SkaLdDC-ginxy0RHWstWpHgDytaBmm/exec";
     const LIFF_ID = "2011319319-1bUfgtSJ";
     let liffUserId = "", liffUserName = "", base64Image = "";
-    let currentJobId = "";
-    let html5QrCode = null;
-    let activeTargetInputId = "";
+    let currentJobId = "", html5QrCode = null, activeTargetInputId = "";
 
-    const lineData = {
-      "ชั้น 3": ["B", "C", "อะไล่ชั้น 3"],
-      "ชั้น 4": ["D", "E", "F", "อะไหล่ชั้น 4"]
-    };
+    const lineData = { "ชั้น 3": ["B", "C", "อะไล่ชั้น 3"], "ชั้น 4": ["D", "E", "F", "อะไหล่ชั้น 4"] };
 
     async function main() {
       const urlParams = new URLSearchParams(window.location.search);
       currentJobId = urlParams.get('jobId') || "";
 
       if (currentJobId) {
-        document.getElementById('userReportView').style.display = 'none';
+        document.getElementById('mainNavTabs').style.display = 'none';
+        document.getElementById('tabReport').style.display = 'none';
         document.getElementById('techStartView').style.display = 'block';
         document.getElementById('displayJobId').innerText = currentJobId;
       }
@@ -186,75 +216,115 @@
           const profile = await liff.getProfile();
           liffUserId = profile.userId;
           liffUserName = profile.displayName || "ไม่ระบุชื่อ";
-          
           document.getElementById('reporterInput').value = liffUserName;
           document.getElementById('displayTechName').innerText = liffUserName;
         } else {
           liff.login();
         }
-      } catch (err) {
-        console.error("LIFF Init Error:", err);
-      }
+      } catch (err) { console.error("LIFF Init Error:", err); }
     }
     window.onload = main;
 
-    /* --- ฟังก์ชันสแกน บาร์โค้ด 13 หลัก / QR Code (ปรับปรุงความแม่นยำ) --- */
+    // ระบบสลับ Tab
+    function switchTab(tabName) {
+      const tabs = document.querySelectorAll('.tab-btn');
+      tabs.forEach(btn => btn.classList.remove('active'));
+
+      if (tabName === 'report') {
+        tabs[0].classList.add('active');
+        document.getElementById('tabReport').style.display = 'block';
+        document.getElementById('tabDashboard').style.display = 'none';
+      } else {
+        tabs[1].classList.add('active');
+        document.getElementById('tabReport').style.display = 'none';
+        document.getElementById('tabDashboard').style.display = 'block';
+        loadDashboardData(); // โหลดข้อมูล Dashboard
+      }
+    }
+
+    // ดึงข้อมูล Dashboard จาก Google Apps Script
+    async function loadDashboardData() {
+      const container = document.getElementById('jobListContainer');
+      container.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 20px;">กำลังโหลดข้อมูล...</div>';
+
+      try {
+        const res = await fetch(`${GAS_WEB_APP_URL}?action=getDashboard`);
+        const data = await res.json();
+
+        // อัปเดตตัวเลขการ์ดสรุป
+        document.getElementById('countPending').innerText = data.stats.pending || 0;
+        document.getElementById('countProgress').innerText = data.stats.progress || 0;
+        document.getElementById('countDone').innerText = data.stats.done || 0;
+        document.getElementById('countCancel').innerText = data.stats.cancel || 0;
+
+        // วาดรายการใบงาน
+        if (!data.jobs || data.jobs.length === 0) {
+          container.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 20px;">ไม่มีรายการแจ้งซ่อม</div>';
+          return;
+        }
+
+        let html = '';
+        data.jobs.forEach(job => {
+          let badgeClass = 'badge-pending';
+          if (job.status === 'กำลังดำเนินการ') badgeClass = 'badge-progress';
+          if (job.status === 'ดำเนินการแล้วเสร็จ') badgeClass = 'badge-done';
+
+          html += `
+            <div class="job-item">
+              <div class="job-header">
+                <span>${job.jobId}</span>
+                <span class="job-badge ${badgeClass}">${job.status}</span>
+              </div>
+              <div class="job-detail-row"><b>เครื่องจักร:</b> ${job.machineName} (${job.machineCode})</div>
+              <div class="job-detail-row"><b>อาการ:</b> ${job.issue}</div>
+              <div class="job-detail-row" style="font-size:11px; color:#94a3b8; margin-top:4px;">ผู้แจ้ง: ${job.reporter} | ${job.date}</div>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+
+      } catch (err) {
+        container.innerHTML = '<div style="text-align: center; color: #ef4444; padding: 20px;">ไม่สามารถดึงข้อมูลได้</div>';
+      }
+    }
+
+    /* --- สแกนบาร์โค้ด / QR Code --- */
     function startBarcodeScanner(inputId) {
       activeTargetInputId = inputId;
       document.getElementById('scannerModal').style.display = 'flex';
-      
-      if (!html5QrCode) {
-        html5QrCode = new Html5Qrcode("reader");
-      }
+      if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
 
       const config = { 
         fps: 20, 
-        qrbox: { width: 300, height: 120 }, // กรอบแนวนอนแคบเพื่อโฟกัสเส้นบาร์โค้ด
-        aspectRatio: 1.0,
-        experimentalFeatures: {
-          useBarCodeDetectorIfSupported: true // ดึงการจับ Barcode จากฮาร์ดแวร์มือถือ
-        }
+        qrbox: { width: 300, height: 120 },
+        experimentalFeatures: { useBarCodeDetectorIfSupported: true }
       };
 
-      html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
-        .catch(err => {
-          alert("ไม่สามารถเปิดกล้องได้: " + err);
-          stopBarcodeScanner();
-        });
-    }
-
-    function onScanSuccess(decodedText) {
-      if (activeTargetInputId) {
-        document.getElementById(activeTargetInputId).value = decodedText;
-        if (activeTargetInputId === 'machineCodeInput') {
-          lookupMachineName();
+      html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+        if (activeTargetInputId) {
+          document.getElementById(activeTargetInputId).value = decodedText;
+          if (activeTargetInputId === 'machineCodeInput') lookupMachineName();
         }
-      }
-      stopBarcodeScanner();
+        stopBarcodeScanner();
+      }).catch(err => { alert("ไม่สามารถเปิดกล้องได้: " + err); stopBarcodeScanner(); });
     }
 
     function stopBarcodeScanner() {
       if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode.stop().then(() => {
-          document.getElementById('scannerModal').style.display = 'none';
-        }).catch(err => console.error(err));
+        html5QrCode.stop().then(() => { document.getElementById('scannerModal').style.display = 'none'; });
       } else {
         document.getElementById('scannerModal').style.display = 'none';
       }
     }
 
     function updateLineOptions() {
-      const floorSelect = document.getElementById('floorSelect');
+      const floor = document.getElementById('floorSelect').value;
       const lineSelect = document.getElementById('lineSelect');
-      const selectedFloor = floorSelect.value;
       lineSelect.innerHTML = '';
-
-      if (selectedFloor && lineData[selectedFloor]) {
+      if (floor && lineData[floor]) {
         lineSelect.disabled = false;
         lineSelect.appendChild(new Option('-- เลือก LINE --', ''));
-        lineData[selectedFloor].forEach(line => {
-          lineSelect.appendChild(new Option('LINE ' + line, 'LINE ' + line));
-        });
+        lineData[floor].forEach(l => lineSelect.appendChild(new Option('LINE ' + l, 'LINE ' + l)));
       } else {
         lineSelect.disabled = true;
         lineSelect.appendChild(new Option('-- กรุณาเลือกชั้นก่อน --', ''));
@@ -266,102 +336,43 @@
       const code = document.getElementById('machineCodeInput').value.trim();
       const nameInput = document.getElementById('machineNameInput');
       const statusText = document.getElementById('machineStatus');
+      if (!code) { nameInput.value = ''; statusText.innerText = ''; return; }
 
-      if (!code) {
-        nameInput.value = '';
-        statusText.innerText = '';
-        return;
-      }
-
-      statusText.innerText = '🔍 กำลังค้นหาชื่อเครื่องจักร...';
+      statusText.innerText = '🔍 กำลังค้นหา...';
       clearTimeout(searchTimeout);
-
       searchTimeout = setTimeout(async () => {
         try {
           const res = await fetch(`${GAS_WEB_APP_URL}?action=getMachineName&code=${encodeURIComponent(code)}`);
           const data = await res.json();
           if (data.name) {
             nameInput.value = data.name;
-            statusText.innerText = '✅ พบข้อมูลเครื่องจักร';
-            statusText.style.color = '#1DB954';
+            statusText.innerText = '✅ พบข้อมูล'; statusText.style.color = '#1DB954';
           } else {
-            nameInput.value = '';
-            statusText.innerText = '❌ ไม่พบรหัสเครื่องจักรนี้ในระบบ';
-            statusText.style.color = '#e53e3e';
+            nameInput.value = ''; statusText.innerText = '❌ ไม่พบรหัสนี้'; statusText.style.color = '#e53e3e';
           }
-        } catch (err) {
-          statusText.innerText = '⚠️ ไม่สามารถดึงข้อมูลเครื่องจักรได้';
-          statusText.style.color = '#e53e3e';
-        }
+        } catch (err) { statusText.innerText = '⚠️ ดึงข้อมูลไม่ได้'; }
       }, 500);
     }
 
-    function previewImage(event) {
-      const file = event.target.files[0];
+    function previewImage(e) {
+      const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = function(e) {
-          document.getElementById('previewImg').src = e.target.result;
+        reader.onload = (evt) => {
+          document.getElementById('previewImg').src = evt.target.result;
           document.getElementById('imagePreview').style.display = 'block';
-          document.getElementById('attachBtnText').innerHTML = '🔄 เปลี่ยนรูปภาพ';
-          base64Image = e.target.result;
+          base64Image = evt.target.result;
         };
         reader.readAsDataURL(file);
       }
     }
 
-    function closeLiff() {
-      if (typeof liff !== "undefined" && liff.isInClient()) {
-        liff.closeWindow();
-      }
-    }
-
-    async function submitTechStart() {
-      const machineScanCode = document.getElementById('techMachineScanInput').value.trim();
-      if (!machineScanCode) {
-        alert("กรุณาสแกนหรือกรอกรหัสเครื่องจักรหน้างานเพื่อยืนยัน");
-        return;
-      }
-
-      const techStartBtn = document.getElementById('techStartBtn');
-      techStartBtn.disabled = true;
-      techStartBtn.innerText = "กำลังบันทึกเวลา...";
-
-      const payload = {
-        action: 'START_REPAIR_JOB',
-        jobId: currentJobId,
-        techName: liffUserName,
-        machineCode: machineScanCode,
-        userId: liffUserId
-      };
-
-      try {
-        const res = await fetch(GAS_WEB_APP_URL, {
-          method: 'POST',
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
-        });
-        const result = await res.json();
-
-        if (result.status === "success") {
-          alert("บันทึกเวลาเริ่มซ่อมจริงเรียบร้อยแล้ว!");
-          closeLiff();
-        } else {
-          alert("เกิดข้อผิดพลาด: " + (result.error || "ไม่สามารถบันทึกได้"));
-        }
-      } catch (err) {
-        alert("เกิดข้อผิดพลาดในการเชื่อมต่อ: " + err.message);
-      } finally {
-        techStartBtn.disabled = false;
-        techStartBtn.innerText = "▶️ บันทึกเวลาเริ่มซ่อมจริง";
-      }
-    }
+    function closeLiff() { if (typeof liff !== "undefined" && liff.isInClient()) liff.closeWindow(); }
 
     document.getElementById('repairForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const submitBtn = document.getElementById('submitBtn');
-      submitBtn.disabled = true;
-      submitBtn.innerText = "กำลังส่งข้อมูล...";
+      submitBtn.disabled = true; submitBtn.innerText = "กำลังส่ง...";
 
       const payload = {
         action: 'CREATE_REPAIR_JOB',
@@ -376,26 +387,13 @@
       };
 
       try {
-        const res = await fetch(GAS_WEB_APP_URL, { 
-          method: 'POST', 
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload) 
-        });
-
+        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
         const result = await res.json();
-
         if (result.status === "success") {
-          alert("แจ้งซ่อมเรียบร้อยแล้ว! รหัสงาน: " + (result.jobId || ""));
-          closeLiff();
-        } else {
-          alert("เกิดข้อผิดพลาด: " + (result.error || "ไม่สามารถบันทึกได้"));
-        }
-      } catch (error) {
-        alert("เกิดข้อผิดพลาดในการเชื่อมต่อ: " + error.message);
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerText = "CONFIRM";
-      }
+          alert("แจ้งซ่อมเรียบร้อย!"); closeLiff();
+        } else { alert("เกิดข้อผิดพลาด"); }
+      } catch (err) { alert("เกิดข้อผิดพลาดในการเชื่อมต่อ"); }
+      finally { submitBtn.disabled = false; submitBtn.innerText = "ส่งแจ้งซ่อม"; }
     });
   </script>
 </body>

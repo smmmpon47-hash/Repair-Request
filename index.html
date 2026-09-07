@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบแจ้งซ่อมและติดตามงาน</title>
 
-  <!-- ใช้ฟอนต์เดิม: Arial + Noto Sans Thai -->
+  <!-- ใช้ฟอนต์เดิม: Kanit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
 
@@ -13,7 +16,7 @@
       margin: 0;
       background: #f1f3f5;
       color: #222;
-      font-family: Arial, "Noto Sans Thai", sans-serif;
+      font-family: 'Kanit', sans-serif;
     }
 
     .app {
@@ -468,7 +471,7 @@
     </select>
 
     <label for="reporter">ผู้แจ้ง</label>
-    <input id="reporter" type="text" readonly value="กำลังโหลด...">
+    <input id="reporter" type="text" placeholder="กรุณากรอกชื่อผู้แจ้ง" required>
 
     <label for="machineCode">รหัสเครื่องจักร</label>
     <div class="machine-row">
@@ -721,19 +724,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         lineUserId = profile.userId || "";
         lineDisplayName = profile.displayName || "";
 
-        document.getElementById("reporter").value =
-          lineDisplayName || "ไม่พบชื่อผู้ใช้";
+        // ผู้แจ้งให้ผู้ใช้กรอกเอง
+        // lineUserId เก็บไว้เบื้องหลังสำหรับระบุตัวผู้ใช้/ช่างเท่านั้น
       } else {
-        document.getElementById("reporter").value = "กรุณาเข้าสู่ระบบ LINE";
+        console.warn("ยังไม่ได้เข้าสู่ระบบ LINE");
       }
 
     } catch (err) {
       console.error("LIFF init error:", err);
-      document.getElementById("reporter").value = "L.";
     }
   } else {
-    // Preview mode
-    document.getElementById("reporter").value = "L.";
+    // Preview mode: ไม่ต้องกรอกชื่ออัตโนมัติ
   }
 
   // ถ้าเปิด LIFF มาจากปุ่ม "รับงาน" ใน Flex ให้รับงานอัตโนมัติ

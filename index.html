@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- ไลบรารีสำหรับสแกน Barcode 13 หลักโดยเฉพาะ -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Kanit', sans-serif; }
     body { background-color: #f0f2f5; color: #333; padding: 16px; display: flex; justify-content: center; }
@@ -38,9 +40,20 @@
     .job-card-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
     .job-card-label { font-weight: 500; color: #64748b; }
     .job-card-val { font-weight: 600; color: #1e293b; }
+
+    /* Modal กล้องสแกน Barcode */
+    #scannerModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 999; justify-content: center; align-items: center; flex-direction: column; padding: 20px; }
+    #reader { width: 100%; max-width: 400px; background: #fff; border-radius: 12px; overflow: hidden; }
+    .btn-close-scan { margin-top: 15px; padding: 10px 24px; background: #e53e3e; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; }
   </style>
 </head>
 <body>
+
+  <!-- Modal สำหรับกล้องสแกน Barcode 13 หลัก -->
+  <div id="scannerModal">
+    <div id="reader"></div>
+    <button type="button" class="btn-close-scan" onclick="stopBarcodeScanner()">ปิดกล้อง</button>
+  </div>
 
   <div class="form-container">
     
@@ -74,9 +87,9 @@
           <label class="form-label" for="machineCodeInput">รหัสเครื่องจักร</label>
           <div class="input-with-btn">
             <input type="text" id="machineCodeInput" class="form-control" placeholder="พิมพ์/สแกนรหัสเครื่องจักร" required oninput="lookupMachineName()">
-            <button type="button" class="btn-qr" onclick="scanMachineQR()">
+            <button type="button" class="btn-qr" onclick="startBarcodeScanner('machineCodeInput')">
               <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v2h-3v-2zm-3 0h2v3h-2v-3zm3 3h3v5h-2v-3h-1v-2zm-3 2h2v3h-2v-3zm0 3h5v2h-5v-2z"/></svg>
-              สแกน QR
+              สแกน
             </button>
           </div>
         </div>
@@ -128,8 +141,8 @@
       <div class="form-group">
         <label class="form-label">สแกนยืนยันรหัสเครื่องจักรหน้างาน</label>
         <div class="input-with-btn">
-          <input type="text" id="techMachineScanInput" class="form-control" placeholder="สแกน QR ที่ติดอยู่บนเครื่องจักร" required>
-          <button type="button" class="btn-qr" style="background:#2980B9;" onclick="scanTechMachineQR()">
+          <input type="text" id="techMachineScanInput" class="form-control" placeholder="สแกน QR / บาร์โค้ดหน้าเครื่อง" required>
+          <button type="button" class="btn-qr" style="background:#2980B9;" onclick="startBarcodeScanner('techMachineScanInput')">
             <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v2h-3v-2zm-3 0h2v3h-2v-3zm3 3h3v5h-2v-3h-1v-2zm-3 2h2v3h-2v-3zm0 3h5v2h-5v-2z"/></svg>
             สแกน
           </button>
@@ -146,10 +159,11 @@
 
   <script>
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyLm1LVkTiwK3PCvPSt3PFA1ifb76KCRsWxC1SkaLdDC-ginxy0RHWstWpHgDytaBmm/exec";
-    const LIFF_ID = "2011319319-1bUfgtSJ"; // 👈 ใส่ LIFF ID ตรงนี้
+    const LIFF_ID = "2011319319-1bUfgtSJ";
     let liffUserId = "", liffUserName = "", base64Image = "";
     let currentJobId = "";
-    let isLiffReady = false;
+    let html5QrCode = null;
+    let activeTargetInputId = "";
 
     const lineData = {
       "ชั้น 3": ["B", "C", "อะไล่ชั้น 3"],
@@ -167,10 +181,7 @@
       }
 
       try {
-        // บังคับ Init LIFF
         await liff.init({ liffId: LIFF_ID });
-        isLiffReady = true;
-
         if (liff.isLoggedIn()) {
           const profile = await liff.getProfile();
           liffUserId = profile.userId;
@@ -183,12 +194,56 @@
         }
       } catch (err) {
         console.error("LIFF Init Error:", err);
-        alert("ไม่สามารถเริ่มต้นระบบ LIFF ได้: " + err.message);
       }
     }
-    
-    // เรียกใช้ main ทันทีที่โหลดหน้า
     window.onload = main;
+
+    /* --- ฟังก์ชันสแกน บาร์โค้ด 13 หลัก / QR Code --- */
+    function startBarcodeScanner(inputId) {
+      activeTargetInputId = inputId;
+      document.getElementById('scannerModal').style.display = 'flex';
+      
+      if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+      }
+
+      const config = { 
+        fps: 15, 
+        qrbox: { width: 280, height: 180 }, // ทรงผืนผ้า เหมาะกับบาร์โค้ดแท่ง 13 หลัก
+        formatsToSupport: [ 
+          Html5QrcodeSupportedFormats.EAN_13, 
+          Html5QrcodeSupportedFormats.EAN_8, 
+          Html5QrcodeSupportedFormats.CODE_128, 
+          Html5QrcodeSupportedFormats.QR_CODE 
+        ]
+      };
+
+      html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
+        .catch(err => {
+          alert("ไม่สามารถเปิดกล้องได้: " + err);
+          stopBarcodeScanner();
+        });
+    }
+
+    function onScanSuccess(decodedText) {
+      if (activeTargetInputId) {
+        document.getElementById(activeTargetInputId).value = decodedText;
+        if (activeTargetInputId === 'machineCodeInput') {
+          lookupMachineName();
+        }
+      }
+      stopBarcodeScanner();
+    }
+
+    function stopBarcodeScanner() {
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().then(() => {
+          document.getElementById('scannerModal').style.display = 'none';
+        }).catch(err => console.error(err));
+      } else {
+        document.getElementById('scannerModal').style.display = 'none';
+      }
+    }
 
     function updateLineOptions() {
       const floorSelect = document.getElementById('floorSelect');
@@ -241,45 +296,6 @@
           statusText.style.color = '#e53e3e';
         }
       }, 500);
-    }
-
-    async function scanMachineQR() {
-      if (!isLiffReady) {
-        alert("ระบบกำลังโหลดกรุณารอสักครู่...");
-        return;
-      }
-      try {
-        if (liff.scanCodeV2) {
-          const result = await liff.scanCodeV2();
-          if (result.value) {
-            document.getElementById('machineCodeInput').value = result.value;
-            lookupMachineName();
-          }
-        } else {
-          alert("อุปกรณ์ของคุณไม่รองรับการสแกน QR ผ่าน LIFF (เปิดในแอป LINE เท่านั้น)");
-        }
-      } catch (err) {
-        alert("เกิดข้อผิดพลาดในการสแกน: " + err.message);
-      }
-    }
-
-    async function scanTechMachineQR() {
-      if (!isLiffReady) {
-        alert("ระบบกำลังโหลดกรุณารอสักครู่...");
-        return;
-      }
-      try {
-        if (liff.scanCodeV2) {
-          const result = await liff.scanCodeV2();
-          if (result.value) {
-            document.getElementById('techMachineScanInput').value = result.value;
-          }
-        } else {
-          alert("อุปกรณ์ของคุณไม่รองรับการสแกน QR ผ่าน LIFF (เปิดในแอป LINE เท่านั้น)");
-        }
-      } catch (err) {
-        alert("เกิดข้อผิดพลาดในการสแกน: " + err.message);
-      }
     }
 
     function previewImage(event) {

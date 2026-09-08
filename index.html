@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -12,7 +11,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
   <style>
@@ -390,7 +388,6 @@
       font-weight: 600;
     }
   </style>
-
 </head>
 
 <body>
@@ -409,271 +406,273 @@
     </button>
   </div>
 
+
   <div class="form-container">
 
-<!-- =========================
-     3 TABS
-========================= -->
+    <!-- =========================
+         3 TABS
+    ========================= -->
 
-<div class="nav-tabs">
+    <div class="nav-tabs">
 
-  <button
-    class="tab-btn active"
-    onclick="switchTab('report')">
-    🛠️ แจ้งซ่อม
-  </button>
+      <button
+        class="tab-btn active"
+        onclick="switchTab('report')">
+        🛠️ แจ้งซ่อม
+      </button>
 
-  <button
-    class="tab-btn"
-    onclick="switchTab('myjobs')">
-    📊 งานที่ฉันแจ้ง
-  </button>
+      <button
+        class="tab-btn"
+        onclick="switchTab('myjobs')">
+        📊 งานที่ฉันแจ้ง
+      </button>
 
-  <button
-    class="tab-btn"
-    onclick="switchTab('technician')">
-    👨‍🔧 งานของฉัน
-  </button>
+      <button
+        class="tab-btn"
+        onclick="switchTab('technician')">
+        👨‍🔧 งานของฉัน
+      </button>
 
-</div>
-
-
-<!-- =====================================================
-     TAB 1 : แจ้งซ่อม
-     ===================================================== -->
-
-<div id="tabReport">
-
-  <form id="repairForm">
-
-    <div class="form-group">
-      <label class="form-label">ชั้น</label>
-
-      <select id="floorSelect" required onchange="updateLineOptions()">
-        <option value="">-- กรุณาเลือกชั้น --</option>
-        <option value="ชั้น 3">ชั้น 3</option>
-        <option value="ชั้น 4">ชั้น 4</option>
-      </select>
     </div>
 
 
-    <div class="form-group">
-      <label class="form-label">LINE การผลิต</label>
+    <!-- =====================================================
+         TAB 1 : แจ้งซ่อม
+         ===================================================== -->
 
-      <select id="lineSelect" required>
-        <option value="">-- กรุณาเลือก LINE --</option>
-      </select>
+    <div id="tabReport">
+
+      <form id="repairForm">
+
+        <div class="form-group">
+          <label class="form-label">ชั้น</label>
+
+          <select id="floorSelect" required onchange="updateLineOptions()">
+            <option value="">-- กรุณาเลือกชั้น --</option>
+            <option value="ชั้น 3">ชั้น 3</option>
+            <option value="ชั้น 4">ชั้น 4</option>
+          </select>
+        </div>
+
+
+        <div class="form-group">
+          <label class="form-label">LINE การผลิต</label>
+
+          <select id="lineSelect" required>
+            <option value="">-- กรุณาเลือก LINE --</option>
+          </select>
+        </div>
+
+
+        <div class="form-group">
+          <label class="form-label">ผู้แจ้ง</label>
+
+          <input
+            type="text"
+            id="reporterInput"
+            class="form-control"
+            placeholder="กำลังโหลดชื่อผู้แจ้ง..."
+            required>
+        </div>
+
+
+        <div class="form-group">
+
+          <label class="form-label">
+            รหัสเครื่องจักร
+          </label>
+
+          <div class="input-with-btn">
+
+            <input
+              type="text"
+              id="machineCodeInput"
+              class="form-control"
+              placeholder="พิมพ์/สแกนรหัสเครื่องจักร"
+              required
+              oninput="lookupMachineName()">
+
+            <button
+              type="button"
+              class="btn-qr"
+              onclick="startBarcodeScanner('machineCodeInput')">
+
+              <svg viewBox="0 0 24 24">
+                <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v2h-3v-2zm-3 0h2v3h-2v-3zm3 3h3v5h-2v-3h-1v-2zm-3 2h2v3h-2v-3zm0 3h5v2h-5v-2z"/>
+              </svg>
+
+              สแกน
+            </button>
+
+          </div>
+        </div>
+
+
+        <div class="form-group">
+
+          <label class="form-label">
+            ชื่อเครื่องจักร
+          </label>
+
+          <input
+            type="text"
+            id="machineNameInput"
+            class="form-control"
+            placeholder="จะแสดงอัตโนมัติ"
+            readonly>
+
+          <div
+            id="machineStatus"
+            style="font-size:11px;margin-top:2px;">
+          </div>
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label class="form-label">
+            อาการที่เสีย
+          </label>
+
+          <textarea
+            id="issueInput"
+            class="form-control"
+            rows="3"
+            placeholder="ระบุอาการเสีย..."
+            required>
+          </textarea>
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label class="form-label">
+            แนบรูปภาพ
+          </label>
+
+          <input
+            type="file"
+            id="imageInput"
+            style="display:none;"
+            accept="image/*"
+            onchange="previewImage(event)">
+
+          <label
+            for="imageInput"
+            class="file-attach-btn"
+            id="attachBtnText">
+
+            📷 ถ่ายรูป / เลือกรูปภาพ
+
+          </label>
+
+          <div
+            class="image-preview"
+            id="imagePreview">
+
+            <img
+              id="previewImg"
+              src="">
+
+          </div>
+
+        </div>
+
+
+        <div class="button-group">
+
+          <button
+            type="button"
+            class="btn btn-cancel"
+            onclick="closeLiff()">
+
+            ยกเลิก
+
+          </button>
+
+          <button
+            type="submit"
+            class="btn btn-confirm"
+            id="submitBtn">
+
+            ส่งแจ้งซ่อม
+
+          </button>
+
+        </div>
+
+      </form>
+
     </div>
 
 
-    <div class="form-group">
-      <label class="form-label">ผู้แจ้ง</label>
+    <!-- =====================================================
+         TAB 2 : งานที่ฉันแจ้ง
+         ===================================================== -->
 
-      <input
-        type="text"
-        id="reporterInput"
-        class="form-control"
-        placeholder="กำลังโหลดชื่อผู้แจ้ง..."
-        required>
-    </div>
+    <div
+      id="tabMyJobs"
+      style="display:none;">
 
+      <div class="myjobs-header">
 
-    <div class="form-group">
-
-      <label class="form-label">
-        รหัสเครื่องจักร
-      </label>
-
-      <div class="input-with-btn">
-
-        <input
-          type="text"
-          id="machineCodeInput"
-          class="form-control"
-          placeholder="พิมพ์/สแกนรหัสเครื่องจักร"
-          required
-          oninput="lookupMachineName()">
+        <span class="myjobs-title">
+          📊 รายการงานที่ฉันแจ้ง
+        </span>
 
         <button
-          type="button"
-          class="btn-qr"
-          onclick="startBarcodeScanner('machineCodeInput')">
+          class="refresh-btn"
+          onclick="loadMyJobs()">
 
-          <svg viewBox="0 0 24 24">
-            <path d="M3 3h8v8H3V3zm2 2v4h4V5H5zm8-2h8v8h-8V3zm2 2v4h4V5h-4zM3 13h8v8H3v-8zm2 2v4h4v-4H5zm13-2h3v2h-3v-2zm-3 0h2v3h-2v-3zm3 3h3v5h-2v-3h-1v-2zm-3 2h2v3h-2v-3zm0 3h5v2h-5v-2z"/>
-          </svg>
+          🔄 รีเฟรช
 
-          สแกน
         </button>
 
       </div>
-    </div>
 
 
-    <div class="form-group">
+      <div id="myJobsContainer">
 
-      <label class="form-label">
-        ชื่อเครื่องจักร
-      </label>
-
-      <input
-        type="text"
-        id="machineNameInput"
-        class="form-control"
-        placeholder="จะแสดงอัตโนมัติ"
-        readonly>
-
-      <div
-        id="machineStatus"
-        style="font-size:11px;margin-top:2px;">
-      </div>
-
-    </div>
-
-
-    <div class="form-group">
-
-      <label class="form-label">
-        อาการที่เสีย
-      </label>
-
-      <textarea
-        id="issueInput"
-        class="form-control"
-        rows="3"
-        placeholder="ระบุอาการเสีย..."
-        required>
-      </textarea>
-
-    </div>
-
-
-    <div class="form-group">
-
-      <label class="form-label">
-        แนบรูปภาพ
-      </label>
-
-      <input
-        type="file"
-        id="imageInput"
-        style="display:none;"
-        accept="image/*"
-        onchange="previewImage(event)">
-
-      <label
-        for="imageInput"
-        class="file-attach-btn"
-        id="attachBtnText">
-
-        📷 ถ่ายรูป / เลือกรูปภาพ
-
-      </label>
-
-      <div
-        class="image-preview"
-        id="imagePreview">
-
-        <img
-          id="previewImg"
-          src="">
+        <div class="loading-state">
+          กำลังโหลดข้อมูล...
+        </div>
 
       </div>
 
     </div>
 
 
-    <div class="button-group">
+    <!-- =====================================================
+         TAB 3 : งานของฉัน
+         ยังไม่ทำรอบนี้
+         ===================================================== -->
 
-      <button
-        type="button"
-        class="btn btn-cancel"
-        onclick="closeLiff()">
+    <div
+      id="tabTechnician"
+      style="display:none;">
 
-        ยกเลิก
+      <div class="coming-soon">
 
-      </button>
+        <div class="coming-soon-icon">
+          👨‍🔧
+        </div>
 
-      <button
-        type="submit"
-        class="btn btn-confirm"
-        id="submitBtn">
+        <div class="coming-soon-title">
+          งานของฉัน
+        </div>
 
-        ส่งแจ้งซ่อม
+        <div class="coming-soon-text">
+          หน้าสำหรับช่างกำลังจัดทำ
+        </div>
 
-      </button>
+      </div>
 
-    </div>
-
-  </form>
-
-</div>
-
-
-<!-- =====================================================
-     TAB 2 : งานที่ฉันแจ้ง
-     ===================================================== -->
-
-<div
-  id="tabMyJobs"
-  style="display:none;">
-
-  <div class="myjobs-header">
-
-    <span class="myjobs-title">
-      📊 รายการงานที่ฉันแจ้ง
-    </span>
-
-    <button
-      class="refresh-btn"
-      onclick="loadMyJobs()">
-
-      🔄 รีเฟรช
-
-    </button>
-
-  </div>
-
-
-  <div id="myJobsContainer">
-
-    <div class="loading-state">
-      กำลังโหลดข้อมูล...
     </div>
 
   </div>
 
-</div>
-
-
-<!-- =====================================================
-     TAB 3 : งานของฉัน
-     ยังไม่ทำรอบนี้
-     ===================================================== -->
-
-<div
-  id="tabTechnician"
-  style="display:none;">
-
-  <div class="coming-soon">
-
-    <div class="coming-soon-icon">
-      👨‍🔧
-    </div>
-
-    <div class="coming-soon-title">
-      งานของฉัน
-    </div>
-
-    <div class="coming-soon-text">
-      หน้าสำหรับช่างกำลังจัดทำ
-    </div>
-
-  </div>
-
-</div>
-
-  </div>
 
   <script>
 

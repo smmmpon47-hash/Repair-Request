@@ -447,10 +447,19 @@
         <div class="form-group">
           <label class="form-label">ชั้น</label>
 
-          <select id="floorSelect" required>
+          <select id="floorSelect" required onchange="updateLineOptions()">
             <option value="">-- กรุณาเลือกชั้น --</option>
             <option value="ชั้น 3">ชั้น 3</option>
             <option value="ชั้น 4">ชั้น 4</option>
+          </select>
+        </div>
+
+
+        <div class="form-group">
+          <label class="form-label">LINE การผลิต</label>
+
+          <select id="lineSelect" required>
+            <option value="">-- กรุณาเลือก LINE --</option>
           </select>
         </div>
 
@@ -746,6 +755,40 @@
 
 
     window.onload = main;
+
+
+    /* =====================================================
+       LINE OPTIONS
+       ===================================================== */
+
+    function updateLineOptions() {
+
+      const floor =
+        document.getElementById('floorSelect').value;
+
+      const lineSelect =
+        document.getElementById('lineSelect');
+
+      lineSelect.innerHTML =
+        '<option value="">-- กรุณาเลือก LINE --</option>';
+
+      let lines = [];
+
+      if (floor === 'ชั้น 3') {
+        lines = ['B', 'C', 'อะไหล่ชั้น 3'];
+      }
+      else if (floor === 'ชั้น 4') {
+        lines = ['D', 'E', 'F', 'อะไหล่ชั้น 4'];
+      }
+
+      lines.forEach(line => {
+        const option = document.createElement('option');
+        option.value = line;
+        option.textContent = line;
+        lineSelect.appendChild(option);
+      });
+
+    }
 
 
     /* =====================================================
@@ -1431,6 +1474,11 @@
             floor:
               document.getElementById(
                 'floorSelect'
+              ).value,
+
+            line:
+              document.getElementById(
+                'lineSelect'
               ).value,
 
             reporter:

@@ -847,7 +847,7 @@ async function lookupMachine() {
 
     const url =
       GAS_WEB_APP_URL +
-      "?action=getMachineName&machineCode=" +
+      "?action=getMachineName&code=" +
       encodeURIComponent(code);
 
     const res = await fetch(url);

@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบแจ้งซ่อมและติดตามงาน</title>
 
-  <!-- ใช้ฟอนต์เดิม: Arial + Noto Sans Thai -->
+  <!-- ใช้ฟอนต์เดิม: Kanit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
 
@@ -13,7 +16,7 @@
       margin: 0;
       background: #f1f3f5;
       color: #222;
-      font-family: Arial, "Noto Sans Thai", sans-serif;
+      font-family: 'Kanit', sans-serif;
     }
 
     .app {
@@ -461,14 +464,19 @@
   <section id="repairPage" class="page active">
 
     <label for="floor">ชั้น</label>
-    <select id="floor">
+    <select id="floor" onchange="updateLineOptions()">
       <option value="">-- กรุณาเลือกชั้น --</option>
       <option value="ชั้น 3">ชั้น 3</option>
       <option value="ชั้น 4">ชั้น 4</option>
     </select>
 
+    <label for="line">LINE การผลิต</label>
+    <select id="line" required>
+      <option value="">-- กรุณาเลือก LINE --</option>
+    </select>
+
     <label for="reporter">ผู้แจ้ง</label>
-    <input id="reporter" type="text" readonly value="กำลังโหลด...">
+    <input id="reporter" type="text" placeholder="กรุณากรอกชื่อผู้แจ้ง" required>
 
     <label for="machineCode">รหัสเครื่องจักร</label>
     <div class="machine-row">
@@ -637,20 +645,21 @@
 <div id="finishModal" class="modal-bg">
   <div class="modal">
     <h3>✅ ปิดงานซ่อม</h3>
+    <div class="sub-title">กรอกข้อมูลสรุปการซ่อม</div>
 
     <label for="finishResult">ผลการซ่อม</label>
-    <select id="finishResult">
-      <option value="">-- กรุณาเลือกผลการซ่อม --</option>
-      <option value="ซ่อมเสร็จ ใช้งานได้">ซ่อมเสร็จ ใช้งานได้</option>
-      <option value="ซ่อมชั่วคราว">ซ่อมชั่วคราว</option>
-      <option value="รออะไหล่">รออะไหล่</option>
-      <option value="ซ่อมไม่ได้">ซ่อมไม่ได้</option>
-      <option value="ส่งต่อช่างอื่น">ส่งต่อช่างอื่น</option>
+    <select id="finishResult" required>
+      <option value="">-- เลือกผลการซ่อม --</option>
+      <option value="ซ่อมเสร็จ ใช้งานได้">✅ ซ่อมเสร็จ ใช้งานได้</option>
+      <option value="ซ่อมชั่วคราว">🟡 ซ่อมชั่วคราว</option>
+      <option value="รออะไหล่">🔩 รออะไหล่</option>
+      <option value="ซ่อมไม่ได้">🔴 ซ่อมไม่ได้</option>
+      <option value="ส่งต่อช่างอื่น">🔄 ส่งต่อช่างอื่น</option>
     </select>
 
     <label for="repairType">ประเภทการซ่อม</label>
-    <select id="repairType">
-      <option value="">-- กรุณาเลือกประเภท --</option>
+    <select id="repairType" required>
+      <option value="">-- เลือกประเภทการซ่อม --</option>
       <option value="ซ่อม">ซ่อม</option>
       <option value="ปรับ">ปรับ</option>
       <option value="เปลี่ยน">เปลี่ยน</option>
@@ -659,18 +668,16 @@
     <label for="repairDetail">รายละเอียดการซ่อม</label>
     <textarea id="repairDetail" placeholder="ระบุรายละเอียดการซ่อม..."></textarea>
 
-    <label>รูปหลังซ่อม <span style="color:#d00;">* จำเป็น</span></label>
+    <label>📷 รูปหลังซ่อม <span style="color:#e53e3e;">*จำเป็น</span></label>
     <label class="image-box">
       📷 ถ่ายรูป / เลือกรูปหลังซ่อม
-      <input id="afterImageInput" type="file" accept="image/*" capture="environment"
-             onchange="previewAfterImage(event)">
+      <input id="afterImageInput" type="file" accept="image/*" capture="environment" onchange="previewAfterImage(event)">
     </label>
-    <img id="afterImagePreview"
-         style="display:none;width:100%;max-height:230px;object-fit:contain;margin-top:9px;border-radius:9px;">
+    <img id="afterImagePreview" style="display:none;width:100%;max-height:230px;object-fit:contain;margin-top:9px;border-radius:9px;">
 
     <div class="bottom-actions">
-      <button class="btn btn-cancel" onclick="closeModal('finishModal')">ยกเลิก</button>
-      <button class="btn btn-submit" onclick="submitFinishJob()">ยืนยันปิดงาน</button>
+      <button type="button" class="btn btn-cancel" onclick="closeModal('finishModal')">ยกเลิก</button>
+      <button type="button" class="btn btn-submit" onclick="submitFinishJob()">ปิดงาน</button>
     </div>
   </div>
 </div>
@@ -699,12 +706,13 @@
    CONFIG
 ========================================================= */
 
-const GAS_WEB_APP_URL = "YOUR_GAS_WEB_APP_URL";
-const LIFF_ID = "YOUR_LIFF_ID";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyLm1LVkTiwK3PCvPSt3PFA1ifb76KCRsWxC1SkaLdDC-ginxy0RHWstWpHgDytaBmm/exec";
+const LIFF_ID = "2011319319-1bUfgtSJ";
 
 let lineUserId = "";
 let lineDisplayName = "";
 let currentFinishJobId = "";
+let afterImageBase64 = "";
 let scanner = null;
 
 
@@ -725,19 +733,23 @@ document.addEventListener("DOMContentLoaded", async () => {
         lineUserId = profile.userId || "";
         lineDisplayName = profile.displayName || "";
 
-        document.getElementById("reporter").value =
-          lineDisplayName || "ไม่พบชื่อผู้ใช้";
+        // ผู้แจ้งให้ผู้ใช้กรอกเอง
+        // lineUserId เก็บไว้เบื้องหลังสำหรับระบุตัวผู้ใช้/ช่างเท่านั้น
       } else {
-        document.getElementById("reporter").value = "กรุณาเข้าสู่ระบบ LINE";
+        console.warn("ยังไม่ได้เข้าสู่ระบบ LINE");
       }
 
     } catch (err) {
       console.error("LIFF init error:", err);
-      document.getElementById("reporter").value = "L.";
     }
   } else {
-    // Preview mode
-    document.getElementById("reporter").value = "L.";
+    // Preview mode: ไม่ต้องกรอกชื่ออัตโนมัติ
+  }
+
+  // ถ้าเปิด LIFF มาจากปุ่ม "รับงาน" ใน Flex ให้รับงานอัตโนมัติ
+  const jobIdFromUrl = new URLSearchParams(window.location.search).get("jobId");
+  if (jobIdFromUrl && lineUserId) {
+    acceptJobFromFlex(jobIdFromUrl);
   }
 
   // เมื่อพิมพ์รหัสเครื่อง ให้ลองค้นชื่อเครื่อง
@@ -752,6 +764,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 /* =========================================================
    TAB
 ========================================================= */
+
+function updateLineOptions() {
+  const floor = document.getElementById("floor").value;
+  const lineSelect = document.getElementById("line");
+  lineSelect.innerHTML = '<option value="">-- กรุณาเลือก LINE --</option>';
+
+  let lines = [];
+  if (floor === "ชั้น 3") {
+    lines = ["B", "C", "อะไหล่ชั้น 3"];
+  } else if (floor === "ชั้น 4") {
+    lines = ["D", "E", "F", "อะไหล่ชั้น 4"];
+  }
+
+  lines.forEach(line => {
+    const option = document.createElement("option");
+    option.value = line;
+    option.textContent = line;
+    lineSelect.appendChild(option);
+  });
+}
+
 
 function switchTab(tab) {
 
@@ -821,7 +854,7 @@ async function lookupMachine() {
     const data = await res.json();
 
     document.getElementById("machineName").value =
-      data.machineName || "ไม่พบข้อมูลเครื่องจักร";
+      data.name || "ไม่พบข้อมูลเครื่องจักร";
 
   } catch (err) {
 
@@ -876,6 +909,18 @@ async function submitRepair() {
     return;
   }
 
+  const line = document.getElementById("line").value;
+  if (!line) {
+    showToast("กรุณาเลือก LINE การผลิต");
+    return;
+  }
+
+  const reporter = document.getElementById("reporter").value.trim();
+  if (!reporter) {
+    showToast("กรุณากรอกชื่อผู้แจ้ง");
+    return;
+  }
+
   if (!machineCode) {
     showToast("กรุณาระบุรหัสเครื่องจักร");
     return;
@@ -889,8 +934,8 @@ async function submitRepair() {
   const payload = {
     action: "CREATE_REPAIR_JOB",
     userId: lineUserId,
-    reporter: lineDisplayName ||
-      document.getElementById("reporter").value,
+    reporter: document.getElementById("reporter").value.trim(),
+    line: document.getElementById("line").value,
     floor: floor,
     machineCode: machineCode,
     machineName: machineName,
@@ -1242,6 +1287,57 @@ function updateTechnicianSummary(jobs) {
    START JOB
 ========================================================= */
 
+async function acceptJobFromFlex(jobId) {
+
+  if (
+    !GAS_WEB_APP_URL ||
+    GAS_WEB_APP_URL === "YOUR_GAS_WEB_APP_URL"
+  ) {
+    switchTab("technician");
+    return;
+  }
+
+  try {
+
+    showToast("กำลังรับงาน...");
+
+    const payload = {
+      action: "acceptJobViaLIFF",
+      jobId: jobId,
+      userId: lineUserId,
+      techName: lineDisplayName
+    };
+
+    const res = await fetch(GAS_WEB_APP_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (data.status === "success") {
+      alert("รับงานเรียบร้อยแล้ว");
+    } else if (data.status === "already_taken") {
+      alert("งานนี้มีช่างรับไปแล้ว: " + (data.techName || ""));
+    } else if (data.status === "already_started") {
+      alert("งานนี้เริ่มงานไปแล้ว");
+    } else if (data.status === "already_done") {
+      alert("งานนี้เสร็จสิ้นแล้ว");
+    } else {
+      alert(data.message || "รับงานไม่สำเร็จ");
+    }
+
+    switchTab("technician");
+
+  } catch (err) {
+    console.error(err);
+    alert("เกิดข้อผิดพลาดในการรับงาน");
+  }
+}
+
 async function startJob(jobId) {
 
   if (!confirm("ต้องการเริ่มงาน " + jobId + " ใช่ไหม?")) {
@@ -1312,26 +1408,36 @@ async function startJob(jobId) {
 function openFinishModal(jobId) {
 
   currentFinishJobId = jobId;
+  afterImageBase64 = "";
+
+  document.getElementById("afterImageInput").value = "";
+  document.getElementById("afterImagePreview").style.display = "none";
+  document.getElementById("afterImagePreview").src = "";
+  document.getElementById("finishResult").value = "";
+  document.getElementById("repairType").value = "";
+  document.getElementById("repairDetail").value = "";
 
   document
     .getElementById("finishModal")
     .classList.add("show");
 }
 
-
 function previewAfterImage(event) {
+
   const file = event.target.files[0];
-  const img = document.getElementById("afterImagePreview");
 
   if (!file) {
-    img.src = "";
-    img.style.display = "none";
+    afterImageBase64 = "";
+    document.getElementById("afterImagePreview").style.display = "none";
     return;
   }
 
   const reader = new FileReader();
 
   reader.onload = e => {
+    afterImageBase64 = e.target.result;
+
+    const img = document.getElementById("afterImagePreview");
     img.src = e.target.result;
     img.style.display = "block";
   };
@@ -1346,103 +1452,73 @@ async function submitFinishJob() {
   const result = document.getElementById("finishResult").value;
   const repairType = document.getElementById("repairType").value;
   const repairDetail = document.getElementById("repairDetail").value.trim();
-  const imageFile = document.getElementById("afterImageInput").files[0];
 
   if (!jobId) return;
 
   if (!result) {
-    showToast("กรุณาเลือกผลการซ่อม");
+    alert("กรุณาเลือกผลการซ่อม");
     return;
   }
 
   if (!repairType) {
-    showToast("กรุณาเลือกประเภทการซ่อม");
+    alert("กรุณาเลือกประเภทการซ่อม");
     return;
   }
 
-  if (!repairDetail) {
-    showToast("กรุณาระบุรายละเอียดการซ่อม");
+  if (!afterImageBase64) {
+    alert("กรุณาแนบรูปหลังซ่อมก่อนปิดงานนะคะ 📷");
     return;
   }
 
-  if (!imageFile) {
-    showToast("กรุณาแนบรูปหลังซ่อม");
+  closeModal("finishModal");
+
+  if (!GAS_WEB_APP_URL || GAS_WEB_APP_URL === "YOUR_GAS_WEB_APP_URL") {
+    alert(
+      "ตัวอย่างการปิดงาน\n\n" +
+      "JOB: " + jobId + "\n" +
+      "ผลการซ่อม: " + result + "\n" +
+      "ประเภทการซ่อม: " + repairType + "\n" +
+      "รายละเอียด: " + (repairDetail || "-")
+    );
     return;
   }
 
-  const reader = new FileReader();
+  try {
+    showToast("กำลังปิดงาน...");
 
-  reader.onload = async () => {
+    const payload = {
+      action: "FINISH_REPAIR_JOB",
+      jobId: jobId,
+      userId: lineUserId,
+      technician: lineDisplayName,
+      result: result,
+      repairType: repairType,
+      repairDetail: repairDetail,
+      afterImage: afterImageBase64
+    };
 
-    const afterImage = reader.result;
+    const res = await fetch(GAS_WEB_APP_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify(payload)
+    });
 
-    if (
-      !GAS_WEB_APP_URL ||
-      GAS_WEB_APP_URL === "YOUR_GAS_WEB_APP_URL"
-    ) {
-      alert(
-        "ตัวอย่างการปิดงาน\n\n" +
-        "JOB: " + jobId + "\n" +
-        "ผลการซ่อม: " + result + "\n" +
-        "ประเภทการซ่อม: " + repairType + "\n" +
-        "รายละเอียด: " + repairDetail + "\n" +
-        "รูปหลังซ่อม: แนบแล้ว"
-      );
-      return;
+    const data = await res.json();
+
+    if (data.success) {
+      alert("ปิดงานเรียบร้อยแล้ว");
+      loadTechnicianJobs();
+    } else {
+      alert(data.message || "ปิดงานไม่สำเร็จ");
     }
-
-    try {
-
-      showToast("กำลังปิดงาน...");
-
-      const payload = {
-        action: "FINISH_REPAIR_JOB",
-        jobId: jobId,
-        userId: lineUserId,
-        technician: lineDisplayName,
-        result: result,
-        repairType: repairType,
-        repairDetail: repairDetail,
-        afterImage: afterImage
-      };
-
-      const res = await fetch(GAS_WEB_APP_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain;charset=utf-8"
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-
-        closeModal("finishModal");
-        document.getElementById("finishResult").value = "";
-        document.getElementById("repairType").value = "";
-        document.getElementById("repairDetail").value = "";
-        document.getElementById("afterImageInput").value = "";
-        document.getElementById("afterImagePreview").src = "";
-        document.getElementById("afterImagePreview").style.display = "none";
-
-        alert("ปิดงานเรียบร้อยแล้ว");
-        loadTechnicianJobs();
-
-      } else {
-
-        alert(data.message || "ปิดงานไม่สำเร็จ");
-      }
-
-    } catch (err) {
-
-      console.error(err);
-      alert("เกิดข้อผิดพลาด");
-    }
-  };
-
-  reader.readAsDataURL(imageFile);
+  } catch (err) {
+    console.error(err);
+    alert("เกิดข้อผิดพลาด");
+  }
 }
+
 
 
 /* =========================================================

@@ -452,10 +452,10 @@
   <!-- =========================
        TABS
   ========================== -->
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('repair')">🛠️ แจ้งซ่อม</button>
-    <button class="tab-btn" onclick="switchTab('reported')">📊 ดูสถานะงาน</button>
-    <button class="tab-btn" onclick="switchTab('technician')">👨‍🔧 งานของฉัน</button>
+  <div class="tabs" id="mainTabs">
+    <button id="tabRepairBtn" class="tab-btn active" onclick="switchTab('repair')">🛠️ แจ้งซ่อม</button>
+    <button id="tabReportedBtn" class="tab-btn" onclick="switchTab('reported')">📊 ดูสถานะงาน</button>
+    <button id="tabTechnicianBtn" class="tab-btn" onclick="switchTab('technician')">👨‍🔧 งานของฉัน</button>
   </div>
 
   <!-- =========================
@@ -711,6 +711,7 @@ const LIFF_ID = "2011319319-1bUfgtSJ";
 
 let lineUserId = "";
 let lineDisplayName = "";
+let currentUserRole = "unknown"; // requester | technician
 let currentFinishJobId = "";
 let beforeImageBase64 = "";
 let afterImageBase64 = "";
@@ -723,19 +724,17 @@ let scanner = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
 
-  // ถ้ามี LIFF ให้เปิดใช้งาน
+  let roleInfo = { isTechnician: false, technician: null };
+
+  // อ่าน LINE User ID จาก LIFF
   if (typeof liff !== "undefined") {
     try {
       await liff.init({ liffId: LIFF_ID });
 
       if (liff.isLoggedIn()) {
         const profile = await liff.getProfile();
-
         lineUserId = profile.userId || "";
         lineDisplayName = profile.displayName || "";
-
-        // ผู้แจ้งให้ผู้ใช้กรอกเอง
-        // lineUserId เก็บไว้เบื้องหลังสำหรับระบุตัวผู้ใช้/ช่างเท่านั้น
       } else {
         console.warn("ยังไม่ได้เข้าสู่ระบบ LINE");
       }
@@ -743,14 +742,25 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (err) {
       console.error("LIFF init error:", err);
     }
-  } else {
-    // Preview mode: ไม่ต้องกรอกชื่ออัตโนมัติ
   }
 
-  // ถ้าเปิด LIFF มาจากปุ่ม "รับงาน" ใน Flex ให้รับงานอัตโนมัติ
+  // แยกหน้าตาม Role จากชีท Technicians
+  if (lineUserId) {
+    roleInfo = await checkCurrentUserRole();
+  }
+
+  applyRoleUI(roleInfo.isTechnician === true);
+
+  // ถ้าเปิดมาจากปุ่ม "รับงาน" ใน Flex:
+  // เฉพาะผู้ที่ลงทะเบียนเป็นช่างเท่านั้นจึงรับงานได้
   const jobIdFromUrl = new URLSearchParams(window.location.search).get("jobId");
-  if (jobIdFromUrl && lineUserId) {
-    acceptJobFromFlex(jobIdFromUrl);
+
+  if (jobIdFromUrl) {
+    if (currentUserRole === "technician" && lineUserId) {
+      await acceptJobFromFlex(jobIdFromUrl);
+    } else {
+      showToast("งานนี้รับได้เฉพาะผู้ที่ลงทะเบียนเป็นช่าง");
+    }
   }
 
   // เมื่อพิมพ์รหัสเครื่อง ให้ลองค้นชื่อเครื่อง
@@ -760,6 +770,74 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("machineCode")
     .addEventListener("blur", lookupMachine);
 });
+
+
+async function checkCurrentUserRole() {
+
+  if (!lineUserId) {
+    return { isTechnician: false, technician: null };
+  }
+
+  try {
+    const url =
+      GAS_WEB_APP_URL +
+      "?action=checkTechnician&userId=" +
+      encodeURIComponent(lineUserId);
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    return {
+      isTechnician: data.isTechnician === true,
+      technician: data.technician || null
+    };
+
+  } catch (err) {
+    console.error("checkCurrentUserRole error:", err);
+
+    // ถ้าเช็ก Role ไม่สำเร็จ ให้ปลอดภัยไว้ก่อน:
+    // ไม่เปิดหน้าช่างโดยเดาเอง
+    return { isTechnician: false, technician: null };
+  }
+}
+
+
+function applyRoleUI(isTechnician) {
+
+  const repairBtn = document.getElementById("tabRepairBtn");
+  const reportedBtn = document.getElementById("tabReportedBtn");
+  const technicianBtn = document.getElementById("tabTechnicianBtn");
+
+  document.querySelectorAll(".page")
+    .forEach(page => page.classList.remove("active"));
+
+  document.querySelectorAll(".tab-btn")
+    .forEach(btn => btn.classList.remove("active"));
+
+  if (isTechnician) {
+    currentUserRole = "technician";
+
+    // ช่างเห็นเฉพาะ "งานของฉัน"
+    repairBtn.style.display = "none";
+    reportedBtn.style.display = "none";
+    technicianBtn.style.display = "";
+
+    technicianBtn.classList.add("active");
+    document.getElementById("technicianPage").classList.add("active");
+    loadTechnicianJobs();
+
+  } else {
+    currentUserRole = "requester";
+
+    // ผู้แจ้งเห็นเฉพาะ "แจ้งซ่อม" + "ดูสถานะงาน"
+    repairBtn.style.display = "";
+    reportedBtn.style.display = "";
+    technicianBtn.style.display = "none";
+
+    repairBtn.classList.add("active");
+    document.getElementById("repairPage").classList.add("active");
+  }
+}
 
 
 /* =========================================================
@@ -789,6 +867,15 @@ function updateLineOptions() {
 
 function switchTab(tab) {
 
+  // กันเปิดหน้าที่ไม่ตรง Role แม้เรียกจาก console/URL
+  if (currentUserRole === "technician" && tab !== "technician") {
+    return;
+  }
+
+  if (currentUserRole === "requester" && tab === "technician") {
+    return;
+  }
+
   document.querySelectorAll(".page")
     .forEach(page => page.classList.remove("active"));
 
@@ -797,18 +884,18 @@ function switchTab(tab) {
 
   if (tab === "repair") {
     document.getElementById("repairPage").classList.add("active");
-    document.querySelectorAll(".tab-btn")[0].classList.add("active");
+    document.getElementById("tabRepairBtn").classList.add("active");
   }
 
   if (tab === "reported") {
     document.getElementById("reportedPage").classList.add("active");
-    document.querySelectorAll(".tab-btn")[1].classList.add("active");
+    document.getElementById("tabReportedBtn").classList.add("active");
     loadMyReportedJobs();
   }
 
   if (tab === "technician") {
     document.getElementById("technicianPage").classList.add("active");
-    document.querySelectorAll(".tab-btn")[2].classList.add("active");
+    document.getElementById("tabTechnicianBtn").classList.add("active");
     loadTechnicianJobs();
   }
 }
@@ -1020,6 +1107,12 @@ function resetForm() {
 async function loadMyReportedJobs() {
 
   const box = document.getElementById("reportedContent");
+
+  if (!lineUserId) {
+    box.innerHTML =
+      `<div class="empty">กรุณาเปิดหน้านี้ผ่าน LINE เพื่อดูงานของคุณ</div>`;
+    return;
+  }
 
   if (
     !GAS_WEB_APP_URL ||
@@ -1335,6 +1428,7 @@ async function acceptJobFromFlex(jobId) {
       alert(data.message || "รับงานไม่สำเร็จ");
     }
 
+    // ช่างอยู่หน้า "งานของฉัน" เท่านั้น และรีโหลดรายการหลังรับงาน
     switchTab("technician");
 
   } catch (err) {

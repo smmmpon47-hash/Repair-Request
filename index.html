@@ -712,6 +712,7 @@ const LIFF_ID = "2011319319-1bUfgtSJ";
 let lineUserId = "";
 let lineDisplayName = "";
 let currentFinishJobId = "";
+let beforeImageBase64 = "";
 let afterImageBase64 = "";
 let scanner = null;
 
@@ -875,6 +876,8 @@ function previewImage(event) {
   const img = document.getElementById("imagePreview");
 
   if (!file) {
+    beforeImageBase64 = "";
+    img.src = "";
     img.style.display = "none";
     return;
   }
@@ -882,13 +885,13 @@ function previewImage(event) {
   const reader = new FileReader();
 
   reader.onload = e => {
+    beforeImageBase64 = e.target.result;
     img.src = e.target.result;
     img.style.display = "block";
   };
 
   reader.readAsDataURL(file);
 }
-
 
 /* =========================================================
    SUBMIT REPAIR
@@ -939,7 +942,8 @@ async function submitRepair() {
     floor: floor,
     machineCode: machineCode,
     machineName: machineName,
-    issue: issue
+    issue: issue,
+    image: beforeImageBase64
   };
 
   // Preview mode
@@ -970,7 +974,7 @@ async function submitRepair() {
 
     const result = await response.json();
 
-    if (result.success) {
+    if (result.success === true || result.status === "success") {
       alert(
         "ส่งแจ้งซ่อมเรียบร้อยแล้ว\n" +
         (result.jobId ? "Job ID: " + result.jobId : "")
@@ -979,7 +983,7 @@ async function submitRepair() {
       resetForm();
 
     } else {
-      alert(result.message || "ส่งข้อมูลไม่สำเร็จ");
+      alert(result.message || result.error || "ส่งข้อมูลไม่สำเร็จ");
     }
 
   } catch (err) {
@@ -1001,6 +1005,7 @@ function resetForm() {
   document.getElementById("machineName").value = "";
   document.getElementById("issue").value = "";
   document.getElementById("imageInput").value = "";
+  beforeImageBase64 = "";
 
   const img = document.getElementById("imagePreview");
   img.src = "";

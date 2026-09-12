@@ -810,6 +810,42 @@
       }
     }
 
+  
+
+    /* ===== ROLE TAB ALIGNMENT FIX ===== */
+    .tabs.role-requester {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      justify-content: stretch;
+    }
+
+    .tabs.role-technician {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .tabs.role-technician .tab-btn {
+      flex: 0 1 220px;
+      width: min(100%, 220px);
+    }
+
+    #technicianPage > .tech-badge {
+      display: table;
+      margin: 4px auto 10px;
+    }
+
+    #technicianPage > .section-title,
+    #technicianPage > .sub-title {
+      text-align: center;
+    }
+
+    @media (max-width: 390px) {
+      .tabs.role-technician .tab-btn {
+        flex-basis: 200px;
+      }
+    }
+
   </style>
 </head>
 
@@ -1175,6 +1211,9 @@ function applyRoleUI(isTechnician) {
   const repairBtn = document.getElementById("tabRepairBtn");
   const reportedBtn = document.getElementById("tabReportedBtn");
   const technicianBtn = document.getElementById("tabTechnicianBtn");
+  const tabsWrap = document.getElementById("mainTabs");
+
+  tabsWrap.classList.remove("role-requester", "role-technician");
 
   document.querySelectorAll(".page")
     .forEach(page => page.classList.remove("active"));
@@ -1184,6 +1223,7 @@ function applyRoleUI(isTechnician) {
 
   if (isTechnician) {
     currentUserRole = "technician";
+    tabsWrap.classList.add("role-technician");
 
     // ช่างเห็นเฉพาะ "งานของฉัน"
     repairBtn.style.display = "none";
@@ -1196,6 +1236,7 @@ function applyRoleUI(isTechnician) {
 
   } else {
     currentUserRole = "requester";
+    tabsWrap.classList.add("role-requester");
 
     // ผู้แจ้งเห็นเฉพาะ "แจ้งซ่อม" + "ดูสถานะงาน"
     repairBtn.style.display = "";

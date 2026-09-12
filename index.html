@@ -848,19 +848,472 @@
 
   
 
-    /* ===== REQUESTER SIMPLE UX ===== */
-    .requester-intro{text-align:center;padding:4px 4px 8px}.requester-intro .section-title{margin-bottom:3px}.requester-intro .sub-title{margin-bottom:8px}
-    .scan-hero{width:100%;border:0;border-radius:18px;padding:20px 14px;background:linear-gradient(135deg,#13b86a,#079d58);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 7px 20px rgba(8,168,79,.18);text-align:center}.scan-hero-icon{font-size:36px;line-height:1;margin-bottom:8px}.scan-hero-title{font-size:1.08rem;font-weight:700}.scan-hero-sub{font-size:.78rem;opacity:.9;margin-top:3px}
-    .manual-code-link{width:100%;border:0;background:transparent;color:#637386;font-family:inherit;font-size:.78rem;padding:9px 4px 3px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
-    .machine-placeholder{margin-top:12px;border:1px dashed #d5ded9;border-radius:14px;background:#fbfcfb;color:#819087;padding:14px 10px;text-align:center;font-size:.78rem}
-    .machine-auto-card{margin-top:12px;border:1px solid #e2e9e5;background:#f8fbf9;border-radius:15px;overflow:hidden}.machine-auto-card.hidden{display:none}.auto-row{display:grid;grid-template-columns:34px minmax(0,1fr);gap:8px;align-items:center;padding:9px 11px;border-bottom:1px solid #e9efeb}.auto-row:last-child{border-bottom:0}.auto-icon{text-align:center;font-size:17px}.auto-label{display:block;color:#7a8580;font-size:.68rem}.auto-value{display:block;color:#1f2c25;font-size:.9rem;font-weight:700;overflow-wrap:anywhere}
-    .requester-note{margin:8px 2px 0;color:#819087;font-size:.7rem;text-align:center;line-height:1.4}.simple-heading{margin:19px 0 9px;font-weight:700;font-size:1rem;color:#21372b}
-    .symptom-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.symptom-btn{min-height:62px;border:1px solid #dfe5e2;border-radius:14px;background:#fff;color:#27332d;font-family:inherit;font-weight:700;font-size:.9rem;cursor:pointer;padding:9px 6px;line-height:1.3}.symptom-btn.selected{border-color:#0aa85a;background:#eefaf3;color:#08733f;box-shadow:inset 0 0 0 1px #0aa85a}.simple-detail{margin-top:10px;min-height:76px;background:#fafbfb}.optional-photo-wrap{margin-top:11px}.optional-photo-label{display:block;margin:0;font-weight:600;font-size:.82rem;color:#65746b}.optional-photo-wrap .image-box{margin-top:7px}
-    .requester-submit{width:100%;border:0;border-radius:14px;padding:14px 10px;margin-top:16px;background:#12ad62;color:#fff;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 5px 15px rgba(18,173,98,.15)}.requester-submit:disabled{background:#b9c5bf;box-shadow:none}
-    .reported-card{padding:14px 12px}.reported-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start}.reported-machine-code{font-size:.72rem;color:#7b8580;margin-top:2px}.reported-issue{margin:7px 0 10px;color:#4c5751;font-size:.82rem;line-height:1.45}
-    .progress-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;margin:13px -2px 6px;position:relative}.progress-steps:before{content:"";position:absolute;height:3px;background:#e1e6e3;left:10%;right:10%;top:15px}.progress-step{position:relative;z-index:1;text-align:center;min-width:0}.progress-dot{width:31px;height:31px;border-radius:50%;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;background:#e1e6e3;color:#849087;font-size:14px;border:3px solid #fff}.progress-step.done .progress-dot{background:#24b86b;color:#fff}.progress-step.current .progress-dot{background:#ff9639;color:#fff;box-shadow:0 0 0 3px #fff2e6}.progress-label{font-size:.59rem;line-height:1.2;color:#8a938e;overflow-wrap:anywhere}.progress-step.done .progress-label{color:#2b7f52}.progress-step.current .progress-label{color:#d46811;font-weight:700}
-    .current-status-banner{width:fit-content;max-width:100%;margin:8px auto 0;border-radius:999px;padding:7px 12px;background:#fff3e9;color:#ce6816;font-size:.75rem;font-weight:700;text-align:center}.current-status-banner.complete{background:#e9f8ef;color:#187945}.reported-history{margin-top:12px;background:#f7f9f8;border-radius:11px;padding:9px 10px;font-size:.72rem;color:#6e7973;line-height:1.65}.history-row{display:grid;grid-template-columns:52px minmax(0,1fr);gap:7px}.history-row strong{color:#46544c;font-weight:600}.manual-modal-actions{display:grid;grid-template-columns:.8fr 1.2fr;gap:8px;margin-top:12px}
-    @media(max-width:360px){.symptom-grid{grid-template-columns:1fr}.progress-label{font-size:.54rem}.progress-dot{width:29px;height:29px}}
+    /* ===== REQUESTER MOCKUP UX ===== */
+    body.requester-mode {
+      background: #eef4f2;
+      padding-bottom: 92px;
+    }
+
+    .requester-header {
+      margin: -8px -12px 16px;
+      padding: 18px 18px 16px;
+      background: linear-gradient(135deg,#0f766e,#0b5f5a);
+      color:#fff;
+      text-align:center;
+      font-size:1.18rem;
+      font-weight:700;
+      letter-spacing:.1px;
+    }
+
+    .requester-intro {
+      text-align:center;
+      padding:0 2px 10px;
+    }
+
+    .requester-intro .sub-title {
+      margin:0;
+      color:#718078;
+      font-size:.78rem;
+    }
+
+    .scan-hero {
+      width:100%;
+      border:0;
+      border-radius:17px;
+      padding:18px 14px;
+      background:linear-gradient(135deg,#18b879,#0ca568);
+      color:#fff;
+      font-family:inherit;
+      cursor:pointer;
+      box-shadow:0 8px 22px rgba(12,165,104,.20);
+      text-align:center;
+    }
+
+    .scan-hero-icon {
+      font-size:38px;
+      line-height:1;
+      margin-bottom:7px;
+    }
+
+    .scan-hero-title {
+      font-size:1.05rem;
+      font-weight:700;
+    }
+
+    .scan-hero-sub {
+      font-size:.75rem;
+      opacity:.9;
+      margin-top:2px;
+    }
+
+    .manual-code-link {
+      width:100%;
+      border:0;
+      background:transparent;
+      color:#6d7c75;
+      font-family:inherit;
+      font-size:.76rem;
+      padding:9px 4px 6px;
+      cursor:pointer;
+      text-decoration:underline;
+      text-underline-offset:3px;
+    }
+
+    .machine-auto-card {
+      margin-top:8px;
+      border:1px solid #e1e9e5;
+      background:#fff;
+      border-radius:16px;
+      overflow:hidden;
+      box-shadow:0 4px 14px rgba(38,65,53,.06);
+    }
+
+    .auto-row {
+      display:grid;
+      grid-template-columns:32px minmax(0,1fr);
+      gap:9px;
+      align-items:center;
+      padding:9px 12px;
+      border-bottom:1px solid #edf1ef;
+      min-height:48px;
+    }
+
+    .auto-row:last-child { border-bottom:0; }
+
+    .auto-icon {
+      text-align:center;
+      font-size:17px;
+      color:#60726a;
+    }
+
+    .auto-label {
+      display:inline-block;
+      color:#697872;
+      font-size:.70rem;
+      min-width:102px;
+      margin-right:5px;
+    }
+
+    .auto-value {
+      display:inline;
+      color:#18251f;
+      font-size:.90rem;
+      font-weight:700;
+      overflow-wrap:anywhere;
+    }
+
+    .requester-note {
+      margin:8px 3px 0;
+      color:#7e8c85;
+      font-size:.69rem;
+      text-align:center;
+      line-height:1.4;
+    }
+
+    .issue-entry-wrap {
+      margin-top:16px;
+    }
+
+    .issue-entry-label {
+      display:block;
+      margin:0 0 7px;
+      color:#22332b;
+      font-weight:700;
+      font-size:.95rem;
+    }
+
+    .simple-detail {
+      width:100%;
+      min-height:96px;
+      margin:0;
+      background:#fff;
+      border:1px solid #dfe7e3;
+      border-radius:14px;
+      padding:13px 14px;
+      box-shadow:0 3px 10px rgba(38,65,53,.04);
+      resize:vertical;
+    }
+
+    .simple-detail:focus {
+      border-color:#13aa70;
+      box-shadow:0 0 0 3px rgba(19,170,112,.10);
+    }
+
+    .optional-photo-wrap { margin-top:11px; }
+
+    .optional-photo-label {
+      display:block;
+      margin:0 0 7px;
+      font-weight:600;
+      font-size:.80rem;
+      color:#65746b;
+    }
+
+    .optional-photo-wrap .image-box {
+      margin:0;
+      min-height:72px;
+      border:1px solid #e0e7e4;
+      background:#f7faf8;
+      color:#218761;
+      border-radius:14px;
+      font-weight:700;
+    }
+
+    .requester-submit {
+      width:100%;
+      border:0;
+      border-radius:14px;
+      padding:14px 10px;
+      margin-top:14px;
+      background:#14ad72;
+      color:#fff;
+      font-family:inherit;
+      font-size:1rem;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow:0 6px 17px rgba(20,173,114,.18);
+    }
+
+    .requester-submit:disabled {
+      background:#b9c5bf;
+      box-shadow:none;
+    }
+
+    /* bottom nav ใช้ tabs เดิม ไม่เปลี่ยน logic */
+    .tabs.role-requester {
+      position:fixed;
+      left:50%;
+      bottom:10px;
+      transform:translateX(-50%);
+      z-index:80;
+      width:min(calc(100vw - 20px),500px);
+      margin:0;
+      padding:5px;
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:4px;
+      background:rgba(255,255,255,.96);
+      border:1px solid #e1e8e4;
+      border-radius:18px;
+      box-shadow:0 9px 28px rgba(29,52,42,.16);
+      backdrop-filter:blur(8px);
+    }
+
+    .tabs.role-requester .tab-btn {
+      min-height:50px;
+      border-radius:13px;
+      font-size:.78rem;
+      color:#64736c;
+    }
+
+    .tabs.role-requester .tab-btn.active {
+      background:#eaf8f2;
+      color:#0b8f5c;
+      box-shadow:none;
+    }
+
+    .tabs.role-technician {
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      position:static;
+      transform:none;
+      width:auto;
+      margin:14px 12px 6px;
+      box-shadow:none;
+      border:0;
+    }
+
+    .tabs.role-technician .tab-btn {
+      flex:0 1 220px;
+      width:min(100%,220px);
+    }
+
+    #technicianPage > .tech-badge {
+      display:table;
+      margin:4px auto 10px;
+    }
+
+    #technicianPage > .section-title,
+    #technicianPage > .sub-title {
+      text-align:center;
+    }
+
+    .reported-header {
+      margin:-8px -12px 12px;
+      padding:18px 16px 16px;
+      background:linear-gradient(135deg,#0f766e,#0b5f5a);
+      color:#fff;
+      text-align:center;
+      font-size:1.16rem;
+      font-weight:700;
+    }
+
+    .myjobs-filter {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:12px;
+      padding:10px 12px;
+      background:#e9f7f4;
+      color:#275d52;
+      border-radius:14px;
+      font-size:.78rem;
+      font-weight:700;
+    }
+
+    .reported-card {
+      padding:13px;
+      border-radius:16px;
+      box-shadow:0 5px 16px rgba(36,58,49,.07);
+    }
+
+    .reported-main {
+      display:grid;
+      grid-template-columns:76px minmax(0,1fr);
+      gap:11px;
+      align-items:start;
+    }
+
+    .reported-thumb {
+      width:76px;
+      height:76px;
+      border-radius:12px;
+      object-fit:cover;
+      background:#edf2ef;
+      border:1px solid #e2e8e5;
+    }
+
+    .reported-thumb.placeholder {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#89968f;
+      font-size:24px;
+    }
+
+    .reported-top {
+      display:block;
+      min-width:0;
+    }
+
+    .reported-card .job-id {
+      font-size:.72rem;
+      color:#66756e;
+      margin-bottom:2px;
+    }
+
+    .reported-card .machine-name {
+      margin:0 0 2px;
+      font-size:1rem;
+    }
+
+    .reported-machine-code {
+      font-size:.69rem;
+      color:#738078;
+      line-height:1.45;
+    }
+
+    .reported-issue {
+      margin:4px 0 0;
+      color:#4c5751;
+      font-size:.78rem;
+      line-height:1.4;
+    }
+
+    .progress-steps {
+      display:grid;
+      grid-template-columns:repeat(5,minmax(0,1fr));
+      gap:0;
+      margin:15px -2px 6px;
+      position:relative;
+    }
+
+    .progress-steps:before {
+      content:"";
+      position:absolute;
+      height:4px;
+      background:#dfe6e2;
+      left:10%;
+      right:10%;
+      top:15px;
+      border-radius:999px;
+    }
+
+    .progress-step {
+      position:relative;
+      z-index:1;
+      text-align:center;
+      min-width:0;
+    }
+
+    .progress-dot {
+      width:32px;
+      height:32px;
+      border-radius:50%;
+      margin:0 auto 5px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#e0e6e3;
+      color:#849087;
+      font-size:14px;
+      border:3px solid #fff;
+      font-weight:700;
+    }
+
+    .progress-step.done .progress-dot {
+      background:#2fbc78;
+      color:#fff;
+    }
+
+    .progress-step.current .progress-dot {
+      background:#ff8c3c;
+      color:#fff;
+      box-shadow:0 0 0 3px #fff0e6;
+    }
+
+    .progress-label {
+      font-size:.58rem;
+      line-height:1.2;
+      color:#89938e;
+      overflow-wrap:anywhere;
+    }
+
+    .progress-step.done .progress-label { color:#2b7f52; }
+    .progress-step.current .progress-label {
+      color:#d46811;
+      font-weight:700;
+    }
+
+    .current-status-banner {
+      width:fit-content;
+      max-width:100%;
+      margin:9px auto 0;
+      border-radius:999px;
+      padding:7px 12px;
+      background:#fff1e7;
+      color:#cb681b;
+      font-size:.73rem;
+      font-weight:700;
+      text-align:center;
+    }
+
+    .current-status-banner.complete {
+      background:#e9f8ef;
+      color:#187945;
+    }
+
+    .reported-history {
+      margin-top:12px;
+      background:#f5f8f6;
+      border-radius:12px;
+      padding:9px 10px;
+      font-size:.70rem;
+      color:#6e7973;
+      line-height:1.7;
+    }
+
+    .reported-history-title {
+      font-weight:700;
+      color:#4e5d55;
+      margin-bottom:3px;
+    }
+
+    .history-row {
+      display:grid;
+      grid-template-columns:48px minmax(0,1fr);
+      gap:7px;
+    }
+
+    .history-row strong {
+      color:#46544c;
+      font-weight:600;
+    }
+
+    .manual-modal-actions {
+      display:grid;
+      grid-template-columns:.8fr 1.2fr;
+      gap:8px;
+      margin-top:12px;
+    }
+
+    @media(max-width:390px){
+      .requester-header,.reported-header{margin-left:-9px;margin-right:-9px}
+      .auto-label{min-width:92px}
+      .progress-label{font-size:.54rem}
+      .progress-dot{width:30px;height:30px}
+      .reported-main{grid-template-columns:68px minmax(0,1fr)}
+      .reported-thumb{width:68px;height:68px}
+    }
+
+    @media(max-width:340px){
+      .tabs.role-requester{width:calc(100vw - 12px)}
+      .auto-row{grid-template-columns:28px minmax(0,1fr);padding:8px 9px}
+      .auto-label{min-width:0;display:block}
+      .auto-value{display:block}
+    }
 
   </style>
 </head>
@@ -874,49 +1327,87 @@
   ========================== -->
   <div class="tabs" id="mainTabs">
     <button id="tabRepairBtn" class="tab-btn active" onclick="switchTab('repair')">🛠️ แจ้งซ่อม</button>
-    <button id="tabReportedBtn" class="tab-btn" onclick="switchTab('reported')">📊 ดูสถานะงาน</button>
+    <button id="tabReportedBtn" class="tab-btn" onclick="switchTab('reported')">☷ สถานะงานของฉัน</button>
     <button id="tabTechnicianBtn" class="tab-btn" onclick="switchTab('technician')">👨‍🔧 งานของฉัน</button>
   </div>
 
   <!-- =========================
-       PAGE 1 : แจ้งซ่อม (Requester Simple UX)
+       PAGE 1 : แจ้งซ่อม (Requester Mockup UX)
   ========================== -->
   <section id="repairPage" class="page active">
-    <div class="requester-intro"><div class="section-title">🛠️ แจ้งซ่อม</div><div class="sub-title">สแกนเครื่อง → เลือกอาการ → ส่ง</div></div>
-    <input id="reporter" type="hidden"><input id="floor" type="hidden"><input id="line" type="hidden"><input id="machineCode" type="hidden"><input id="machineName" type="hidden">
+    <div class="requester-header">แจ้งซ่อม</div>
+
+    <div class="requester-intro">
+      <div class="sub-title">สแกนเครื่อง → กรอกอาการ → ส่ง</div>
+    </div>
+
+    <input id="reporter" type="hidden">
+    <input id="floor" type="hidden">
+    <input id="line" type="hidden">
+    <input id="machineCode" type="hidden">
+    <input id="machineName" type="hidden">
+
+    <button type="button" class="scan-hero" onclick="openScanner()">
+      <div class="scan-hero-icon">▦</div>
+      <div class="scan-hero-title">สแกนบาร์โค้ดเครื่องจักร</div>
+      <div class="scan-hero-sub">แตะเพื่อเปิดกล้อง</div>
+    </button>
+
+    <button type="button" class="manual-code-link" onclick="openManualMachineModal()">
+      สแกนไม่ได้? กรอกรหัสเครื่องแทน
+    </button>
 
     <div id="requesterProfileCard" class="machine-auto-card">
-      <div class="auto-row"><div class="auto-icon">👤</div><div><span class="auto-label">ผู้แจ้ง</span><span id="autoReporterName" class="auto-value">กำลังตรวจสอบ...</span></div></div>
-      <div class="auto-row"><div class="auto-icon">📍</div><div><span class="auto-label">พื้นที่ประจำ</span><span id="autoRequesterArea" class="auto-value">กำลังตรวจสอบ...</span></div></div>
+      <div class="auto-row">
+        <div class="auto-icon">⚙️</div>
+        <div><span class="auto-label">รหัสเครื่องจักร</span><span id="autoMachineCode" class="auto-value">รอสแกน</span></div>
+      </div>
+      <div class="auto-row">
+        <div class="auto-icon">🏭</div>
+        <div><span class="auto-label">ชื่อเครื่องจักร</span><span id="autoMachineName" class="auto-value">-</span></div>
+      </div>
+      <div class="auto-row">
+        <div class="auto-icon">📍</div>
+        <div><span class="auto-label">พื้นที่</span><span id="autoRequesterArea" class="auto-value">กำลังตรวจสอบ...</span></div>
+      </div>
+      <div class="auto-row">
+        <div class="auto-icon">👤</div>
+        <div><span class="auto-label">ผู้แจ้ง</span><span id="autoReporterName" class="auto-value">กำลังตรวจสอบ...</span></div>
+      </div>
     </div>
-    <div id="requesterAccountNote" class="requester-note">ระบบดึงชื่อ • ชั้น • LINE จาก LINE User ID ให้อัตโนมัติ</div>
 
-    <button type="button" class="scan-hero" onclick="openScanner()"><div class="scan-hero-icon">▦</div><div class="scan-hero-title">สแกนบาร์โค้ดเครื่องจักร</div><div class="scan-hero-sub">แตะเพื่อเปิดกล้อง</div></button>
-    <button type="button" class="manual-code-link" onclick="openManualMachineModal()">สแกนไม่ได้? กรอกรหัสเครื่องแทน</button>
-    <div id="machinePlaceholder" class="machine-placeholder">สแกนเครื่องก่อน ระบบจะดึงรหัสและชื่อเครื่องให้อัตโนมัติ</div>
-    <div id="machineAutoCard" class="machine-auto-card hidden">
-      <div class="auto-row"><div class="auto-icon">⚙️</div><div><span class="auto-label">รหัสเครื่องจักร</span><span id="autoMachineCode" class="auto-value">-</span></div></div>
-      <div class="auto-row"><div class="auto-icon">🏭</div><div><span class="auto-label">ชื่อเครื่องจักร</span><span id="autoMachineName" class="auto-value">-</span></div></div>
+    <div id="machinePlaceholder" style="display:none;"></div>
+    <div id="machineAutoCard" class="hidden" style="display:none;"></div>
+    <div id="requesterAccountNote" class="requester-note">
+      ระบบดึงชื่อผู้แจ้ง • ชั้น • LINE จาก LINE User ID ให้อัตโนมัติ
     </div>
-    <div class="simple-heading">🔧 อาการที่พบ</div>
-    <div class="symptom-grid">
-      <button type="button" class="symptom-btn" data-symptom="เครื่องไม่ทำงาน" onclick="selectSymptom(this)">⛔ เครื่องไม่ทำงาน</button>
-      <button type="button" class="symptom-btn" data-symptom="เสียงผิดปกติ" onclick="selectSymptom(this)">🔊 เสียงผิดปกติ</button>
-      <button type="button" class="symptom-btn" data-symptom="ไฟฟ้า" onclick="selectSymptom(this)">⚡ ไฟฟ้า</button>
-      <button type="button" class="symptom-btn" data-symptom="อื่นๆ" onclick="selectSymptom(this)">••• อื่นๆ</button>
+
+    <div class="issue-entry-wrap">
+      <label class="issue-entry-label" for="issueDetail">กรอกอาการเสีย</label>
+      <textarea id="issueDetail" class="simple-detail" placeholder="เช่น เครื่องหยุดทำงาน / มีเสียงดังผิดปกติ / ไฟไม่เข้า..." required></textarea>
+      <input id="issue" type="hidden">
     </div>
-    <textarea id="issueDetail" class="simple-detail" placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"></textarea><input id="issue" type="hidden">
-    <div class="optional-photo-wrap"><span class="optional-photo-label">📷 แนบรูป (ถ้ามี)</span><label class="image-box">+ ถ่ายรูป / เลือกรูป<input id="imageInput" type="file" accept="image/*" capture="environment" onchange="previewImage(event)"></label><img id="imagePreview"></div>
-    <button id="requesterSubmitBtn" type="button" class="requester-submit" onclick="submitRepair()">➤ ส่งแจ้งซ่อม</button>
+
+    <div class="optional-photo-wrap">
+      <span class="optional-photo-label">📷 แนบรูป (ถ้ามี)</span>
+      <label class="image-box">
+        + ถ่ายรูป / เลือกรูป
+        <input id="imageInput" type="file" accept="image/*" capture="environment" onchange="previewImage(event)">
+      </label>
+      <img id="imagePreview">
+    </div>
+
+    <button id="requesterSubmitBtn" type="button" class="requester-submit" onclick="submitRepair()">
+      ➤ ส่งแจ้งซ่อม
+    </button>
   </section>
 
   <!-- =========================
        PAGE 2 : งานที่ฉันแจ้ง
   ========================== -->
   <section id="reportedPage" class="page">
-
-    <div class="section-title">📊 งานที่ฉันแจ้ง</div>
-    <div class="sub-title">ติดตามสถานะงานซ่อมที่คุณเป็นผู้แจ้ง</div>
+    <div class="reported-header">สถานะงานของฉัน</div>
+    <div class="myjobs-filter"><span>👤 แสดงเฉพาะงานของฉัน</span><span>›</span></div>
 
     <div id="reportedContent">
       <div class="loading">กำลังโหลด...</div>
@@ -1231,6 +1722,7 @@ function applyRoleUI(isTechnician) {
 
   if (isTechnician) {
     currentUserRole = "technician";
+    document.body.classList.remove("requester-mode");
     tabsWrap.classList.add("role-technician");
 
     // ช่างเห็นเฉพาะ "งานของฉัน"
@@ -1244,6 +1736,7 @@ function applyRoleUI(isTechnician) {
 
   } else {
     currentUserRole = "requester";
+    document.body.classList.add("requester-mode");
     tabsWrap.classList.add("role-requester");
 
     // ผู้แจ้งเห็นเฉพาะ "แจ้งซ่อม" + "ดูสถานะงาน"
@@ -1338,8 +1831,19 @@ async function loadRequesterProfile(){
     noteEl.textContent=(data&&data.found)?"ข้อมูลผู้แจ้งยังไม่ครบ กรุณาเติม ชื่อจริง / ชั้น / LINE ใน RepairUsers":"LINE นี้ยังไม่ได้ลงทะเบียนใน RepairUsers กรุณาติดต่อผู้ดูแลระบบ";
   }catch(err){console.error(err);nameEl.textContent="ตรวจสอบข้อมูลไม่สำเร็จ";areaEl.textContent="-";noteEl.textContent="เชื่อมต่อข้อมูลผู้แจ้งไม่สำเร็จ กรุณาลองใหม่";}
 }
-function clearMachineInfo(){currentMachineInfo=null;["machineCode","machineName"].forEach(id=>document.getElementById(id).value="");document.getElementById("machineAutoCard").classList.add("hidden");document.getElementById("machinePlaceholder").style.display="block";}
-function fillMachineInfo(info){currentMachineInfo=info;document.getElementById("machineCode").value=info.code||"";document.getElementById("machineName").value=info.name||"";document.getElementById("autoMachineCode").textContent=info.code||"-";document.getElementById("autoMachineName").textContent=info.name||"-";document.getElementById("machinePlaceholder").style.display="none";document.getElementById("machineAutoCard").classList.remove("hidden");}
+function clearMachineInfo(){
+  currentMachineInfo=null;
+  ["machineCode","machineName"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("autoMachineCode").textContent="รอสแกน";
+  document.getElementById("autoMachineName").textContent="-";
+}
+function fillMachineInfo(info){
+  currentMachineInfo=info;
+  document.getElementById("machineCode").value=info.code||"";
+  document.getElementById("machineName").value=info.name||"";
+  document.getElementById("autoMachineCode").textContent=info.code||"-";
+  document.getElementById("autoMachineName").textContent=info.name||"-";
+}
 async function lookupMachine(codeOverride){
   const code=String(codeOverride||document.getElementById("machineCode").value||"").trim().toUpperCase();if(!code){clearMachineInfo();return false;}
   try{showToast("กำลังตรวจสอบเครื่อง...");const res=await fetch(GAS_WEB_APP_URL+"?action=getMachineInfo&code="+encodeURIComponent(code));const data=await res.json();
@@ -1350,8 +1854,10 @@ async function lookupMachine(codeOverride){
 }
 function openManualMachineModal(){const input=document.getElementById("manualMachineCodeInput");input.value=document.getElementById("machineCode").value||"";document.getElementById("manualMachineModal").classList.add("show");setTimeout(()=>input.focus(),120);}
 async function confirmManualMachineCode(){const code=String(document.getElementById("manualMachineCodeInput").value||"").trim();if(!code){showToast("กรุณากรอกรหัสเครื่องจักร");return;}closeModal("manualMachineModal");await lookupMachine(code);}
-function selectSymptom(button){document.querySelectorAll(".symptom-btn").forEach(btn=>btn.classList.remove("selected"));button.classList.add("selected");selectedIssueCategory=button.dataset.symptom||"";if(selectedIssueCategory==="อื่นๆ")document.getElementById("issueDetail").focus();}
-function buildIssueText(){const detail=document.getElementById("issueDetail").value.trim();if(selectedIssueCategory==="อื่นๆ")return detail;if(selectedIssueCategory&&detail)return selectedIssueCategory+" - "+detail;return selectedIssueCategory||detail;}
+function selectSymptom(){ /* quick symptom buttons removed by design */ }
+function buildIssueText(){
+  return String(document.getElementById("issueDetail").value||"").trim();
+}
 
 /* =========================================================
    IMAGE
@@ -1389,7 +1895,7 @@ async function submitRepair(){
   if(!lineUserId){showToast("กรุณาเปิดระบบผ่าน LINE");return;}
   if(!requesterIsRegistered||!registeredReporterName||!floor||!line){alert("ข้อมูลผู้แจ้งยังไม่พร้อม\nกรุณาให้ผู้ดูแลลงทะเบียน ชื่อจริง / ชั้น / LINE ใน RepairUsers");return;}
   if(!machineCode||!machineName){showToast("กรุณาสแกนเครื่องจักรก่อน");return;}
-  if(!issue){showToast("กรุณาเลือกหรือระบุอาการที่พบ");return;}
+  if(!issue){showToast("กรุณากรอกอาการเสีย");document.getElementById("issueDetail").focus();return;}
   const payload={action:"CREATE_REPAIR_JOB",userId:lineUserId,machineCode,issue,image:beforeImageBase64};const btn=document.getElementById("requesterSubmitBtn");btn.disabled=true;btn.textContent="กำลังส่ง...";
   try{const response=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});const result=await response.json();if(result.success===true||result.status==="success"){alert("ส่งแจ้งซ่อมเรียบร้อยแล้ว"+(result.jobId?"\n"+result.jobId:""));resetForm();switchTab("reported");}else alert(result.message||result.error||"ส่งข้อมูลไม่สำเร็จ");}catch(err){console.error(err);alert("เกิดข้อผิดพลาดในการส่งข้อมูล");}finally{btn.disabled=false;btn.textContent="➤ ส่งแจ้งซ่อม";}
 }
@@ -1398,7 +1904,18 @@ async function submitRepair(){
    RESET
 ========================================================= */
 
-function resetForm(){clearMachineInfo();selectedIssueCategory="";document.querySelectorAll(".symptom-btn").forEach(btn=>btn.classList.remove("selected"));document.getElementById("issue").value="";document.getElementById("issueDetail").value="";document.getElementById("imageInput").value="";beforeImageBase64="";const img=document.getElementById("imagePreview");img.src="";img.style.display="none";document.getElementById("reporter").value=registeredReporterName||"";}
+function resetForm(){
+  clearMachineInfo();
+  selectedIssueCategory="";
+  document.getElementById("issue").value="";
+  document.getElementById("issueDetail").value="";
+  document.getElementById("imageInput").value="";
+  beforeImageBase64="";
+  const img=document.getElementById("imagePreview");
+  img.src="";
+  img.style.display="none";
+  document.getElementById("reporter").value=registeredReporterName||"";
+}
 
 /* =========================================================
    REPORTED JOBS
@@ -1496,7 +2013,56 @@ async function loadMyReportedJobs() {
 function getRequesterProgress(status){const s=String(status||"");if(s.includes("เสร็จ"))return 5;if(s.includes("ตรวจรับ"))return 4;if(s.includes("กำลัง")||s.includes("ดำเนินการ")||s.includes("รออะไหล่"))return 3;if(s.includes("รับงาน")||s.includes("รอเริ่ม"))return 2;return 1;}
 function getRequesterStatusText(status){const s=String(status||"");if(s.includes("เสร็จ"))return"✅ งานเสร็จเรียบร้อย";if(s.includes("ตรวจรับ"))return"🔎 รอคุณตรวจรับงาน";if(s.includes("รออะไหล่"))return"🔩 ช่างกำลังรออะไหล่";if(s.includes("กำลัง")||s.includes("ดำเนินการ"))return"🔧 ช่างกำลังดำเนินการ";if(s.includes("รับงาน")||s.includes("รอเริ่ม"))return"👨‍🔧 ช่างรับงานแล้ว";if(s.includes("ซ่อมไม่ได้"))return"⚠️ ช่างแจ้งว่าซ่อมไม่ได้";if(s.includes("ส่งต่อ"))return"🔄 กำลังส่งต่องาน";return"🟡 แจ้งแล้ว รอช่างรับงาน";}
 function renderProgressSteps(status){const current=getRequesterProgress(status),steps=[["✓","แจ้งแล้ว"],["✓","รับงาน"],["🔧","กำลังซ่อม"],["🔎","รอตรวจรับ"],["✓","เสร็จสิ้น"]];return`<div class="progress-steps">`+steps.map((step,index)=>{const n=index+1;let cls="";if(n<current||current===5)cls="done";else if(n===current)cls="current";return`<div class="progress-step ${cls}"><div class="progress-dot">${step[0]}</div><div class="progress-label">${step[1]}</div></div>`;}).join("")+`</div>`;}
-function renderReportedJob(job){const status=String(job.status||"รอดำเนินการ"),isComplete=status.includes("เสร็จ"),history=[];if(job.reportTime||job.reportDate)history.push(`<div class="history-row"><span>${escapeHtml(job.reportTime||"")}</span><strong>แจ้งซ่อม</strong></div>`);if(job.technician)history.push(`<div class="history-row"><span></span><strong>ช่างรับงาน: ${escapeHtml(job.technician)}</strong></div>`);if(job.startTime||job.startDate)history.push(`<div class="history-row"><span>${escapeHtml(job.startTime||"")}</span><strong>เริ่มซ่อม</strong></div>`);if(job.finishTime||job.finishDate)history.push(`<div class="history-row"><span>${escapeHtml(job.finishTime||"")}</span><strong>${status.includes("ตรวจรับ")?"ช่างส่งตรวจรับ":"ปิดงาน"}</strong></div>`);return`<div class="job-card reported-card"><div class="reported-top"><div><div class="job-id">${escapeHtml(job.jobId||"-")}</div><div class="machine-name">${escapeHtml(job.machineName||job.machineCode||"-")}</div><div class="reported-machine-code">${escapeHtml(job.machineCode||"")}${job.floor?" • "+escapeHtml(job.floor):""}${job.line?" • LINE "+escapeHtml(job.line):""}</div></div><div class="status ${getStatusClass(status)}">${escapeHtml(status)}</div></div><div class="reported-issue">อาการ: ${escapeHtml(job.issue||"-")}</div>${renderProgressSteps(status)}<div class="current-status-banner ${isComplete?"complete":""}">${getRequesterStatusText(status)}</div>${history.length?`<div class="reported-history">${history.join("")}</div>`:""}</div>`;}
+function renderReportedJob(job){
+  const status=String(job.status||"รอดำเนินการ");
+  const isComplete=status.includes("เสร็จ");
+  const history=[];
+
+  if(job.reportTime||job.reportDate){
+    history.push(`<div class="history-row"><span>${escapeHtml(job.reportTime||"")}</span><strong>แจ้งซ่อม</strong></div>`);
+  }
+  if(job.technician){
+    history.push(`<div class="history-row"><span></span><strong>ช่างรับงาน: ${escapeHtml(job.technician)}</strong></div>`);
+  }
+  if(job.startTime||job.startDate){
+    history.push(`<div class="history-row"><span>${escapeHtml(job.startTime||"")}</span><strong>เริ่มซ่อม</strong></div>`);
+  }
+  if(job.finishTime||job.finishDate){
+    history.push(`<div class="history-row"><span>${escapeHtml(job.finishTime||"")}</span><strong>${status.includes("ตรวจรับ")?"ช่างส่งตรวจรับ":"ปิดงาน"}</strong></div>`);
+  }
+
+  const thumb = job.beforeImage
+    ? `<img class="reported-thumb" src="${escapeHtml(job.beforeImage)}" alt="รูปแจ้งซ่อม" onerror="this.outerHTML='<div class=&quot;reported-thumb placeholder&quot;>⚙️</div>'">`
+    : `<div class="reported-thumb placeholder">⚙️</div>`;
+
+  return `
+    <div class="job-card reported-card">
+      <div class="reported-main">
+        ${thumb}
+        <div class="reported-top">
+          <div class="job-id">${escapeHtml(job.jobId||"-")}</div>
+          <div class="machine-name">${escapeHtml(job.machineName||job.machineCode||"-")}</div>
+          <div class="reported-machine-code">
+            ${escapeHtml(job.machineCode||"")}
+            ${job.floor?" • "+escapeHtml(job.floor):""}
+            ${job.line?" • LINE "+escapeHtml(job.line):""}
+          </div>
+          <div class="reported-issue">อาการ: ${escapeHtml(job.issue||"-")}</div>
+        </div>
+      </div>
+
+      ${renderProgressSteps(status)}
+      <div class="current-status-banner ${isComplete?"complete":""}">
+        ${getRequesterStatusText(status)}
+      </div>
+
+      ${history.length?`
+        <div class="reported-history">
+          <div class="reported-history-title">▣ ประวัติงาน</div>
+          ${history.join("")}
+        </div>`:""}
+    </div>`;
+}
 
 /* =========================================================
    TECHNICIAN JOBS

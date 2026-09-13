@@ -1123,7 +1123,7 @@
 
     <label class="mock-photo-box">
       <div>📷 &nbsp;+ แนบรูป<span class="mock-photo-sub">ถ่ายรูปหรือเลือกรูปจากอุปกรณ์ (ถ้ามี)</span></div>
-      <input id="imageInput" type="file" accept="image/*" capture="environment" onchange="previewImage(event)">
+      <input id="imageInput" type="file" accept="image/*" onchange="previewImage(event)">
     </label>
     <img id="imagePreview">
 
@@ -1247,7 +1247,6 @@
   <div id="requesterBottomNav" class="mock-bottom-nav requester-chrome">
     <button id="mockNavRepair" class="mock-nav-btn active" type="button" onclick="switchTab('repair')"><span class="mock-nav-icon">🛠️</span>แจ้งซ่อม</button>
     <button id="mockNavReported" class="mock-nav-btn" type="button" onclick="switchTab('reported')"><span class="mock-nav-icon">☷</span>สถานะงานของฉัน</button>
-    <button id="mockNavProfile" class="mock-nav-btn" type="button" onclick="openRequesterProfile()"><span class="mock-nav-icon">👤</span>โปรไฟล์</button>
   </div>
 
 </div>
@@ -1312,17 +1311,6 @@
 <!-- =========================
      MANUAL MACHINE CODE MODAL
 ========================== -->
-
-<div id="requesterProfileModal" class="modal-bg">
-  <div class="modal">
-    <div class="mock-profile-card">
-      <div class="mock-profile-avatar">👤</div>
-      <div id="profileModalName" class="mock-profile-name">-</div>
-      <div id="profileModalArea" class="mock-profile-area">-</div>
-    </div>
-    <button class="modal-close" onclick="closeModal('requesterProfileModal')">ปิด</button>
-  </div>
-</div>
 
 <div id="manualMachineModal" class="modal-bg"><div class="modal"><h3>⌨️ กรอกรหัสเครื่องจักร</h3><div class="sub-title">ใช้เฉพาะตอนสแกนบาร์โค้ดไม่ได้</div><input id="manualMachineCodeInput" type="text" placeholder="เช่น MC-3F-024" autocomplete="off"><div class="manual-modal-actions"><button type="button" class="btn btn-cancel" onclick="closeModal('manualMachineModal')">ยกเลิก</button><button type="button" class="btn btn-submit" onclick="confirmManualMachineCode()">ยืนยัน</button></div></div></div>
 
@@ -1541,8 +1529,7 @@ function updateRequesterChrome(tab){
   const title=document.getElementById("requesterHeaderTitle");
   const repair=document.getElementById("mockNavRepair");
   const reported=document.getElementById("mockNavReported");
-  const profile=document.getElementById("mockNavProfile");
-  [repair,reported,profile].forEach(el=>el&&el.classList.remove("active"));
+  [repair,reported].forEach(el=>el&&el.classList.remove("active"));
   if(tab==="reported"){
     title.textContent="สถานะงานของฉัน";
     reported&&reported.classList.add("active");
@@ -1555,16 +1542,6 @@ function updateRequesterChrome(tab){
 function requesterBack(){
   if(document.getElementById("reportedPage").classList.contains("active")) switchTab("repair");
   else if(typeof liff!=="undefined" && liff.isInClient()) liff.closeWindow();
-}
-
-function openRequesterProfile(){
-  document.getElementById("profileModalName").textContent=registeredReporterName||"ยังไม่ได้ลงทะเบียน";
-  const floor=document.getElementById("floor").value||"-";
-  const line=document.getElementById("line").value||"-";
-  document.getElementById("profileModalArea").textContent=floor+" • LINE "+line;
-  document.getElementById("requesterProfileModal").classList.add("show");
-  document.querySelectorAll(".mock-nav-btn").forEach(el=>el.classList.remove("active"));
-  document.getElementById("mockNavProfile").classList.add("active");
 }
 
 

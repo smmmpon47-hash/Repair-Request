@@ -846,12 +846,225 @@
       }
     }
 
+  
+
+    /* ===== REQUESTER SIMPLE UX ===== */
+    .requester-intro{text-align:center;padding:4px 4px 8px}.requester-intro .section-title{margin-bottom:3px}.requester-intro .sub-title{margin-bottom:8px}
+    .scan-hero{width:100%;border:0;border-radius:18px;padding:20px 14px;background:linear-gradient(135deg,#13b86a,#079d58);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 7px 20px rgba(8,168,79,.18);text-align:center}.scan-hero-icon{font-size:36px;line-height:1;margin-bottom:8px}.scan-hero-title{font-size:1.08rem;font-weight:700}.scan-hero-sub{font-size:.78rem;opacity:.9;margin-top:3px}
+    .manual-code-link{width:100%;border:0;background:transparent;color:#637386;font-family:inherit;font-size:.78rem;padding:9px 4px 3px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+    .machine-placeholder{margin-top:12px;border:1px dashed #d5ded9;border-radius:14px;background:#fbfcfb;color:#819087;padding:14px 10px;text-align:center;font-size:.78rem}
+    .machine-auto-card{margin-top:12px;border:1px solid #e2e9e5;background:#f8fbf9;border-radius:15px;overflow:hidden}.machine-auto-card.hidden{display:none}.auto-row{display:grid;grid-template-columns:34px minmax(0,1fr);gap:8px;align-items:center;padding:9px 11px;border-bottom:1px solid #e9efeb}.auto-row:last-child{border-bottom:0}.auto-icon{text-align:center;font-size:17px}.auto-label{display:block;color:#7a8580;font-size:.68rem}.auto-value{display:block;color:#1f2c25;font-size:.9rem;font-weight:700;overflow-wrap:anywhere}
+    .requester-note{margin:8px 2px 0;color:#819087;font-size:.7rem;text-align:center;line-height:1.4}.simple-heading{margin:19px 0 9px;font-weight:700;font-size:1rem;color:#21372b}
+    .symptom-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.symptom-btn{min-height:62px;border:1px solid #dfe5e2;border-radius:14px;background:#fff;color:#27332d;font-family:inherit;font-weight:700;font-size:.9rem;cursor:pointer;padding:9px 6px;line-height:1.3}.symptom-btn.selected{border-color:#0aa85a;background:#eefaf3;color:#08733f;box-shadow:inset 0 0 0 1px #0aa85a}.simple-detail{margin-top:10px;min-height:76px;background:#fafbfb}.optional-photo-wrap{margin-top:11px}.optional-photo-label{display:block;margin:0;font-weight:600;font-size:.82rem;color:#65746b}.optional-photo-wrap .image-box{margin-top:7px}
+    .requester-submit{width:100%;border:0;border-radius:14px;padding:14px 10px;margin-top:16px;background:#12ad62;color:#fff;font-family:inherit;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 5px 15px rgba(18,173,98,.15)}.requester-submit:disabled{background:#b9c5bf;box-shadow:none}
+    .reported-card{padding:14px 12px}.reported-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start}.reported-machine-code{font-size:.72rem;color:#7b8580;margin-top:2px}.reported-issue{margin:7px 0 10px;color:#4c5751;font-size:.82rem;line-height:1.45}
+    .progress-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;margin:13px -2px 6px;position:relative}.progress-steps:before{content:"";position:absolute;height:3px;background:#e1e6e3;left:10%;right:10%;top:15px}.progress-step{position:relative;z-index:1;text-align:center;min-width:0}.progress-dot{width:31px;height:31px;border-radius:50%;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;background:#e1e6e3;color:#849087;font-size:14px;border:3px solid #fff}.progress-step.done .progress-dot{background:#24b86b;color:#fff}.progress-step.current .progress-dot{background:#ff9639;color:#fff;box-shadow:0 0 0 3px #fff2e6}.progress-label{font-size:.59rem;line-height:1.2;color:#8a938e;overflow-wrap:anywhere}.progress-step.done .progress-label{color:#2b7f52}.progress-step.current .progress-label{color:#d46811;font-weight:700}
+    .current-status-banner{width:fit-content;max-width:100%;margin:8px auto 0;border-radius:999px;padding:7px 12px;background:#fff3e9;color:#ce6816;font-size:.75rem;font-weight:700;text-align:center}.current-status-banner.complete{background:#e9f8ef;color:#187945}.reported-history{margin-top:12px;background:#f7f9f8;border-radius:11px;padding:9px 10px;font-size:.72rem;color:#6e7973;line-height:1.65}.history-row{display:grid;grid-template-columns:52px minmax(0,1fr);gap:7px}.history-row strong{color:#46544c;font-weight:600}.manual-modal-actions{display:grid;grid-template-columns:.8fr 1.2fr;gap:8px;margin-top:12px}
+    @media(max-width:360px){.symptom-grid{grid-template-columns:1fr}.progress-label{font-size:.54rem}.progress-dot{width:29px;height:29px}}
+
+  
+
+    /* =========================================================
+       REQUESTER MOCKUP STYLE — MATCH REFERENCE
+       ========================================================= */
+    :root{
+      --mk-teal:#0f766e;
+      --mk-teal-dark:#0b5f5a;
+      --mk-green:#16a86f;
+      --mk-green-dark:#0c8d5b;
+      --mk-bg:#f4f7f8;
+      --mk-card:#ffffff;
+      --mk-soft:#f1f5f6;
+      --mk-line:#e4ebed;
+      --mk-text:#173047;
+      --mk-muted:#71808c;
+      --mk-orange:#ff8a34;
+    }
+
+    body.requester-mode{
+      background:linear-gradient(180deg,#eef4f4 0%,#f7f9fa 100%);
+      padding:0;
+      min-height:100vh;
+    }
+
+    body.requester-mode .app{
+      width:100%;
+      max-width:440px;
+      margin:0 auto;
+      border-radius:0;
+      box-shadow:0 12px 38px rgba(22,52,64,.12);
+      min-height:100vh;
+      background:var(--mk-bg);
+      overflow:visible;
+      padding-bottom:82px;
+    }
+
+    body.requester-mode #mainTabs{ display:none !important; }
+    .requester-chrome{ display:none; }
+    body.requester-mode .requester-chrome{ display:flex; }
+
+    .mock-topbar{
+      position:sticky;
+      top:0;
+      z-index:40;
+      height:72px;
+      align-items:flex-end;
+      justify-content:center;
+      padding:0 18px 16px;
+      background:linear-gradient(135deg,#0b5f5a,#1b8c80);
+      color:#fff;
+      box-shadow:0 2px 12px rgba(10,83,77,.16);
+    }
+    .mock-topbar-title{font-size:1.22rem;font-weight:700;letter-spacing:.1px;line-height:1}
+    .mock-back{
+      position:absolute;left:14px;bottom:10px;width:38px;height:38px;border:0;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;background:transparent;color:#fff;
+      font-size:2rem;font-family:Arial,sans-serif;cursor:pointer;line-height:1;
+    }
+
+    body.requester-mode .page{padding:14px 14px 22px;background:var(--mk-bg)}
+    body.requester-mode #repairPage,
+    body.requester-mode #reportedPage{min-height:calc(100vh - 154px)}
+
+    .mock-scan-card{
+      width:100%;border:0;border-radius:16px;padding:15px 16px;
+      display:flex;align-items:center;gap:14px;text-align:left;cursor:pointer;color:#fff;
+      background:linear-gradient(135deg,#18ad7a,#0a966e);
+      box-shadow:0 7px 18px rgba(10,150,110,.18);
+      font-family:inherit;
+    }
+    .mock-scan-icon{
+      width:54px;height:54px;border:3px solid rgba(255,255,255,.95);border-radius:12px;
+      display:flex;align-items:center;justify-content:center;font-size:29px;flex:0 0 auto;
+    }
+    .mock-scan-title{font-size:1.02rem;font-weight:700;line-height:1.25}
+    .mock-scan-sub{font-size:.72rem;opacity:.9;margin-top:3px}
+    .mock-manual-link{
+      width:100%;border:0;background:transparent;color:#6f7c86;font-family:inherit;
+      font-size:.72rem;padding:8px 4px 7px;cursor:pointer;text-align:center;text-decoration:underline;text-underline-offset:3px;
+    }
+
+    .mock-info-card{
+      margin-top:2px;border:1px solid #e7ecee;background:#fff;border-radius:14px;
+      padding:7px 9px;box-shadow:0 4px 14px rgba(31,62,73,.05);
+    }
+    .mock-info-row{
+      display:grid;grid-template-columns:28px 108px minmax(0,1fr);align-items:center;
+      min-height:39px;padding:3px 5px;border-bottom:1px solid #eef2f3;
+    }
+    .mock-info-row:last-child{border-bottom:0}
+    .mock-info-icon{font-size:16px;text-align:center;opacity:.72}
+    .mock-info-label{font-size:.77rem;color:#657682;font-weight:600}
+    .mock-info-value{font-size:.9rem;color:#172b3b;font-weight:700;overflow-wrap:anywhere}
+    .mock-info-value.waiting{font-weight:500;color:#9aa5ac}
+    .mock-helper{font-size:.68rem;color:#78868f;margin:7px 3px 12px;line-height:1.35}
+
+    .mock-issue-box{
+      width:100%;min-height:88px;border:1px solid #dfe6e8;background:#fff;border-radius:13px;
+      padding:12px 13px;font-size:.95rem;color:#253845;resize:vertical;outline:none;
+      box-shadow:0 2px 8px rgba(31,62,73,.025);
+    }
+    .mock-issue-box:focus{border-color:#1aa579;box-shadow:0 0 0 3px rgba(26,165,121,.1)}
+
+    .mock-photo-box{
+      margin-top:12px;border:1px solid #e4eaec;background:#edf3f5;border-radius:14px;
+      min-height:80px;display:flex;align-items:center;justify-content:center;text-align:center;
+      color:#0f806d;font-weight:700;cursor:pointer;padding:12px;font-size:.95rem;
+    }
+    .mock-photo-box input{display:none}
+    .mock-photo-box .mock-photo-sub{display:block;font-size:.68rem;font-weight:500;color:#778791;margin-top:3px}
+    body.requester-mode #imagePreview{
+      margin-top:9px;border-radius:13px;max-height:220px;object-fit:cover;border:1px solid #e3eaec;background:#fff;
+    }
+
+    .mock-submit{
+      width:100%;border:0;border-radius:14px;padding:14px 12px;margin-top:13px;
+      background:linear-gradient(135deg,#19a977,#0e9569);color:#fff;font-family:inherit;
+      font-size:1.02rem;font-weight:700;cursor:pointer;box-shadow:0 7px 18px rgba(14,149,105,.2);
+    }
+    .mock-submit:disabled{background:#b8c6c3;box-shadow:none}
+
+    .mock-status-filter{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      background:#dff4f1;color:#1c6f69;border-radius:999px;padding:10px 14px;
+      font-size:.78rem;font-weight:700;margin-bottom:12px;
+    }
+    .mock-status-filter span:first-child{display:flex;align-items:center;gap:7px}
+
+    .mock-job-card{
+      background:#fff;border:1px solid #e4eaec;border-radius:15px;padding:13px;
+      margin-bottom:12px;box-shadow:0 5px 15px rgba(25,58,70,.06);
+    }
+    .mock-job-main{display:grid;grid-template-columns:82px minmax(0,1fr) 18px;gap:11px;align-items:start}
+    .mock-job-thumb{width:82px;height:82px;border-radius:11px;object-fit:cover;background:#eaf0f1;border:1px solid #e1e8ea}
+    .mock-job-thumb-fallback{width:82px;height:82px;border-radius:11px;background:#eaf0f1;display:flex;align-items:center;justify-content:center;font-size:30px;color:#7e9199}
+    .mock-job-id{font-size:.77rem;font-weight:800;color:#153049;line-height:1.3;overflow-wrap:anywhere}
+    .mock-job-name{font-size:1rem;font-weight:800;color:#172f44;margin-top:2px;line-height:1.25;overflow-wrap:anywhere}
+    .mock-job-meta{font-size:.73rem;color:#6f7d87;line-height:1.45;margin-top:4px}
+    .mock-job-chevron{font-size:1.4rem;color:#71818d;line-height:1.1;padding-top:14px}
+
+    .mock-progress{
+      position:relative;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;margin:15px 1px 7px;
+    }
+    .mock-progress:before{content:"";position:absolute;left:9%;right:9%;top:17px;height:4px;background:#dfe6e7;border-radius:9px}
+    .mock-progress-step{position:relative;z-index:1;text-align:center;min-width:0}
+    .mock-progress-dot{
+      width:35px;height:35px;border-radius:50%;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;
+      background:#dfe5e7;color:#7e8a91;border:3px solid #fff;font-size:14px;font-weight:800;
+    }
+    .mock-progress-step.done .mock-progress-dot{background:#36b985;color:#fff}
+    .mock-progress-step.current .mock-progress-dot{background:var(--mk-orange);color:#fff}
+    .mock-progress-label{font-size:.57rem;color:#727f87;line-height:1.18;white-space:normal}
+    .mock-progress-step.current .mock-progress-label{color:#ed7724;font-weight:800}
+    .mock-progress-step.done .mock-progress-label{color:#458873;font-weight:700}
+
+    .mock-state-chip{
+      width:fit-content;max-width:100%;margin:8px auto 10px;border-radius:999px;
+      padding:7px 12px;background:#fff0e6;color:#dc701f;font-size:.74rem;font-weight:800;text-align:center;
+    }
+    .mock-state-chip.complete{background:#dcf5e9;color:#18845c}
+
+    .mock-history{margin-top:9px;background:#f5f8f9;border-radius:11px;overflow:hidden}
+    .mock-history-head{padding:9px 11px;font-size:.76rem;font-weight:800;color:#42535f;border-bottom:1px solid #e9edef}
+    .mock-history-body{padding:7px 11px 9px}
+    .mock-history-row{display:grid;grid-template-columns:48px minmax(0,1fr);gap:7px;font-size:.7rem;line-height:1.7;color:#66757f}
+    .mock-history-row strong{color:#42525c;font-weight:600}
+
+    .mock-bottom-nav{
+      position:fixed;bottom:0;left:50%;transform:translateX(-50%);z-index:50;
+      width:min(100%,440px);height:72px;background:rgba(255,255,255,.98);border-top:1px solid #e3e9eb;
+      box-shadow:0 -5px 18px rgba(22,52,64,.06);align-items:center;justify-content:space-around;padding:5px 12px 8px;
+    }
+    .mock-nav-btn{
+      flex:1;border:0;background:transparent;font-family:inherit;color:#70808b;cursor:pointer;text-align:center;
+      font-size:.67rem;padding:4px 2px;line-height:1.15;font-weight:600;
+    }
+    .mock-nav-icon{display:block;font-size:21px;margin-bottom:3px}
+    .mock-nav-btn.active{color:#0d9670;font-weight:800}
+
+    .mock-profile-card{text-align:center;padding:3px 2px 6px}
+    .mock-profile-avatar{width:64px;height:64px;border-radius:50%;margin:0 auto 9px;background:#dff3ef;color:#0e806d;display:flex;align-items:center;justify-content:center;font-size:29px}
+    .mock-profile-name{font-weight:800;font-size:1.05rem;color:#1c3343}
+    .mock-profile-area{font-size:.8rem;color:#71808a;margin-top:4px}
+
+    @media(max-width:380px){
+      .mock-info-row{grid-template-columns:26px 94px minmax(0,1fr)}
+      .mock-info-label{font-size:.71rem}.mock-info-value{font-size:.83rem}
+      .mock-job-main{grid-template-columns:72px minmax(0,1fr) 14px}.mock-job-thumb,.mock-job-thumb-fallback{width:72px;height:72px}
+      .mock-progress-dot{width:31px;height:31px}.mock-progress:before{top:15px}.mock-progress-label{font-size:.52rem}
+    }
+
   </style>
 </head>
 
 <body>
 
 <div class="app">
+
+  <div id="requesterTopbar" class="mock-topbar requester-chrome">
+    <button type="button" class="mock-back" onclick="requesterBack()">‹</button>
+    <div id="requesterHeaderTitle" class="mock-topbar-title">แจ้งซ่อม</div>
+  </div>
 
   <!-- =========================
        TABS
@@ -863,63 +1076,66 @@
   </div>
 
   <!-- =========================
-       PAGE 1 : แจ้งซ่อม
+       PAGE 1 : แจ้งซ่อม — MOCKUP STYLE
   ========================== -->
   <section id="repairPage" class="page active">
+    <input id="reporter" type="hidden">
+    <input id="floor" type="hidden">
+    <input id="line" type="hidden">
+    <input id="machineCode" type="hidden">
+    <input id="machineName" type="hidden">
+    <input id="issue" type="hidden">
 
-    <label for="floor">ชั้น</label>
-    <select id="floor" onchange="updateLineOptions()">
-      <option value="">-- กรุณาเลือกชั้น --</option>
-      <option value="ชั้น 3">ชั้น 3</option>
-      <option value="ชั้น 4">ชั้น 4</option>
-    </select>
+    <button type="button" class="mock-scan-card" onclick="openScanner()">
+      <div class="mock-scan-icon">▥</div>
+      <div>
+        <div class="mock-scan-title">สแกนบาร์โค้ดเครื่องจักร</div>
+        <div class="mock-scan-sub">แตะเพื่อสแกน</div>
+      </div>
+    </button>
+    <button type="button" class="mock-manual-link" onclick="openManualMachineModal()">สแกนไม่ติด? กรอกรหัสเครื่องแทน</button>
 
-    <label for="line">LINE การผลิต</label>
-    <select id="line" required>
-      <option value="">-- กรุณาเลือก LINE --</option>
-    </select>
-
-    <label for="reporter">ผู้แจ้ง</label>
-    <input id="reporter" type="text" placeholder="กรุณากรอกชื่อผู้แจ้ง" required>
-
-    <label for="machineCode">รหัสเครื่องจักร</label>
-    <div class="machine-row">
-      <input id="machineCode" type="text" placeholder="พิมพ์/สแกนรหัสเครื่องจักร">
-      <button class="scan-btn" onclick="openScanner()">▦ สแกน</button>
+    <div class="mock-info-card">
+      <div class="mock-info-row">
+        <div class="mock-info-icon">⚙️</div><div class="mock-info-label">รหัสเครื่องจักร:</div>
+        <div id="autoMachineCode" class="mock-info-value waiting">รอสแกน</div>
+      </div>
+      <div class="mock-info-row">
+        <div class="mock-info-icon">🏭</div><div class="mock-info-label">ชื่อเครื่องจักร:</div>
+        <div id="autoMachineName" class="mock-info-value waiting">รอสแกน</div>
+      </div>
+      <div class="mock-info-row">
+        <div class="mock-info-icon">▰</div><div class="mock-info-label">ชั้น:</div>
+        <div id="autoRequesterFloor" class="mock-info-value waiting">กำลังตรวจสอบ...</div>
+      </div>
+      <div class="mock-info-row">
+        <div class="mock-info-icon">🏢</div><div class="mock-info-label">LINE:</div>
+        <div id="autoRequesterLine" class="mock-info-value waiting">กำลังตรวจสอบ...</div>
+      </div>
+      <div class="mock-info-row">
+        <div class="mock-info-icon">👤</div><div class="mock-info-label">ผู้แจ้ง:</div>
+        <div id="autoReporterName" class="mock-info-value waiting">กำลังตรวจสอบ...</div>
+      </div>
     </div>
+    <div id="requesterAccountNote" class="mock-helper">* ระบบดึงชื่อผู้แจ้ง • ชั้น • LINE จาก LINE User ID ให้อัตโนมัติ</div>
 
-    <label for="machineName">ชื่อเครื่องจักร</label>
-    <input id="machineName" type="text" readonly placeholder="จะแสดงอัตโนมัติ">
+    <textarea id="issueDetail" class="mock-issue-box" placeholder="กรอกอาการ / รายละเอียดที่พบ..."></textarea>
 
-    <label for="issue">อาการที่เสีย</label>
-    <textarea id="issue" placeholder="ระบุอาการเสีย..."></textarea>
-
-    <label>แนบรูปภาพ</label>
-    <label class="image-box">
-      📷 ถ่ายรูป / เลือกรูปภาพ
-      <input id="imageInput" type="file" accept="image/*" capture="environment"
-             onchange="previewImage(event)">
+    <label class="mock-photo-box">
+      <div>📷 &nbsp;+ แนบรูป<span class="mock-photo-sub">ถ่ายรูปหรือเลือกรูปจากอุปกรณ์ (ถ้ามี)</span></div>
+      <input id="imageInput" type="file" accept="image/*" capture="environment" onchange="previewImage(event)">
     </label>
     <img id="imagePreview">
 
-    <div class="bottom-actions">
-      <button class="btn btn-cancel" onclick="resetForm()">ยกเลิก</button>
-      <button class="btn btn-submit" onclick="submitRepair()">ส่งแจ้งซ่อม</button>
-    </div>
+    <button id="requesterSubmitBtn" type="button" class="mock-submit" onclick="submitRepair()">➤ &nbsp;ส่งแจ้งซ่อม</button>
   </section>
 
   <!-- =========================
-       PAGE 2 : งานที่ฉันแจ้ง
+       PAGE 2 : สถานะงานของฉัน — MOCKUP STYLE
   ========================== -->
   <section id="reportedPage" class="page">
-
-    <div class="section-title">📊 งานที่ฉันแจ้ง</div>
-    <div class="sub-title">ติดตามสถานะงานซ่อมที่คุณเป็นผู้แจ้ง</div>
-
-    <div id="reportedContent">
-      <div class="loading">กำลังโหลด...</div>
-    </div>
-
+    <div class="mock-status-filter"><span>👤 แสดงเฉพาะงานของฉัน</span><span>›</span></div>
+    <div id="reportedContent"><div class="loading">กำลังโหลด...</div></div>
   </section>
 
   <!-- =========================
@@ -1028,6 +1244,12 @@
 
   </section>
 
+  <div id="requesterBottomNav" class="mock-bottom-nav requester-chrome">
+    <button id="mockNavRepair" class="mock-nav-btn active" type="button" onclick="switchTab('repair')"><span class="mock-nav-icon">🛠️</span>แจ้งซ่อม</button>
+    <button id="mockNavReported" class="mock-nav-btn" type="button" onclick="switchTab('reported')"><span class="mock-nav-icon">☷</span>สถานะงานของฉัน</button>
+    <button id="mockNavProfile" class="mock-nav-btn" type="button" onclick="openRequesterProfile()"><span class="mock-nav-icon">👤</span>โปรไฟล์</button>
+  </div>
+
 </div>
 
 
@@ -1088,6 +1310,23 @@
 
 
 <!-- =========================
+     MANUAL MACHINE CODE MODAL
+========================== -->
+
+<div id="requesterProfileModal" class="modal-bg">
+  <div class="modal">
+    <div class="mock-profile-card">
+      <div class="mock-profile-avatar">👤</div>
+      <div id="profileModalName" class="mock-profile-name">-</div>
+      <div id="profileModalArea" class="mock-profile-area">-</div>
+    </div>
+    <button class="modal-close" onclick="closeModal('requesterProfileModal')">ปิด</button>
+  </div>
+</div>
+
+<div id="manualMachineModal" class="modal-bg"><div class="modal"><h3>⌨️ กรอกรหัสเครื่องจักร</h3><div class="sub-title">ใช้เฉพาะตอนสแกนบาร์โค้ดไม่ได้</div><input id="manualMachineCodeInput" type="text" placeholder="เช่น MC-3F-024" autocomplete="off"><div class="manual-modal-actions"><button type="button" class="btn btn-cancel" onclick="closeModal('manualMachineModal')">ยกเลิก</button><button type="button" class="btn btn-submit" onclick="confirmManualMachineCode()">ยืนยัน</button></div></div></div>
+
+<!-- =========================
      SCANNER MODAL
 ========================== -->
 <div id="scannerModal" class="modal-bg">
@@ -1120,6 +1359,9 @@ let currentFinishJobId = "";
 let beforeImageBase64 = "";
 let afterImageBase64 = "";
 let scanner = null;
+let registeredReporterName = "";
+let requesterIsRegistered = false;
+let currentMachineInfo = null;
 
 
 /* =========================================================
@@ -1167,12 +1409,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // เมื่อพิมพ์รหัสเครื่อง ให้ลองค้นชื่อเครื่อง
-  document.getElementById("machineCode")
-    .addEventListener("change", lookupMachine);
-
-  document.getElementById("machineCode")
-    .addEventListener("blur", lookupMachine);
+  if (currentUserRole === "requester") {
+    await loadRequesterProfile();
+  }
 });
 
 
@@ -1214,37 +1453,30 @@ function applyRoleUI(isTechnician) {
   const tabsWrap = document.getElementById("mainTabs");
 
   tabsWrap.classList.remove("role-requester", "role-technician");
+  document.body.classList.remove("requester-mode");
 
-  document.querySelectorAll(".page")
-    .forEach(page => page.classList.remove("active"));
-
-  document.querySelectorAll(".tab-btn")
-    .forEach(btn => btn.classList.remove("active"));
+  document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
 
   if (isTechnician) {
     currentUserRole = "technician";
     tabsWrap.classList.add("role-technician");
-
-    // ช่างเห็นเฉพาะ "งานของฉัน"
     repairBtn.style.display = "none";
     reportedBtn.style.display = "none";
     technicianBtn.style.display = "";
-
     technicianBtn.classList.add("active");
     document.getElementById("technicianPage").classList.add("active");
     loadTechnicianJobs();
-
   } else {
     currentUserRole = "requester";
+    document.body.classList.add("requester-mode");
     tabsWrap.classList.add("role-requester");
-
-    // ผู้แจ้งเห็นเฉพาะ "แจ้งซ่อม" + "ดูสถานะงาน"
     repairBtn.style.display = "";
     reportedBtn.style.display = "";
     technicianBtn.style.display = "none";
-
     repairBtn.classList.add("active");
     document.getElementById("repairPage").classList.add("active");
+    updateRequesterChrome("repair");
   }
 }
 
@@ -1276,29 +1508,22 @@ function updateLineOptions() {
 
 function switchTab(tab) {
 
-  // กันเปิดหน้าที่ไม่ตรง Role แม้เรียกจาก console/URL
-  if (currentUserRole === "technician" && tab !== "technician") {
-    return;
-  }
+  if (currentUserRole === "technician" && tab !== "technician") return;
+  if (currentUserRole === "requester" && tab === "technician") return;
 
-  if (currentUserRole === "requester" && tab === "technician") {
-    return;
-  }
-
-  document.querySelectorAll(".page")
-    .forEach(page => page.classList.remove("active"));
-
-  document.querySelectorAll(".tab-btn")
-    .forEach(btn => btn.classList.remove("active"));
+  document.querySelectorAll(".page").forEach(page => page.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
 
   if (tab === "repair") {
     document.getElementById("repairPage").classList.add("active");
     document.getElementById("tabRepairBtn").classList.add("active");
+    updateRequesterChrome("repair");
   }
 
   if (tab === "reported") {
     document.getElementById("reportedPage").classList.add("active");
     document.getElementById("tabReportedBtn").classList.add("active");
+    updateRequesterChrome("reported");
     loadMyReportedJobs();
   }
 
@@ -1307,60 +1532,93 @@ function switchTab(tab) {
     document.getElementById("tabTechnicianBtn").classList.add("active");
     loadTechnicianJobs();
   }
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function updateRequesterChrome(tab){
+  if(currentUserRole!=="requester") return;
+  const title=document.getElementById("requesterHeaderTitle");
+  const repair=document.getElementById("mockNavRepair");
+  const reported=document.getElementById("mockNavReported");
+  const profile=document.getElementById("mockNavProfile");
+  [repair,reported,profile].forEach(el=>el&&el.classList.remove("active"));
+  if(tab==="reported"){
+    title.textContent="สถานะงานของฉัน";
+    reported&&reported.classList.add("active");
+  }else{
+    title.textContent="แจ้งซ่อม";
+    repair&&repair.classList.add("active");
+  }
+}
+
+function requesterBack(){
+  if(document.getElementById("reportedPage").classList.contains("active")) switchTab("repair");
+  else if(typeof liff!=="undefined" && liff.isInClient()) liff.closeWindow();
+}
+
+function openRequesterProfile(){
+  document.getElementById("profileModalName").textContent=registeredReporterName||"ยังไม่ได้ลงทะเบียน";
+  const floor=document.getElementById("floor").value||"-";
+  const line=document.getElementById("line").value||"-";
+  document.getElementById("profileModalArea").textContent=floor+" • LINE "+line;
+  document.getElementById("requesterProfileModal").classList.add("show");
+  document.querySelectorAll(".mock-nav-btn").forEach(el=>el.classList.remove("active"));
+  document.getElementById("mockNavProfile").classList.add("active");
 }
 
 
 /* =========================================================
-   MACHINE LOOKUP
+   REQUESTER PROFILE + MACHINE LOOKUP
 ========================================================= */
-
-async function lookupMachine() {
-
-  const code = document.getElementById("machineCode").value.trim();
-
-  if (!code) {
-    document.getElementById("machineName").value = "";
-    return;
-  }
-
-  if (
-    !GAS_WEB_APP_URL ||
-    GAS_WEB_APP_URL === "YOUR_GAS_WEB_APP_URL"
-  ) {
-    // Preview
-    const demo = {
-      "A-103": "เครื่องจักร A-103",
-      "B-204": "เครื่องจักร B-204",
-      "C-015": "เครื่องจักร C-015"
-    };
-
-    document.getElementById("machineName").value =
-      demo[code] || "ไม่พบข้อมูลเครื่องจักร";
-
-    return;
-  }
-
-  try {
-
-    const url =
-      GAS_WEB_APP_URL +
-      "?action=getMachineName&code=" +
-      encodeURIComponent(code);
-
-    const res = await fetch(url);
-    const data = await res.json();
-
-    document.getElementById("machineName").value =
-      data.name || "ไม่พบข้อมูลเครื่องจักร";
-
-  } catch (err) {
-
-    console.error(err);
-    document.getElementById("machineName").value =
-      "ค้นหาข้อมูลไม่สำเร็จ";
-  }
+async function loadRequesterProfile(){
+  const nameEl=document.getElementById("autoReporterName");
+  const floorEl=document.getElementById("autoRequesterFloor");
+  const lineEl=document.getElementById("autoRequesterLine");
+  const noteEl=document.getElementById("requesterAccountNote");
+  requesterIsRegistered=false;registeredReporterName="";
+  document.getElementById("reporter").value="";document.getElementById("floor").value="";document.getElementById("line").value="";
+  if(!lineUserId){nameEl.textContent="กรุณาเปิดผ่าน LINE";floorEl.textContent="-";lineEl.textContent="-";noteEl.textContent="ไม่พบ LINE User ID — กรุณาเปิดระบบผ่าน LINE";return;}
+  try{
+    const res=await fetch(GAS_WEB_APP_URL+"?action=getRequesterProfile&userId="+encodeURIComponent(lineUserId));
+    const data=await res.json();
+    if(data&&data.registered===true&&data.name&&data.floor&&data.line){
+      registeredReporterName=String(data.name).trim();requesterIsRegistered=true;
+      const floor=String(data.floor).trim(),line=String(data.line).trim();
+      document.getElementById("reporter").value=registeredReporterName;document.getElementById("floor").value=floor;document.getElementById("line").value=line;
+      nameEl.textContent=registeredReporterName;floorEl.textContent=floor;lineEl.textContent=line;
+      [nameEl,floorEl,lineEl].forEach(el=>el.classList.remove("waiting"));
+      noteEl.textContent="* ระบบดึงชื่อผู้แจ้งและพื้นที่จาก LINE User ID ให้อัตโนมัติ";return;
+    }
+    nameEl.textContent=(data&&data.name)?String(data.name):"ยังไม่ได้ลงทะเบียน";
+    floorEl.textContent=(data&&data.floor)?String(data.floor):"-";
+    lineEl.textContent=(data&&data.line)?String(data.line):"-";
+    noteEl.textContent=(data&&data.found)?"ข้อมูลผู้แจ้งยังไม่ครบ กรุณาเติม ชื่อจริง / ชั้น / LINE ใน RepairUsers":"LINE นี้ยังไม่ได้ลงทะเบียนใน RepairUsers กรุณาติดต่อผู้ดูแลระบบ";
+  }catch(err){console.error(err);nameEl.textContent="ตรวจสอบข้อมูลไม่สำเร็จ";floorEl.textContent="-";lineEl.textContent="-";noteEl.textContent="เชื่อมต่อข้อมูลผู้แจ้งไม่สำเร็จ กรุณาลองใหม่";}
 }
-
+function clearMachineInfo(){
+  currentMachineInfo=null;
+  ["machineCode","machineName"].forEach(id=>document.getElementById(id).value="");
+  const codeEl=document.getElementById("autoMachineCode"),nameEl=document.getElementById("autoMachineName");
+  codeEl.textContent="รอสแกน";nameEl.textContent="รอสแกน";codeEl.classList.add("waiting");nameEl.classList.add("waiting");
+}
+function fillMachineInfo(info){
+  currentMachineInfo=info;
+  document.getElementById("machineCode").value=info.code||"";document.getElementById("machineName").value=info.name||"";
+  const codeEl=document.getElementById("autoMachineCode"),nameEl=document.getElementById("autoMachineName");
+  codeEl.textContent=info.code||"-";nameEl.textContent=info.name||"-";codeEl.classList.remove("waiting");nameEl.classList.remove("waiting");
+}
+async function lookupMachine(codeOverride){
+  const code=String(codeOverride||document.getElementById("machineCode").value||"").trim().toUpperCase();if(!code){clearMachineInfo();return false;}
+  try{showToast("กำลังตรวจสอบเครื่อง...");const res=await fetch(GAS_WEB_APP_URL+"?action=getMachineInfo&code="+encodeURIComponent(code));const data=await res.json();
+    if(!data||data.found!==true){clearMachineInfo();showToast("ไม่พบรหัสเครื่องนี้ในระบบ");return false;}
+    if(!data.name){clearMachineInfo();alert("เครื่องนี้ยังไม่มีชื่อเครื่องจักรใน MachineMaster");return false;}
+    fillMachineInfo({code:String(data.code||code).trim().toUpperCase(),name:String(data.name||"").trim()});showToast("✓ พบข้อมูลเครื่องแล้ว");return true;
+  }catch(err){console.error(err);clearMachineInfo();showToast("ค้นหาข้อมูลเครื่องไม่สำเร็จ");return false;}
+}
+function openManualMachineModal(){const input=document.getElementById("manualMachineCodeInput");input.value=document.getElementById("machineCode").value||"";document.getElementById("manualMachineModal").classList.add("show");setTimeout(()=>input.focus(),120);}
+async function confirmManualMachineCode(){const code=String(document.getElementById("manualMachineCodeInput").value||"").trim();if(!code){showToast("กรุณากรอกรหัสเครื่องจักร");return;}closeModal("manualMachineModal");await lookupMachine(code);}
+function buildIssueText(){return document.getElementById("issueDetail").value.trim();}
 
 /* =========================================================
    IMAGE
@@ -1393,121 +1651,21 @@ function previewImage(event) {
    SUBMIT REPAIR
 ========================================================= */
 
-async function submitRepair() {
-
-  const floor = document.getElementById("floor").value;
-  const machineCode =
-    document.getElementById("machineCode").value.trim();
-  const machineName =
-    document.getElementById("machineName").value.trim();
-  const issue =
-    document.getElementById("issue").value.trim();
-
-  if (!floor) {
-    showToast("กรุณาเลือกชั้น");
-    return;
-  }
-
-  const line = document.getElementById("line").value;
-  if (!line) {
-    showToast("กรุณาเลือก LINE การผลิต");
-    return;
-  }
-
-  const reporter = document.getElementById("reporter").value.trim();
-  if (!reporter) {
-    showToast("กรุณากรอกชื่อผู้แจ้ง");
-    return;
-  }
-
-  if (!machineCode) {
-    showToast("กรุณาระบุรหัสเครื่องจักร");
-    return;
-  }
-
-  if (!issue) {
-    showToast("กรุณาระบุอาการเสีย");
-    return;
-  }
-
-  const payload = {
-    action: "CREATE_REPAIR_JOB",
-    userId: lineUserId,
-    reporter: document.getElementById("reporter").value.trim(),
-    line: document.getElementById("line").value,
-    floor: floor,
-    machineCode: machineCode,
-    machineName: machineName,
-    issue: issue,
-    image: beforeImageBase64
-  };
-
-  // Preview mode
-  if (
-    !GAS_WEB_APP_URL ||
-    GAS_WEB_APP_URL === "YOUR_GAS_WEB_APP_URL"
-  ) {
-    alert(
-      "ตัวอย่างการส่งข้อมูล\n\n" +
-      JSON.stringify(payload, null, 2)
-    );
-
-    resetForm();
-    return;
-  }
-
-  try {
-
-    showToast("กำลังส่งแจ้งซ่อม...");
-
-    const response = await fetch(GAS_WEB_APP_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8"
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const result = await response.json();
-
-    if (result.success === true || result.status === "success") {
-      alert(
-        "ส่งแจ้งซ่อมเรียบร้อยแล้ว\n" +
-        (result.jobId ? "Job ID: " + result.jobId : "")
-      );
-
-      resetForm();
-
-    } else {
-      alert(result.message || result.error || "ส่งข้อมูลไม่สำเร็จ");
-    }
-
-  } catch (err) {
-
-    console.error(err);
-    alert("เกิดข้อผิดพลาดในการส่งข้อมูล");
-  }
+async function submitRepair(){
+  const machineCode=document.getElementById("machineCode").value.trim(),machineName=document.getElementById("machineName").value.trim(),floor=document.getElementById("floor").value.trim(),line=document.getElementById("line").value.trim(),issue=buildIssueText();
+  if(!lineUserId){showToast("กรุณาเปิดระบบผ่าน LINE");return;}
+  if(!requesterIsRegistered||!registeredReporterName||!floor||!line){alert("ข้อมูลผู้แจ้งยังไม่พร้อม\nกรุณาให้ผู้ดูแลลงทะเบียน ชื่อจริง / ชั้น / LINE ใน RepairUsers");return;}
+  if(!machineCode||!machineName){showToast("กรุณาสแกนเครื่องจักรก่อน");return;}
+  if(!issue){showToast("กรุณากรอกอาการที่พบ");return;}
+  const payload={action:"CREATE_REPAIR_JOB",userId:lineUserId,machineCode,issue,image:beforeImageBase64};const btn=document.getElementById("requesterSubmitBtn");btn.disabled=true;btn.textContent="กำลังส่ง...";
+  try{const response=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});const result=await response.json();if(result.success===true||result.status==="success"){alert("ส่งแจ้งซ่อมเรียบร้อยแล้ว"+(result.jobId?"\n"+result.jobId:""));resetForm();switchTab("reported");}else alert(result.message||result.error||"ส่งข้อมูลไม่สำเร็จ");}catch(err){console.error(err);alert("เกิดข้อผิดพลาดในการส่งข้อมูล");}finally{btn.disabled=false;btn.innerHTML="➤ &nbsp;ส่งแจ้งซ่อม";}
 }
-
 
 /* =========================================================
    RESET
 ========================================================= */
 
-function resetForm() {
-
-  document.getElementById("floor").value = "";
-  document.getElementById("machineCode").value = "";
-  document.getElementById("machineName").value = "";
-  document.getElementById("issue").value = "";
-  document.getElementById("imageInput").value = "";
-  beforeImageBase64 = "";
-
-  const img = document.getElementById("imagePreview");
-  img.src = "";
-  img.style.display = "none";
-}
-
+function resetForm(){clearMachineInfo();document.getElementById("issue").value="";document.getElementById("issueDetail").value="";document.getElementById("imageInput").value="";beforeImageBase64="";const img=document.getElementById("imagePreview");img.src="";img.style.display="none";document.getElementById("reporter").value=registeredReporterName||"";}
 
 /* =========================================================
    REPORTED JOBS
@@ -1602,37 +1760,34 @@ async function loadMyReportedJobs() {
 }
 
 
-function renderReportedJob(job) {
-
-  const statusClass = getStatusClass(job.status);
-
-  return `
-    <div class="job-card">
-
-      <div class="job-head">
-        <div class="job-id">${escapeHtml(job.jobId || "-")}</div>
-        <div class="status ${statusClass}">
-          ${escapeHtml(job.status || "ไม่ทราบสถานะ")}
-        </div>
-      </div>
-
-      <div class="machine-name">
-        ${escapeHtml(job.machineName || job.machineCode || "-")}
-      </div>
-
-      <div class="issue">
-        ${escapeHtml(job.issue || "-")}
-      </div>
-
-      <div class="meta">
-        📍 ${escapeHtml(job.floor || "-")}<br>
-        🕐 ${escapeHtml(job.reportDate || "")}
-      </div>
-
-    </div>
-  `;
+function getRequesterProgress(status){const s=String(status||"");if(s.includes("เสร็จ"))return 5;if(s.includes("ตรวจรับ"))return 4;if(s.includes("กำลัง")||s.includes("ดำเนินการ")||s.includes("รออะไหล่"))return 3;if(s.includes("รับงาน")||s.includes("รอเริ่ม"))return 2;return 1;}
+function getRequesterStatusText(status){const s=String(status||"");if(s.includes("เสร็จ"))return"✓ เสร็จสิ้น";if(s.includes("ตรวจรับ"))return"🔎 รอตรวจรับ";if(s.includes("รออะไหล่"))return"🔩 ช่างกำลังรออะไหล่";if(s.includes("กำลัง")||s.includes("ดำเนินการ"))return"🔧 ช่างกำลังดำเนินการ";if(s.includes("รับงาน")||s.includes("รอเริ่ม"))return"👨‍🔧 ช่างรับงานแล้ว";if(s.includes("ซ่อมไม่ได้"))return"⚠️ ซ่อมไม่ได้";if(s.includes("ส่งต่อ"))return"🔄 กำลังส่งต่องาน";return"🟡 แจ้งแล้ว รอช่างรับงาน";}
+function renderProgressSteps(status){
+  const current=getRequesterProgress(status),steps=[["✓","แจ้งแล้ว"],["✓","รับงานแล้ว"],["🔧","กำลังซ่อม"],["🔎","รอตรวจรับ"],["⚑","เสร็จสิ้น"]];
+  return `<div class="mock-progress">`+steps.map((step,index)=>{const n=index+1;let cls="";if(n<current||current===5)cls="done";else if(n===current)cls="current";return `<div class="mock-progress-step ${cls}"><div class="mock-progress-dot">${step[0]}</div><div class="mock-progress-label">${step[1]}</div></div>`;}).join("")+`</div>`;
 }
-
+function renderReportedJob(job){
+  const status=String(job.status||"รอดำเนินการ"),isComplete=status.includes("เสร็จ"),history=[];
+  if(job.reportTime||job.reportDate)history.push(`<div class="mock-history-row"><span>${escapeHtml(job.reportTime||"")}</span><strong>แจ้งซ่อม</strong></div>`);
+  if(job.technician)history.push(`<div class="mock-history-row"><span></span><strong>ช่างรับงาน: ${escapeHtml(job.technician)}</strong></div>`);
+  if(job.startTime||job.startDate)history.push(`<div class="mock-history-row"><span>${escapeHtml(job.startTime||"")}</span><strong>เริ่มซ่อม</strong></div>`);
+  if(job.finishTime||job.finishDate)history.push(`<div class="mock-history-row"><span>${escapeHtml(job.finishTime||"")}</span><strong>${status.includes("ตรวจรับ")?"ช่างส่งตรวจรับ":"ปิดงาน"}</strong></div>`);
+  const image=job.beforeImage?`<img class="mock-job-thumb" src="${escapeHtml(job.beforeImage)}" alt="รูปเครื่องจักร" onerror="this.outerHTML='<div class=&quot;mock-job-thumb-fallback&quot;>⚙️</div>'">`:`<div class="mock-job-thumb-fallback">⚙️</div>`;
+  return `<div class="mock-job-card">
+    <div class="mock-job-main">
+      ${image}
+      <div>
+        <div class="mock-job-id">${escapeHtml(job.jobId||"-")}</div>
+        <div class="mock-job-name">${escapeHtml(job.machineName||job.machineCode||"-")}</div>
+        <div class="mock-job-meta">${escapeHtml(job.floor||"-")}${job.line?" • LINE "+escapeHtml(job.line):""}<br>อาการ: ${escapeHtml(job.issue||"-")}</div>
+      </div>
+      <div class="mock-job-chevron">›</div>
+    </div>
+    ${renderProgressSteps(status)}
+    <div class="mock-state-chip ${isComplete?"complete":""}">${getRequesterStatusText(status)}</div>
+    ${history.length?`<div class="mock-history"><div class="mock-history-head">▣ ประวัติงาน</div><div class="mock-history-body">${history.join("")}</div></div>`:""}
+  </div>`;
+}
 
 /* =========================================================
    TECHNICIAN JOBS
@@ -2104,12 +2259,8 @@ function openScanner() {
 
       decodedText => {
 
-        document.getElementById("machineCode").value =
-          decodedText;
-
-        lookupMachine();
-
         closeScanner();
+        lookupMachine(decodedText);
       },
 
       errorMessage => {

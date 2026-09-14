@@ -1177,10 +1177,38 @@
       .tech-job-image,.tech-job-image-fallback{width:68px;height:68px}
     }
 
+    /* =========================================================
+       STARTUP LOADING GATE — ซ่อนหน้าจริงจนเช็ก LINE/Role เสร็จ
+    ========================================================= */
+    body.app-booting{overflow:hidden;}
+    body.app-booting > .app{visibility:hidden;opacity:0;}
+    body:not(.app-booting) > .app{visibility:visible;opacity:1;transition:opacity .18s ease;}
+    #appBootLoader{
+      position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;
+      background:#f4f7f8;padding:24px;font-family:'Sarabun',sans-serif;
+    }
+    body:not(.app-booting) #appBootLoader{display:none;}
+    .app-boot-box{text-align:center;color:#173047;}
+    .app-boot-spinner{
+      width:46px;height:46px;margin:0 auto 16px;border:5px solid #dce9e8;
+      border-top-color:#0f766e;border-radius:50%;animation:appBootSpin .8s linear infinite;
+    }
+    .app-boot-title{font-size:1.08rem;font-weight:800;margin-bottom:5px;}
+    .app-boot-sub{font-size:.82rem;color:#71808c;}
+    @keyframes appBootSpin{to{transform:rotate(360deg);}}
+
   </style>
 </head>
 
-<body>
+<body class="app-booting">
+
+<div id="appBootLoader" role="status" aria-live="polite">
+  <div class="app-boot-box">
+    <div class="app-boot-spinner"></div>
+    <div class="app-boot-title">กำลังเข้าสู่ระบบ...</div>
+    <div class="app-boot-sub">กำลังตรวจสอบข้อมูลผู้ใช้งาน</div>
+  </div>
+</div>
 
 <div class="app">
 
@@ -1441,6 +1469,13 @@ let scannerPurpose = "requester";
    INIT
 ========================================================= */
 
+function finishAppBoot(){
+  document.body.classList.remove("app-booting");
+}
+
+// Safety fallback: ถ้าเครือข่ายช้ามาก จะไม่ปล่อยให้หน้า Loading ค้างถาวร
+setTimeout(finishAppBoot, 15000);
+
 document.addEventListener("DOMContentLoaded", async () => {
 
   let roleInfo = { isTechnician: false, technician: null };
@@ -1484,8 +1519,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   if (currentUserRole === "requester") {
-    await loadRequesterProfile();
+    try {
+      await loadRequesterProfile();
+    } catch (err) {
+      console.error("loadRequesterProfile init error:", err);
+    }
   }
+
+  // เปิดหน้าจริงเมื่อรู้ Role และโหลดข้อมูลเริ่มต้นเสร็จแล้ว
+  finishAppBoot();
 });
 
 

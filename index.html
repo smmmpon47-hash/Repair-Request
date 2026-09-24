@@ -1030,6 +1030,18 @@
     .mock-history-row{display:grid;grid-template-columns:48px minmax(0,1fr);gap:7px;font-size:.7rem;line-height:1.7;color:#66757f}
     .mock-history-row strong{color:#42525c;font-weight:600}
 
+    .mock-repair-result{
+      margin-top:11px;border:1px solid #dfe9e6;background:#f7fbf9;border-radius:13px;padding:11px;
+    }
+    .mock-repair-result-title{font-size:.8rem;font-weight:800;color:#28483f;margin-bottom:7px}
+    .mock-repair-result-row{display:grid;grid-template-columns:82px minmax(0,1fr);gap:8px;font-size:.72rem;line-height:1.5;padding:3px 0}
+    .mock-repair-result-row span:first-child{color:#71817a}.mock-repair-result-row strong{color:#344940;font-weight:700;overflow-wrap:anywhere}
+    .mock-after-photo{width:100%;max-height:240px;object-fit:cover;border-radius:11px;border:1px solid #dfe7e4;margin-top:9px;background:#fff}
+    .mock-accept-note{margin-top:10px;padding:9px 10px;border-radius:10px;background:#fff4e7;color:#a45e18;font-size:.7rem;line-height:1.45;text-align:center}
+    .mock-accept-btn{width:100%;border:0;border-radius:12px;padding:12px 10px;margin-top:10px;background:linear-gradient(135deg,#18aa79,#0d936b);color:#fff;font-family:inherit;font-size:.9rem;font-weight:800;cursor:pointer;box-shadow:0 5px 14px rgba(13,147,107,.16)}
+    .mock-accepted-note{margin-top:10px;padding:9px 10px;border-radius:10px;background:#e7f7ef;color:#1b8057;font-size:.72rem;font-weight:800;text-align:center}
+    .mock-job-card.accept-target{box-shadow:0 0 0 3px rgba(18,166,111,.18),0 7px 20px rgba(25,58,70,.08);border-color:#84ceb2}
+
     .mock-bottom-nav{
       position:fixed;bottom:0;left:50%;transform:translateX(-50%);z-index:50;
       width:min(100%,440px);height:72px;background:rgba(255,255,255,.98);border-top:1px solid #e3e9eb;
@@ -1109,12 +1121,12 @@
       background:#fff;border:1px solid #e3e9eb;border-radius:17px;padding:13px;margin-bottom:12px;
       box-shadow:0 5px 15px rgba(25,58,70,.055);
     }
-    .tech-job-top{display:grid;cursor:pointer;grid-template-columns:82px minmax(0,1fr);gap:12px;align-items:start}
+    .tech-job-top{display:grid;cursor:pointer;grid-template-columns:98px minmax(0,1fr);gap:12px;align-items:start}
     .tech-job-image{
-      width:82px;height:82px;border-radius:14px;object-fit:cover;background:#edf2f3;border:1px solid #e1e7e9;
+      width:98px;height:98px;border-radius:15px;object-fit:cover;background:#edf2f3;border:1px solid #e1e7e9;
     }
     .tech-job-image-fallback{
-      width:82px;height:82px;border-radius:14px;background:#edf2f3;display:flex;align-items:center;
+      width:98px;height:98px;border-radius:15px;background:#edf2f3;display:flex;align-items:center;
       justify-content:center;font-size:31px;color:#768990;border:1px solid #e1e7e9;
     }
     .tech-job-headline{display:flex;align-items:flex-start;justify-content:space-between;gap:7px}
@@ -1185,8 +1197,8 @@
 
     @media(max-width:370px){
       .tech-summary-grid{gap:4px}.tech-summary-card span{font-size:.54rem}
-      .tech-job-top{grid-template-columns:68px minmax(0,1fr)}
-      .tech-job-image,.tech-job-image-fallback{width:68px;height:68px}
+      .tech-job-top{grid-template-columns:82px minmax(0,1fr)}
+      .tech-job-image,.tech-job-image-fallback{width:82px;height:82px}
     }
 
     /* =========================================================
@@ -1499,7 +1511,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // ถ้าเปิดมาจากปุ่ม "รับงาน" ใน Flex:
   // เฉพาะผู้ที่ลงทะเบียนเป็นช่างเท่านั้นจึงรับงานได้
-  const jobIdFromUrl = new URLSearchParams(window.location.search).get("jobId");
+  const urlParams = new URLSearchParams(window.location.search);
+  const jobIdFromUrl = urlParams.get("jobId");
+  const acceptRepairJobIdFromUrl = urlParams.get("acceptRepairJobId");
 
   if (jobIdFromUrl) {
     if (currentUserRole === "technician" && lineUserId) {
@@ -1512,6 +1526,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (currentUserRole === "requester") {
     try {
       await loadRequesterProfile();
+
+      if (acceptRepairJobIdFromUrl) {
+        await openReporterAcceptanceFromLink(acceptRepairJobIdFromUrl);
+      }
     } catch (err) {
       console.error("loadRequesterProfile init error:", err);
     }
@@ -1900,14 +1918,43 @@ function renderProgressSteps(status){
   const current=getRequesterProgress(status),steps=[["✓","แจ้งแล้ว"],["✓","รับงานแล้ว"],["🔧","กำลังซ่อม"],["🔎","รอตรวจรับ"],["⚑","เสร็จสิ้น"]];
   return `<div class="mock-progress">`+steps.map((step,index)=>{const n=index+1;let cls="";if(n<current||current===5)cls="done";else if(n===current)cls="current";return `<div class="mock-progress-step ${cls}"><div class="mock-progress-dot">${step[0]}</div><div class="mock-progress-label">${step[1]}</div></div>`;}).join("")+`</div>`;
 }
+function reporterCardDomId(jobId){
+  return "reportedJob_" + String(jobId||"").replace(/[^a-zA-Z0-9_-]/g,"_");
+}
+
 function renderReportedJob(job){
-  const status=String(job.status||"รอดำเนินการ"),isComplete=status.includes("เสร็จ"),history=[];
+  const status=String(job.status||"รอดำเนินการ");
+  const isComplete=status.includes("เสร็จสิ้น") || status.includes("ปิดงาน");
+  const waitingAcceptance=status.includes("รอตรวจรับ") || status.includes("ส่งตรวจรับ");
+  const history=[];
+
   if(job.reportTime||job.reportDate)history.push(`<div class="mock-history-row"><span>${escapeHtml(job.reportTime||"")}</span><strong>แจ้งซ่อม</strong></div>`);
   if(job.technician)history.push(`<div class="mock-history-row"><span></span><strong>ช่างรับงาน: ${escapeHtml(job.technician)}</strong></div>`);
   if(job.startTime||job.startDate)history.push(`<div class="mock-history-row"><span>${escapeHtml(job.startTime||"")}</span><strong>เริ่มซ่อม</strong></div>`);
-  if(job.finishTime||job.finishDate)history.push(`<div class="mock-history-row"><span>${escapeHtml(job.finishTime||"")}</span><strong>${status.includes("ตรวจรับ")?"ช่างส่งตรวจรับ":"ปิดงาน"}</strong></div>`);
-  const image=job.beforeImage?`<img class="mock-job-thumb" src="${escapeHtml(job.beforeImage)}" alt="รูปเครื่องจักร" onerror="this.outerHTML='<div class=&quot;mock-job-thumb-fallback&quot;>⚙️</div>'">`:`<div class="mock-job-thumb-fallback">⚙️</div>`;
-  return `<div class="mock-job-card">
+  if(job.finishTime||job.finishDate)history.push(`<div class="mock-history-row"><span>${escapeHtml(job.finishTime||"")}</span><strong>${waitingAcceptance?"ช่างส่งตรวจรับ":"ช่างซ่อมเสร็จ"}</strong></div>`);
+
+  const image=job.beforeImage
+    ? `<img class="mock-job-thumb" src="${escapeHtml(job.beforeImage)}" alt="รูปตอนแจ้ง" onerror="this.outerHTML='<div class=&quot;mock-job-thumb-fallback&quot;>⚙️</div>'">`
+    : `<div class="mock-job-thumb-fallback">⚙️</div>`;
+
+  const showRepairResult = waitingAcceptance || isComplete;
+  const repairSeconds = Number(job.repairElapsedSeconds||0);
+  const repairResult = showRepairResult ? `
+    <div class="mock-repair-result">
+      <div class="mock-repair-result-title">🔧 ผลการซ่อมจากช่าง</div>
+      <div class="mock-repair-result-row"><span>ช่าง</span><strong>${escapeHtml(job.technician||"-")}</strong></div>
+      <div class="mock-repair-result-row"><span>ประเภท</span><strong>${escapeHtml(job.repairType||"-")}</strong></div>
+      <div class="mock-repair-result-row"><span>รายละเอียด</span><strong>${escapeHtml(job.repairDetail||"-")}</strong></div>
+      ${repairSeconds>0?`<div class="mock-repair-result-row"><span>เวลาซ่อมจริง</span><strong>${formatRepairDuration(repairSeconds)}</strong></div>`:""}
+      ${job.afterImage?`<img class="mock-after-photo" src="${escapeHtml(job.afterImage)}" alt="รูปหลังซ่อม">`:""}
+    </div>` : "";
+
+  const acceptanceAction = waitingAcceptance
+    ? `<div class="mock-accept-note">ตรวจสอบเครื่องและผลการซ่อมก่อนกดยืนยัน</div>
+       <button type="button" class="mock-accept-btn" onclick="acceptRepairJob('${escapeJs(job.jobId)}')">✓ ตรวจรับงาน</button>`
+    : (isComplete ? `<div class="mock-accepted-note">✓ ตรวจรับและปิดงานแล้ว</div>` : "");
+
+  return `<div id="${reporterCardDomId(job.jobId)}" class="mock-job-card" data-reporter-job-id="${escapeHtml(job.jobId||"")}">
     <div class="mock-job-main">
       ${image}
       <div>
@@ -1919,8 +1966,72 @@ function renderReportedJob(job){
     </div>
     ${renderProgressSteps(status)}
     <div class="mock-state-chip ${isComplete?"complete":""}">${getRequesterStatusText(status)}</div>
+    ${repairResult}
+    ${acceptanceAction}
     ${history.length?`<div class="mock-history"><div class="mock-history-head">▣ ประวัติงาน</div><div class="mock-history-body">${history.join("")}</div></div>`:""}
   </div>`;
+}
+
+async function acceptRepairJob(jobId){
+  if(!jobId || !lineUserId) return;
+
+  const ok = window.confirm("ยืนยันตรวจรับงานนี้?\n\nกรุณาตรวจสอบว่าเครื่องใช้งานได้เรียบร้อยก่อนกดยืนยัน");
+  if(!ok) return;
+
+  try{
+    showToast("กำลังตรวจรับงาน...");
+
+    const res = await fetch(GAS_WEB_APP_URL,{
+      method:"POST",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify({
+        action:"REPORTER_ACCEPT_REPAIR_JOB",
+        jobId:jobId,
+        userId:lineUserId
+      })
+    });
+
+    const data = await res.json();
+
+    if(data.status==="success" || data.status==="already_accepted"){
+      showToast("✓ ตรวจรับเรียบร้อยแล้ว");
+      await loadMyReportedJobs();
+      focusReporterAcceptanceJob(jobId,false);
+      return;
+    }
+
+    alert(data.message||"ตรวจรับงานไม่สำเร็จ");
+  }catch(err){
+    console.error(err);
+    alert("เกิดข้อผิดพลาดในการตรวจรับงาน");
+  }
+}
+
+function focusReporterAcceptanceJob(jobId,highlight=true){
+  const card=document.getElementById(reporterCardDomId(jobId));
+  if(!card){
+    if(highlight) showToast("ไม่พบงานนี้ในรายการของคุณ");
+    return;
+  }
+
+  if(highlight){
+    card.classList.add("accept-target");
+    setTimeout(()=>card.classList.remove("accept-target"),3500);
+  }
+
+  card.scrollIntoView({behavior:"smooth",block:"center"});
+}
+
+async function openReporterAcceptanceFromLink(jobId){
+  document.querySelectorAll(".page").forEach(page=>page.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(btn=>btn.classList.remove("active"));
+
+  document.getElementById("reportedPage").classList.add("active");
+  document.getElementById("tabReportedBtn").classList.add("active");
+  updateRequesterChrome("reported");
+
+  await loadMyReportedJobs();
+  setTimeout(()=>focusReporterAcceptanceJob(jobId,true),80);
 }
 
 /* =========================================================

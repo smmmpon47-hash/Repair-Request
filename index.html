@@ -1106,31 +1106,37 @@
     .tech-section-head small{font-size:.68rem;color:#7d8991;font-weight:600}
 
     .tech-job-card{
-      background:#fff;border:1px solid #e3e9eb;border-radius:15px;padding:12px;margin-bottom:11px;
+      background:#fff;border:1px solid #e3e9eb;border-radius:17px;padding:13px;margin-bottom:12px;
       box-shadow:0 5px 15px rgba(25,58,70,.055);
     }
-    .tech-job-top{display:grid;cursor:pointer;grid-template-columns:76px minmax(0,1fr);gap:11px;align-items:start}
+    .tech-job-top{display:grid;cursor:pointer;grid-template-columns:82px minmax(0,1fr);gap:12px;align-items:start}
     .tech-job-image{
-      width:76px;height:76px;border-radius:11px;object-fit:cover;background:#edf2f3;border:1px solid #e1e7e9;
+      width:82px;height:82px;border-radius:14px;object-fit:cover;background:#edf2f3;border:1px solid #e1e7e9;
     }
     .tech-job-image-fallback{
-      width:76px;height:76px;border-radius:11px;background:#edf2f3;display:flex;align-items:center;
-      justify-content:center;font-size:29px;color:#768990;border:1px solid #e1e7e9;
+      width:82px;height:82px;border-radius:14px;background:#edf2f3;display:flex;align-items:center;
+      justify-content:center;font-size:31px;color:#768990;border:1px solid #e1e7e9;
     }
     .tech-job-headline{display:flex;align-items:flex-start;justify-content:space-between;gap:7px}
-    .tech-job-id{font-size:.73rem;font-weight:800;color:#153049;overflow-wrap:anywhere}
-    .tech-job-name{font-size:1rem;font-weight:800;color:#172f44;line-height:1.25;margin-top:2px}
+    .tech-job-id{font-size:.78rem;font-weight:800;color:#153049;overflow-wrap:anywhere}
+    .tech-job-name{font-size:1.02rem;font-weight:800;color:#172f44;line-height:1.25;margin-top:3px}
     .tech-status-pill{
-      flex:0 0 auto;border-radius:999px;padding:5px 8px;font-size:.62rem;font-weight:800;white-space:nowrap;
+      flex:0 0 auto;border-radius:999px;padding:6px 9px;font-size:.64rem;font-weight:800;white-space:nowrap;
     }
     .tech-status-wait{background:#ffe9e9;color:#d54a4a}
-    .tech-status-doing{background:#e5f0ff;color:#2c72c6}
-    .tech-status-inspect{background:#fff2dd;color:#c77819}
+    .tech-status-doing{background:#fff0de;color:#e2791d}
+    .tech-status-inspect{background:#ffe9ec;color:#d65363}
     .tech-status-done{background:#e3f6ec;color:#21875c}
-    .tech-job-meta{font-size:.72rem;line-height:1.5;color:#6c7b84;margin-top:4px}
-    .tech-job-extra{font-size:.69rem;color:#71808a;line-height:1.55;margin-top:8px}
+    .tech-job-meta{font-size:.74rem;line-height:1.5;color:#6c7b84;margin-top:4px}
+    .tech-job-detail-lines{
+      margin-top:11px;padding-top:10px;border-top:1px solid #edf1f2;
+      color:#64757f;font-size:.75rem;line-height:1.65;
+    }
+    .tech-job-detail-line{display:grid;grid-template-columns:24px minmax(0,1fr);gap:5px;align-items:start}
+    .tech-job-detail-icon{text-align:center}
+    .tech-job-extra{font-size:.72rem;color:#71808a;line-height:1.55;margin-top:3px}
     .tech-job-action{
-      width:100%;border:0;border-radius:11px;padding:11px 10px;margin-top:10px;
+      width:100%;border:0;border-radius:11px;padding:11px 10px;margin-top:11px;
       font-family:inherit;font-size:.87rem;font-weight:800;cursor:pointer;color:#fff;
       background:linear-gradient(135deg,#18aa79,#0d936b);
     }
@@ -1140,17 +1146,9 @@
     .tech-job-action.finish{background:linear-gradient(135deg,#17394a,#102c3a)}
     .tech-job-action.locked{background:#eef2f3;color:#71808a;cursor:default}
     .tech-job-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .tech-job-actions .tech-job-action{margin-top:10px}
-    .tech-repair-timer{margin-top:8px;padding:8px 10px;border-radius:10px;background:#f4f8f8;color:#39515f;font-size:.74rem;font-weight:700;text-align:center}
+    .tech-job-actions .tech-job-action{margin-top:11px}
+    .tech-repair-timer{margin-top:9px;padding:8px 10px;border-radius:10px;background:#f4f8f8;color:#39515f;font-size:.74rem;font-weight:700;text-align:center}
     .tech-repair-timer.paused{background:#fff4e5;color:#b66c16}
-    .tech-mini-progress{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;position:relative;margin:12px 0 2px}
-    .tech-mini-progress:before{content:"";position:absolute;left:8%;right:8%;top:10px;height:2px;background:#e1e7e8}
-    .tech-mini-step{position:relative;z-index:1;text-align:center;min-width:0}
-    .tech-mini-dot{width:21px;height:21px;border-radius:50%;margin:0 auto 4px;display:flex;align-items:center;justify-content:center;background:#e2e7e8;color:#839098;font-size:.64rem;border:2px solid #fff}
-    .tech-mini-step.done .tech-mini-dot{background:#25b778;color:#fff}
-    .tech-mini-step.current .tech-mini-dot{background:#ff9639;color:#fff}
-    .tech-mini-label{font-size:.5rem;line-height:1.15;color:#8a959b}
-    .tech-mini-step.done .tech-mini-label{color:#27845e}.tech-mini-step.current .tech-mini-label{color:#ce6d18;font-weight:800}
     .tech-empty{text-align:center;color:#7f8c94;font-size:.8rem;padding:45px 10px}
 
     .tech-detail-card{background:#fff;border:1px solid #e3e9eb;border-radius:14px;overflow:hidden}
@@ -2034,35 +2032,6 @@ function startTechnicianTimers(){
   technicianTimerInterval=setInterval(tick,1000);
 }
 
-function renderTechProgress(status){
-  const s=String(status||"");
-  let current=2;
-  if(s.includes("กำลัง") || s.includes("ดำเนินการ") || s.includes("พักการซ่อม")) current=3;
-  if(s.includes("รอตรวจรับ") || s.includes("ส่งตรวจรับ")) current=4;
-  if(isTechTerminalStatus(s)) current=5;
-
-  const steps=[
-    ["✓","แจ้งแล้ว"],
-    ["✓","รับงาน"],
-    ["🔧","ซ่อม"],
-    ["🔎","ตรวจรับ"],
-    ["⚑","เสร็จ"]
-  ];
-
-  return `<div class="tech-mini-progress">`+
-    steps.map((step,index)=>{
-      const n=index+1;
-      let cls="";
-      if(n<current || current===5) cls="done";
-      else if(n===current) cls="current";
-      return `<div class="tech-mini-step ${cls}">
-        <div class="tech-mini-dot">${step[0]}</div>
-        <div class="tech-mini-label">${step[1]}</div>
-      </div>`;
-    }).join("")+
-  `</div>`;
-}
-
 function renderTechnicianJob(job) {
   const status=String(job.status||"รับงานแล้ว");
   const info=techStatusInfo(status);
@@ -2078,16 +2047,16 @@ function renderTechnicianJob(job) {
 
   let action="";
   if(status.includes("รับงาน") || status.includes("รอเริ่ม")){
-    action=`<button class="tech-job-action" onclick="openTechVerify('${escapeJs(job.jobId)}')">▶ &nbsp;เริ่มซ่อม</button>`;
+    action=`<button class="tech-job-action" onclick="event.stopPropagation();openTechVerify('${escapeJs(job.jobId)}')">▶ &nbsp;เริ่มซ่อม</button>`;
   }else if(paused){
     action=`<div class="tech-job-actions">
-      <button class="tech-job-action resume" onclick="resumeTechnicianJob('${escapeJs(job.jobId)}')">▶ ทำซ่อมต่อ</button>
-      <button class="tech-job-action finish" onclick="openFinishModal('${escapeJs(job.jobId)}')">✓ ซ่อมเสร็จ</button>
+      <button class="tech-job-action resume" onclick="event.stopPropagation();resumeTechnicianJob('${escapeJs(job.jobId)}')">▶ ทำซ่อมต่อ</button>
+      <button class="tech-job-action finish" onclick="event.stopPropagation();openFinishModal('${escapeJs(job.jobId)}')">✓ ซ่อมเสร็จ</button>
     </div>`;
   }else if(repairing){
     action=`<div class="tech-job-actions">
-      <button class="tech-job-action pause" onclick="pauseTechnicianJob('${escapeJs(job.jobId)}')">Ⅱ พักชั่วคราว</button>
-      <button class="tech-job-action finish" onclick="openFinishModal('${escapeJs(job.jobId)}')">✓ ซ่อมเสร็จ</button>
+      <button class="tech-job-action pause" onclick="event.stopPropagation();pauseTechnicianJob('${escapeJs(job.jobId)}')">Ⅱ พักชั่วคราว</button>
+      <button class="tech-job-action finish" onclick="event.stopPropagation();openFinishModal('${escapeJs(job.jobId)}')">✓ ซ่อมเสร็จ</button>
     </div>`;
   }else if(waitingAcceptance){
     action=`<button class="tech-job-action locked" type="button">🔎 &nbsp;รอผู้แจ้งตรวจรับ</button>`;
@@ -2111,18 +2080,29 @@ function renderTechnicianJob(job) {
         <div class="tech-job-name">${escapeHtml(job.machineName||job.machineCode||"-")}</div>
         <div class="tech-job-meta">
           รหัสเครื่อง: ${escapeHtml(job.machineCode||"-")}<br>
-          ${escapeHtml(job.floor||"-")}${job.line?" • LINE "+escapeHtml(job.line):""}<br>
-          อาการ: ${escapeHtml(job.issue||"-")}
+          ${escapeHtml(job.floor||"-")}${job.line?" &nbsp;|&nbsp; LINE "+escapeHtml(job.line):""}
         </div>
       </div>
     </div>
 
-    ${renderTechProgress(status)}
-
-    <div class="tech-job-extra">
-      🕐 แจ้งเมื่อ ${escapeHtml(job.dateTime||"-")}<br>
-      👤 ผู้แจ้ง: ${escapeHtml(job.reporter||"-")}
-      ${job.startTime?`<br>🔧 เริ่มซ่อม ${escapeHtml(job.startTime)}`:""}
+    <div class="tech-job-detail-lines" role="button" tabindex="0"
+      onclick="showJobDetail('${escapeJs(job.jobId)}')">
+      <div class="tech-job-detail-line">
+        <span class="tech-job-detail-icon">📋</span>
+        <span><b>อาการ:</b> ${escapeHtml(job.issue||"-")}</span>
+      </div>
+      <div class="tech-job-detail-line">
+        <span class="tech-job-detail-icon">🕐</span>
+        <span>แจ้งเมื่อ: ${escapeHtml(job.dateTime||"-")}</span>
+      </div>
+      <div class="tech-job-detail-line">
+        <span class="tech-job-detail-icon">👤</span>
+        <span>ผู้แจ้ง: ${escapeHtml(job.reporter||"-")}</span>
+      </div>
+      ${job.startTime?`<div class="tech-job-detail-line">
+        <span class="tech-job-detail-icon">🔧</span>
+        <span>เริ่มซ่อม: ${escapeHtml(job.startTime)}</span>
+      </div>`:""}
     </div>
 
     ${timer}

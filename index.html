@@ -1221,6 +1221,25 @@
     .app-boot-sub{font-size:.82rem;color:#71808c;}
     @keyframes appBootSpin{to{transform:rotate(360deg);}}
 
+
+    /* ===== TEMP TEST: SHOW LINE USER ID ===== */
+    .line-id-test{
+      margin:12px 16px 4px;
+      padding:12px 13px;
+      background:#fffbe8;
+      border:1px solid #eadb8f;
+      border-radius:14px;
+      box-shadow:0 2px 8px rgba(0,0,0,.04);
+      color:#334155;
+    }
+    .line-id-test-title{font-size:.82rem;font-weight:800;margin-bottom:5px;color:#7a5b00;}
+    .line-id-test-name{font-size:.86rem;font-weight:700;margin-bottom:3px;}
+    .line-id-test-value{font-size:.72rem;line-height:1.45;word-break:break-all;color:#475569;}
+    .line-id-test-copy{
+      width:100%;margin-top:9px;border:0;border-radius:10px;padding:9px 10px;
+      background:#0f766e;color:#fff;font-family:inherit;font-weight:800;font-size:.82rem;cursor:pointer;
+    }
+
   </style>
 </head>
 
@@ -1244,6 +1263,14 @@
   <div id="technicianTopbar" class="mock-topbar technician-chrome">
     <button type="button" class="mock-back" onclick="technicianBack()">‹</button>
     <div id="technicianHeaderTitle" class="mock-topbar-title">งานซ่อมของฉัน</div>
+  </div>
+
+  <!-- TEMP TEST ONLY: แสดง LINE User ID สำหรับเก็บไปลง RepairUsers / Technicians -->
+  <div id="lineIdTestBox" class="line-id-test">
+    <div class="line-id-test-title">🧪 TEST — LINE User ID</div>
+    <div id="lineIdTestName" class="line-id-test-name">กำลังอ่านข้อมูล LINE...</div>
+    <div id="lineIdTestValue" class="line-id-test-value">-</div>
+    <button type="button" class="line-id-test-copy" onclick="copyLineUserIdTest()">คัดลอก LINE User ID</button>
   </div>
 
   <!-- =========================
@@ -1468,6 +1495,34 @@ let currentVerifyJobId = "";
 let scannerPurpose = "requester";
 
 
+
+/* =========================================================
+   TEMP TEST — SHOW / COPY LINE USER ID
+   ลบ section นี้ + กล่อง TEST ใน HTML + CSS เมื่อทดสอบเสร็จ
+========================================================= */
+function updateLineUserIdTest(name, userId, message) {
+  const nameEl = document.getElementById("lineIdTestName");
+  const valueEl = document.getElementById("lineIdTestValue");
+  if (!nameEl || !valueEl) return;
+
+  nameEl.textContent = name || "ไม่พบชื่อ LINE";
+  valueEl.textContent = userId || message || "ไม่พบ LINE User ID — กรุณาเปิดผ่าน LINE";
+}
+
+async function copyLineUserIdTest() {
+  if (!lineUserId) {
+    showToast("ยังไม่พบ LINE User ID");
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(lineUserId);
+    showToast("✓ คัดลอก LINE User ID แล้ว");
+  } catch (err) {
+    window.prompt("คัดลอก LINE User ID นี้", lineUserId);
+  }
+}
+
 /* =========================================================
    INIT
 ========================================================= */
@@ -1492,12 +1547,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         const profile = await liff.getProfile();
         lineUserId = profile.userId || "";
         lineDisplayName = profile.displayName || "";
+        updateLineUserIdTest(lineDisplayName, lineUserId, "");
       } else {
         console.warn("ยังไม่ได้เข้าสู่ระบบ LINE");
+        updateLineUserIdTest("ยังไม่ได้เข้าสู่ระบบ LINE", "", "กรุณาเปิดหน้านี้ผ่าน LINE LIFF");
       }
 
     } catch (err) {
       console.error("LIFF init error:", err);
+      updateLineUserIdTest("อ่านข้อมูล LINE ไม่สำเร็จ", "", err && err.message ? err.message : "LIFF error");
     }
   }
 

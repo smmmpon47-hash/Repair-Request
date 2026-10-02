@@ -1121,6 +1121,13 @@
       background:#fff;border:1px solid #e3e9eb;border-radius:17px;padding:13px;margin-bottom:12px;
       box-shadow:0 5px 15px rgba(25,58,70,.055);
     }
+    .tech-job-card{position:relative;transition:opacity .12s ease,transform .12s ease}
+    .tech-job-card.tech-busy{pointer-events:none;opacity:.72}
+    .tech-job-card.tech-busy::after{
+      content:attr(data-busy-label);position:absolute;inset:0;border-radius:17px;background:rgba(255,255,255,.72);
+      display:flex;align-items:center;justify-content:center;color:#24465a;font-size:.78rem;font-weight:800;z-index:5;
+      backdrop-filter:blur(1px);
+    }
     .tech-job-top{display:grid;cursor:pointer;grid-template-columns:98px minmax(0,1fr);gap:12px;align-items:start}
     .tech-job-image{
       width:98px;height:98px;border-radius:15px;object-fit:cover;background:#edf2f3;border:1px solid #e1e7e9;
@@ -1655,6 +1662,8 @@ let repairSyncToken = "";
 let repairSyncTimer = null;
 let repairSyncInFlight = false;
 let reportedJobsLoaded = false;
+const REPAIR_SYNC_INTERVAL_MS = 3000;
+const repairActionLocks = new Set();
 
 
 
@@ -1683,6 +1692,28 @@ async function copyLineUserIdTest() {
   } catch (err) {
     window.prompt("คัดลอก LINE User ID นี้", lineUserId);
   }
+}
+
+
+function repairActionKey(jobId,action){return String(jobId||"");}
+function setTechnicianJobBusy(jobId,busy,label){
+  const key=String(jobId||"");
+  const card=Array.from(document.querySelectorAll("[data-tech-job-id]")).find(el=>String(el.dataset.techJobId||"")===key);
+  if(!card)return;
+  card.classList.toggle("tech-busy",!!busy);
+  if(busy)card.dataset.busyLabel=label||"กำลังบันทึก...";else delete card.dataset.busyLabel;
+}
+function beginRepairAction(jobId,action,label){
+  const key=repairActionKey(jobId,action);
+  if(repairActionLocks.has(key)){showToast("กำลังบันทึกอยู่ กรุณารอสักครู่");return false;}
+  repairActionLocks.add(key);setTechnicianJobBusy(jobId,true,label);return true;
+}
+function endRepairAction(jobId,action){
+  repairActionLocks.delete(repairActionKey(jobId,action));setTechnicianJobBusy(jobId,false,"");
+}
+function cloneTechnicianJob(jobId){
+  const job=technicianJobsById[String(jobId||"")];
+  return job?Object.assign({},job):null;
 }
 
 /* =========================================================
@@ -1735,13 +1766,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ถ้ามาจากปุ่มรับงาน ให้ claim ก่อนโหลด Jobs/RepairLog ทั้งก้อน ลดเวลาค้างตอนหลายคนกดพร้อมกัน
   if (lineUserId) {
     if (fastClaimMode) {
-      const roleInfo = await checkCurrentUserRole();
+      // กดจาก Flex: ยิง claim ตรงไป backend เลย ตัด GET ตรวจ role 1 รอบ
+      // backend ยังเป็นผู้ตรวจสิทธิ์และตัดสินผู้ชนะเหมือนเดิม
       bootstrap = {
-        status:"success",
-        role:roleInfo.isTechnician?"technician":"requester",
-        isTechnician:roleInfo.isTechnician===true,
-        technician:roleInfo.technician||null,
-        jobs:[]
+        status:"success", role:"technician", isTechnician:true,
+        technician:{name:lineDisplayName||"ช่าง",floor:""}, jobs:[]
       };
     } else {
       bootstrap = await loadRepairBootstrap();
@@ -1847,7 +1876,7 @@ async function checkRepairAutoSync(force=false){
 
 function startRepairAutoSync(){
   if(repairSyncTimer)clearInterval(repairSyncTimer);
-  repairSyncTimer=setInterval(()=>checkRepairAutoSync(false),5000);
+  repairSyncTimer=setInterval(()=>checkRepairAutoSync(false),REPAIR_SYNC_INTERVAL_MS);
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkRepairAutoSync(true);});
   window.addEventListener("focus",()=>checkRepairAutoSync(true));
 }
@@ -2201,7 +2230,7 @@ async function previewImage(event) {
 
   try{
     showToast("กำลังเตรียมรูป...");
-    beforeImageBase64=await compressImageFile(file,1280,.72);
+    beforeImageBase64=await compressImageFile(file,1024,.68);
     img.src=beforeImageBase64;
     img.style.display="block";
   }catch(err){
@@ -2229,24 +2258,22 @@ async function submitRepair(){
   if(!machineName){showToast("กรุณาสแกนหรือกรอกชื่อเครื่องจักรก่อน");return;}
   if(!issue){showToast("กรุณากรอกอาการที่พบ");return;}
 
+  const btn=document.getElementById("requesterSubmitBtn");
+  if(btn&&btn.dataset.sending==="1"){showToast("กำลังส่งอยู่ กรุณารอสักครู่");return;}
   const isManualMachine=!!(currentMachineInfo&&currentMachineInfo.manual===true);
-  const payload={
-    action:"CREATE_REPAIR_JOB",userId:lineUserId,line:line,
-    machineCode:machineCode,issue:issue,image:beforeImageBase64,
-    manualMachine:isManualMachine,
-    manualMachineCode:isManualMachine?machineCode:"",
-    manualMachineName:isManualMachine?machineName:""
-  };
-  const btn=document.getElementById("requesterSubmitBtn");btn.disabled=true;btn.textContent="กำลังส่ง...";
+  const payload={action:"CREATE_REPAIR_JOB",userId:lineUserId,line:line,machineCode:machineCode,issue:issue,image:beforeImageBase64,manualMachine:isManualMachine,manualMachineCode:isManualMachine?machineCode:"",manualMachineName:isManualMachine?machineName:""};
+
+  if(btn){btn.dataset.sending="1";btn.disabled=true;btn.textContent="กำลังส่งแจ้งซ่อม...";}
+  showToast("กำลังส่งแจ้งซ่อม...");
   try{
     const response=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
     const result=await response.json();
     if(result.success===true||result.status==="success"){
       alert("ส่งแจ้งซ่อมเรียบร้อยแล้ว"+(result.jobId?"\n"+result.jobId:""));
-      resetForm();reportedJobsLoaded=false;switchTab("reported");
+      resetForm();reportedJobsLoaded=false;repairSyncToken="";switchTab("reported");
     }else alert(result.message||result.error||"ส่งข้อมูลไม่สำเร็จ");
   }catch(err){console.error(err);alert("เกิดข้อผิดพลาดในการส่งข้อมูล");}
-  finally{btn.disabled=false;btn.innerHTML="➤ &nbsp;ส่งแจ้งซ่อม";}
+  finally{if(btn){btn.dataset.sending="0";btn.disabled=false;btn.innerHTML="➤ &nbsp;ส่งแจ้งซ่อม";}}
 }
 
 /* =========================================================
@@ -2542,7 +2569,22 @@ function patchTechnicianJob(jobId,patch){
   const job=technicianJobsById[key];
   if(!job)return;
   Object.assign(job,patch||{});
-  renderTechnicianJobList();
+
+  // เปลี่ยนเฉพาะ card นี้ ไม่ redraw งานทุกใบ / ไม่เด้ง scroll
+  const oldCard=Array.from(document.querySelectorAll("[data-tech-job-id]")).find(el=>String(el.dataset.techJobId||"")===key);
+  if(oldCard){
+    const wasBusy=oldCard.classList.contains("tech-busy");
+    const busyLabel=oldCard.dataset.busyLabel||"กำลังบันทึก...";
+    const template=document.createElement("template");
+    template.innerHTML=renderTechnicianJob(job).trim();
+    const newCard=template.content.firstElementChild;
+    if(newCard){
+      if(wasBusy){newCard.classList.add("tech-busy");newCard.dataset.busyLabel=busyLabel;}
+      oldCard.replaceWith(newCard);
+    }else renderTechnicianJobList();
+  }else{
+    renderTechnicianJobList();
+  }
   invalidateTechnicianToday();
 }
 
@@ -2631,41 +2673,51 @@ function renderTechnicianJob(job) {
    FLEX ACCEPT — 1 JOB = 1 TECH, DUPLICATE CLICK SILENT
 ========================================================= */
 async function acceptJobFromFlex(jobId) {
+  const action="accept";
+  if(!beginRepairAction(jobId,action,"กำลังรับงาน..."))return;
   try{
     showToast("กำลังรับงาน...");
     const res=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"acceptJobViaLIFF",jobId:jobId,userId:lineUserId})});
     const data=await res.json();
-    if(data.status==="success"){
-      showToast("✓ รับงานแล้ว");technicianJobsLoaded=false;await loadTechnicianJobs(true);focusTechnicianJob(jobId,false);return;
-    }
-    if(data.status==="already_owned"){
-      technicianJobsLoaded=false;await loadTechnicianJobs(true);focusTechnicianJob(jobId,false);return;
+    if(data.status==="success"||data.status==="already_owned"){
+      showToast(data.status==="success"?"✓ รับงานแล้ว":"✓ งานนี้เป็นของคุณแล้ว");
+      technicianJobsLoaded=false;
+      loadTechnicianJobs(true).then(()=>focusTechnicianJob(jobId,false));
+      return;
     }
     if(data.status==="already_taken"){
-      alert("งานนี้ช่าง "+(data.techName||"คนอื่น")+" รับไปแล้ว");technicianJobsLoaded=false;await loadTechnicianJobs(true);switchTab("technician");return;
+      alert("งานนี้ช่าง "+(data.techName||"คนอื่น")+" รับไปแล้ว");
+      technicianJobsLoaded=false;loadTechnicianJobs(true);switchTab("technician");return;
     }
     if(data.status==="closed_for_accept"){
-      showToast(data.message||"งานนี้ไม่เปิดให้รับแล้ว");technicianJobsLoaded=false;await loadTechnicianJobs(true);switchTab("technician");return;
+      showToast(data.message||"งานนี้ไม่เปิดให้รับแล้ว");
+      technicianJobsLoaded=false;loadTechnicianJobs(true);switchTab("technician");return;
     }
     alert(data.message||"รับงานไม่สำเร็จ");
   }catch(err){console.error(err);alert("เกิดข้อผิดพลาดในการรับงาน");}
+  finally{endRepairAction(jobId,action);}
 }
 
 
 async function acceptHandoffFromFlex(jobId){
+  const action="acceptHandoff";
+  if(!beginRepairAction(jobId,action,"กำลังรับงานต่อ..."))return;
   try{
     showToast("กำลังรับงานต่อ...");
     const res=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"ACCEPT_HANDOFF_JOB",jobId:jobId,userId:lineUserId})});
     const data=await res.json();
     if(data.status==="success"||data.status==="already_owned"){
-      showToast("✓ รับงานต่อแล้ว");technicianJobsLoaded=false;await loadTechnicianJobs(true);focusTechnicianJob(jobId,false);return;
+      showToast("✓ รับงานต่อแล้ว");technicianJobsLoaded=false;loadTechnicianJobs(true).then(()=>focusTechnicianJob(jobId,false));return;
     }
-    alert(data.message||"รับงานต่อไม่สำเร็จ");technicianJobsLoaded=false;await loadTechnicianJobs(true);
+    alert(data.message||"รับงานต่อไม่สำเร็จ");technicianJobsLoaded=false;loadTechnicianJobs(true);
   }catch(err){console.error(err);alert("เกิดข้อผิดพลาดในการรับงานต่อ");}
+  finally{endRepairAction(jobId,action);}
 }
 
 async function cancelAcceptedJob(jobId){
   if(!window.confirm("ยกเลิกรับงานนี้และส่งกลับเข้ากลุ่มให้ช่างคนอื่นรับใหม่?"))return;
+  const action="cancelAccept";
+  if(!beginRepairAction(jobId,action,"กำลังคืนงาน..."))return;
   try{
     showToast("กำลังคืนงานเข้ากลุ่ม...");
     const res=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"CANCEL_ACCEPT_REPAIR_JOB",jobId:jobId,userId:lineUserId})});
@@ -2673,6 +2725,7 @@ async function cancelAcceptedJob(jobId){
     if(data.status==="success"){showToast("↩ คืนงานเข้ากลุ่มแล้ว");removeTechnicianJob(jobId);return;}
     alert(data.message||"ยกเลิกรับงานไม่สำเร็จ");
   }catch(err){console.error(err);alert("เกิดข้อผิดพลาดในการยกเลิกรับงาน");}
+  finally{endRepairAction(jobId,action);}
 }
 
 async function openHandoffModal(jobId){
@@ -2777,50 +2830,36 @@ async function verifyAndStartTechnicianJob(code,method){
 }
 
 async function startTechnicianJobConfirmed(jobId,machineCode,verifyMethod){
+  const action="start";
+  if(!beginRepairAction(jobId,action,"กำลังเริ่มซ่อม..."))return;
+  const before=cloneTechnicianJob(jobId);
   try{
     showToast("กำลังเริ่มซ่อม...");
+    if(before)patchTechnicianJob(jobId,{status:"กำลังซ่อม",repairPaused:false});
 
-    const payload={
-      action:"START_REPAIR_JOB",
-      jobId:jobId,
-      userId:lineUserId,
-      machineCode:machineCode,
-      verifyMethod:verifyMethod
-    };
-
-    const res=await fetch(GAS_WEB_APP_URL,{
-      method:"POST",
-      headers:{"Content-Type":"text/plain;charset=utf-8"},
-      body:JSON.stringify(payload)
-    });
+    const payload={action:"START_REPAIR_JOB",jobId:jobId,userId:lineUserId,machineCode:machineCode,verifyMethod:verifyMethod};
+    const res=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
     const data=await res.json();
 
     if(data.status==="success"){
-      showToast("✓ เริ่มซ่อมแล้ว");
-      currentVerifyJobId="";
+      showToast("✓ เริ่มซ่อมแล้ว");currentVerifyJobId="";
       const existing=technicianJobsById[String(jobId||"")]||{};
       patchTechnicianJob(jobId,{
         status:data.jobStatus||"กำลังซ่อม",
         startDate:existing.startDate||data.startDate||"",
         startTime:existing.startTime||data.startTime||"",
-        repairElapsedSeconds:Number(existing.repairElapsedSeconds||0),
-        repairPaused:false
+        repairElapsedSeconds:Number(existing.repairElapsedSeconds||0),repairPaused:false
       });
       return;
     }
-
     if(data.status==="already_started"){
-      currentVerifyJobId="";
-      technicianJobsLoaded=false;
-      await loadTechnicianJobs();
-      return;
+      currentVerifyJobId="";technicianJobsLoaded=false;loadTechnicianJobs(true);return;
     }
-
+    if(before)patchTechnicianJob(jobId,before);
     alert(data.message||"เริ่มงานไม่สำเร็จ");
   }catch(err){
-    console.error(err);
-    alert("เกิดข้อผิดพลาดในการเริ่มงาน");
-  }
+    console.error(err);if(before)patchTechnicianJob(jobId,before);alert("เกิดข้อผิดพลาดในการเริ่มงาน");
+  }finally{endRepairAction(jobId,action);}
 }
 
 /* =========================================================
@@ -2840,37 +2879,37 @@ function confirmPauseReason(reason){
 }
 
 async function changeRepairRunState(jobId, action, reason=""){
+  const isPause=action==="PAUSE_REPAIR_JOB";
+  const lockName=isPause?"pause":"resume";
+  if(!beginRepairAction(jobId,lockName,isPause?"กำลังพัก...":"กำลังทำต่อ..."))return;
+  const before=cloneTechnicianJob(jobId);
+  const currentSeconds=getTimerSecondsForJob(jobId);
   try{
-    const isPause=action==="PAUSE_REPAIR_JOB";
-    const currentSeconds=getTimerSecondsForJob(jobId);
     showToast(isPause?"กำลังพักการซ่อม...":"กำลังทำซ่อมต่อ...");
+    patchTechnicianJob(jobId,{
+      status:isPause?"พักการซ่อม":"กำลังซ่อม",
+      repairPaused:isPause,repairElapsedSeconds:currentSeconds,
+      pauseReason:isPause?(reason||""):""
+    });
 
     const payload={action:action,jobId:jobId,userId:lineUserId};
     if(isPause&&reason)payload.reason=reason;
-
-    const res=await fetch(GAS_WEB_APP_URL,{
-      method:"POST",
-      headers:{"Content-Type":"text/plain;charset=utf-8"},
-      body:JSON.stringify(payload)
-    });
+    const res=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
     const data=await res.json();
 
-    if(data.status==="success" || data.status==="already_paused" || data.status==="already_resumed"){
+    if(data.status==="success"||data.status==="already_paused"||data.status==="already_resumed"){
       showToast(isPause?"⏸ พักการซ่อมแล้ว":"▶ ทำซ่อมต่อแล้ว");
       patchTechnicianJob(jobId,{
-        status:data.jobStatus||(isPause?"พักการซ่อม":"กำลังซ่อม"),
-        repairPaused:isPause,
-        repairElapsedSeconds:currentSeconds,
-        pauseReason:isPause?(data.pauseReason||reason||""):""
+        status:data.jobStatus||(isPause?"พักการซ่อม":"กำลังซ่อม"),repairPaused:isPause,
+        repairElapsedSeconds:currentSeconds,pauseReason:isPause?(data.pauseReason||reason||""):""
       });
       return;
     }
-
+    if(before)patchTechnicianJob(jobId,before);
     alert(data.message||"อัปเดตสถานะไม่สำเร็จ");
   }catch(err){
-    console.error(err);
-    alert("เกิดข้อผิดพลาดในการอัปเดตสถานะ");
-  }
+    console.error(err);if(before)patchTechnicianJob(jobId,before);alert("เกิดข้อผิดพลาดในการอัปเดตสถานะ");
+  }finally{endRepairAction(jobId,lockName);}
 }
 
 function pauseTechnicianJob(jobId,reason){
@@ -2909,7 +2948,7 @@ async function previewAfterImage(event) {
 
   try{
     note&&note.classList.add("show");
-    afterImageBase64=await compressImageFile(file,1280,.70);
+    afterImageBase64=await compressImageFile(file,1024,.68);
     img.src=afterImageBase64;
     img.style.display="block";
   }catch(err){
@@ -2925,63 +2964,37 @@ async function previewAfterImage(event) {
 
 
 async function submitFinishJob() {
-  const jobId = currentFinishJobId;
-  const repairType = document.getElementById("repairType").value;
-  const repairDetail = document.getElementById("repairDetail").value.trim();
+  const jobId=currentFinishJobId;
+  const repairType=document.getElementById("repairType").value;
+  const repairDetail=document.getElementById("repairDetail").value.trim();
   const btn=document.getElementById("finishSubmitBtn");
+  if(!jobId)return;
+  if(!repairType){alert("กรุณาเลือกประเภทการซ่อม");return;}
+  if(!repairDetail){alert("กรุณาระบุรายละเอียดการซ่อม");return;}
+  if(!afterImageBase64){alert("กรุณาแนบรูปหลังซ่อมก่อนส่งตรวจรับ 📷");return;}
 
-  if (!jobId) return;
-  if (!repairType) { alert("กรุณาเลือกประเภทการซ่อม"); return; }
-  if (!repairDetail) { alert("กรุณาระบุรายละเอียดการซ่อม"); return; }
-  if (!afterImageBase64) { alert("กรุณาแนบรูปหลังซ่อมก่อนส่งตรวจรับ 📷"); return; }
+  const action="finish";
+  if(!beginRepairAction(jobId,action,"กำลังส่งตรวจรับ..."))return;
+  try{
+    if(btn){btn.disabled=true;btn.textContent="กำลังส่งรูป...";}
+    showToast("กำลังส่งรูปและบันทึกงาน...");
+    const payload={action:"FINISH_REPAIR_JOB",jobId:jobId,userId:lineUserId,technician:lineDisplayName,repairType:repairType,repairDetail:repairDetail,afterImage:afterImageBase64};
+    const res=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
+    const data=await res.json();
 
-  try {
-    if(btn){btn.disabled=true;btn.textContent="กำลังส่ง...";}
-    showToast("กำลังส่งตรวจรับ...");
-
-    const payload = {
-      action: "FINISH_REPAIR_JOB",
-      jobId: jobId,
-      userId: lineUserId,
-      technician: lineDisplayName,
-      repairType: repairType,
-      repairDetail: repairDetail,
-      afterImage: afterImageBase64
-    };
-
-    const res = await fetch(GAS_WEB_APP_URL, {
-      method: "POST",
-      headers: {"Content-Type": "text/plain;charset=utf-8"},
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-
-    if (data.status === "success" || data.success === true) {
-      closeModal("finishModal");
-      showToast("✓ ส่งตรวจรับแล้ว");
+    if(data.status==="success"||data.success===true){
+      closeModal("finishModal");showToast("✓ ส่งตรวจรับแล้ว");
       const seconds=getTimerSecondsForJob(jobId);
       patchTechnicianJob(jobId,{
-        status:data.jobStatus||"รอตรวจรับ",
-        finishDate:data.finishDate||"",
-        finishTime:data.finishTime||"",
-        result:data.result||"ซ่อมเสร็จ ใช้งานได้",
-        repairType:data.repairType||repairType,
-        repairDetail:data.repairDetail||repairDetail,
-        afterImage:data.afterImage||"",
-        repairElapsedSeconds:seconds,
-        repairPaused:false
+        status:data.jobStatus||"รอตรวจรับ",finishDate:data.finishDate||"",finishTime:data.finishTime||"",
+        result:data.result||"ซ่อมเสร็จ ใช้งานได้",repairType:data.repairType||repairType,
+        repairDetail:data.repairDetail||repairDetail,afterImage:data.afterImage||"",
+        repairElapsedSeconds:seconds,repairPaused:false
       });
-      currentFinishJobId="";
-      afterImageBase64="";
-    } else {
-      alert(data.message || "ส่งตรวจรับไม่สำเร็จ");
-    }
-  } catch (err) {
-    console.error(err);
-    alert("เกิดข้อผิดพลาด");
-  } finally {
-    if(btn){btn.disabled=false;btn.textContent="✓ ยืนยันซ่อมเสร็จ";}
-  }
+      currentFinishJobId="";afterImageBase64="";
+    }else alert(data.message||"ส่งตรวจรับไม่สำเร็จ");
+  }catch(err){console.error(err);alert("เกิดข้อผิดพลาด");}
+  finally{if(btn){btn.disabled=false;btn.textContent="✓ ยืนยันซ่อมเสร็จ";}endRepairAction(jobId,action);}
 }
 
 

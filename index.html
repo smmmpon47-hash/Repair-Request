@@ -1266,6 +1266,32 @@
       background:#0f766e;color:#fff;font-family:inherit;font-weight:800;font-size:.82rem;cursor:pointer;
     }
 
+  
+
+    /* ===== UAT FLOW FIXES 2026-10-02 ===== */
+    .mock-line-select{
+      width:100%;min-height:36px;border:1px solid #dbe4e6;border-radius:9px;
+      background:#fff;color:#173047;font-family:inherit;font-size:.83rem;font-weight:700;
+      padding:6px 28px 6px 9px;outline:none;
+    }
+    .mock-line-select:disabled{background:#f1f4f5;color:#98a2a8}
+    .finish-photo-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px}
+    .finish-photo-btn{border:1px solid #dce5e7;border-radius:11px;padding:12px 8px;background:#f8fbfb;color:#1d5961;font-family:inherit;font-weight:800;font-size:.86rem;cursor:pointer}
+    .finish-photo-btn.camera{background:#e9f7f2;border-color:#cfeadf;color:#0b7d59}
+    .finish-photo-input{display:none!important}
+    .mock-accept-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+    .mock-reject-btn{width:100%;border:1px solid #f0b7a6;border-radius:12px;padding:12px 8px;background:#fff3ee;color:#b64c28;font-family:inherit;font-size:.86rem;font-weight:800;cursor:pointer}
+    .rework-reason-note{margin-top:9px;padding:9px 10px;border-radius:10px;background:#fff0eb;color:#a64c2c;font-size:.72rem;line-height:1.45}
+    .tech-job-action.cancel{background:#edf0f2;color:#8b3d3d;border:1px solid #efd1d1}
+    .tech-job-action.handoff{background:linear-gradient(135deg,#6f62c7,#5547ad)}
+    .tech-job-action.rework{background:linear-gradient(135deg,#d97a35,#bc5c20)}
+    .tech-job-actions.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .tech-job-actions.three .tech-job-action{font-size:.74rem;padding:10px 5px}
+    .tech-wait-note{margin-top:8px;padding:8px 10px;border-radius:10px;background:#fff5e8;color:#a76818;font-size:.72rem;font-weight:700;text-align:center}
+    .handoff-target-wrap{display:none;margin-top:10px}.handoff-target-wrap.show{display:block}
+    .modal-help{font-size:.72rem;color:#7b878d;line-height:1.45;margin-top:7px}
+    @media(max-width:360px){.tech-job-actions.three{grid-template-columns:1fr}.mock-accept-actions{grid-template-columns:1fr}}
+
   </style>
 </head>
 
@@ -1344,14 +1370,16 @@
       </div>
       <div class="mock-info-row">
         <div class="mock-info-icon">🏢</div><div class="mock-info-label">LINE:</div>
-        <div id="autoRequesterLine" class="mock-info-value waiting">กำลังตรวจสอบ...</div>
+        <select id="requesterLineSelect" class="mock-line-select" onchange="selectRequesterLine(this.value)" disabled>
+          <option value="">กำลังตรวจสอบ...</option>
+        </select>
       </div>
       <div class="mock-info-row">
         <div class="mock-info-icon">👤</div><div class="mock-info-label">ผู้แจ้ง:</div>
         <div id="autoReporterName" class="mock-info-value waiting">กำลังตรวจสอบ...</div>
       </div>
     </div>
-    <div id="requesterAccountNote" class="mock-helper">* ระบบดึงชื่อผู้แจ้ง • ชั้น • LINE จาก LINE User ID ให้อัตโนมัติ</div>
+    <div id="requesterAccountNote" class="mock-helper">* ระบบล็อกชื่อผู้แจ้งและชั้นจาก LINE • กรุณาเลือก LINE ที่เครื่องเสีย</div>
 
     <textarea id="issueDetail" class="mock-issue-box" placeholder="กรอกอาการ / รายละเอียดที่พบ..."></textarea>
 
@@ -1450,10 +1478,12 @@
     <textarea id="repairDetail" placeholder="เช่น เปลี่ยน Sensor และทดสอบเครื่องแล้ว..."></textarea>
 
     <label>📷 รูปหลังซ่อม <span style="color:#e53e3e;">*จำเป็น</span></label>
-    <label class="image-box">
-      📷 ถ่ายรูป / เลือกรูปหลังซ่อม
-      <input id="afterImageInput" type="file" accept="image/*" onchange="previewAfterImage(event)">
-    </label>
+    <div class="finish-photo-actions">
+      <button type="button" class="finish-photo-btn camera" onclick="document.getElementById('afterCameraInput').click()">📷 ถ่ายรูปตอนนี้</button>
+      <button type="button" class="finish-photo-btn" onclick="document.getElementById('afterGalleryInput').click()">🖼 เลือกรูป</button>
+    </div>
+    <input id="afterCameraInput" class="finish-photo-input" type="file" accept="image/*" capture="environment" onchange="previewAfterImage(event)">
+    <input id="afterGalleryInput" class="finish-photo-input" type="file" accept="image/*" onchange="previewAfterImage(event)">
     <img id="afterImagePreview" style="display:none;width:100%;max-height:230px;object-fit:contain;margin-top:9px;border-radius:9px;">
     <div id="afterImageProcessing" class="image-processing-note">กำลังเตรียมรูปให้ส่งเร็วขึ้น...</div>
 
@@ -1478,12 +1508,54 @@
   </div>
 </div>
 
+<!-- =========================
+     HANDOFF MODAL
+========================== -->
+<div id="handoffModal" class="modal-bg">
+  <div class="modal">
+    <h3>🔄 ส่งต่องาน</h3>
+    <div class="sub-title">เลือกเหตุผล ระบบจะหยุดนับเวลาซ่อมของคุณ ณ ตอนที่ส่งต่อ</div>
+    <label for="handoffReason">เหตุผล</label>
+    <select id="handoffReason" onchange="onHandoffReasonChange()">
+      <option value="">-- เลือกเหตุผล --</option>
+      <option value="ซ่อมไม่สำเร็จ">ซ่อมไม่สำเร็จ</option>
+      <option value="ต้องการช่างคนอื่นช่วย">ต้องการช่างคนอื่นช่วย</option>
+      <option value="เรียกช่างภายนอก">เรียกช่างภายนอก</option>
+    </select>
+    <div id="handoffTargetWrap" class="handoff-target-wrap">
+      <label for="handoffTargetTech">เลือกช่างชั้นเดียวกัน</label>
+      <select id="handoffTargetTech"><option value="">-- เลือกช่าง --</option></select>
+    </div>
+    <div class="modal-help">ซ่อมไม่สำเร็จ = คืนงานเข้ากลุ่มช่าง • ช่างคนอื่นช่วย = ส่งตรงให้ช่างที่เลือก • ช่างภายนอก = คงเจ้าของงานเดิมไว้</div>
+    <div class="bottom-actions">
+      <button type="button" class="btn btn-cancel" onclick="closeModal('handoffModal')">ยกเลิก</button>
+      <button id="handoffSubmitBtn" type="button" class="btn btn-submit" onclick="submitHandoffJob()">ยืนยันส่งต่อ</button>
+    </div>
+  </div>
+</div>
+
+<!-- =========================
+     REPORTER REJECT / REWORK MODAL
+========================== -->
+<div id="rejectRepairModal" class="modal-bg">
+  <div class="modal">
+    <h3>↩ ส่งกลับแก้ไข</h3>
+    <div class="sub-title">ใช้เมื่อทดลองเครื่องแล้วพบว่ายังใช้งานไม่ได้ งานจะกลับไปหาช่างคนเดิม</div>
+    <label for="rejectRepairReason">เหตุผลที่ยังใช้งานไม่ได้ <span style="color:#e53e3e;">*จำเป็น</span></label>
+    <textarea id="rejectRepairReason" placeholder="เช่น ยังมีเสียงดัง / เครื่องยังไม่เดิน / อาการเดิมยังอยู่"></textarea>
+    <div class="bottom-actions">
+      <button type="button" class="btn btn-cancel" onclick="closeModal('rejectRepairModal')">ยกเลิก</button>
+      <button id="rejectRepairSubmitBtn" type="button" class="btn btn-submit" onclick="submitRejectRepairJob()">ส่งกลับให้ช่างแก้ไข</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- =========================
      MANUAL MACHINE CODE MODAL
 ========================== -->
 
-<div id="manualMachineModal" class="modal-bg"><div class="modal"><h3>⌨️ กรอกรหัสเครื่องจักร</h3><div class="sub-title">ใช้เฉพาะตอนสแกนบาร์โค้ดไม่ได้ แต่เครื่องมีรหัสอยู่ในระบบ</div><input id="manualMachineCodeInput" type="text" placeholder="เช่น PKSM....." autocomplete="off"><div class="manual-modal-actions"><button type="button" class="btn btn-cancel" onclick="closeModal('manualMachineModal')">ยกเลิก</button><button type="button" class="btn btn-submit" onclick="confirmManualMachineCode()">ยืนยัน</button></div></div></div>
+<div id="manualMachineModal" class="modal-bg"><div class="modal"><h3>⌨️ กรอกรหัสเครื่องจักร</h3><div class="sub-title">ใช้เฉพาะตอนสแกนบาร์โค้ดไม่ได้ แต่เครื่องมีรหัสอยู่ในระบบ</div><input id="manualMachineCodeInput" type="text" placeholder="เช่น MC-3F-024" autocomplete="off"><div class="manual-modal-actions"><button type="button" class="btn btn-cancel" onclick="closeModal('manualMachineModal')">ยกเลิก</button><button type="button" class="btn btn-submit" onclick="confirmManualMachineCode()">ยืนยัน</button></div></div></div>
 
 <div id="noBarcodeMachineModal" class="modal-bg">
   <div class="modal">
@@ -1577,6 +1649,12 @@ let technicianTodayLoaded = false;
 let technicianTodayJobs = [];
 let technicianTodaySummary = { total:0, finished:0, active:0, paused:0 };
 let technicianTodayDate = "";
+let currentRejectJobId = "";
+let currentHandoffJobId = "";
+let repairSyncToken = "";
+let repairSyncTimer = null;
+let repairSyncInFlight = false;
+let reportedJobsLoaded = false;
 
 
 
@@ -1618,70 +1696,90 @@ function finishAppBoot(){
 // Safety fallback: ถ้าเครือข่ายช้ามาก จะไม่ปล่อยให้หน้า Loading ค้างถาวร
 setTimeout(finishAppBoot, 15000);
 
-document.addEventListener("DOMContentLoaded", async () => {
 
+function clearActionQueryParams(){
+  try{
+    const url=new URL(window.location.href);
+    ["jobId","handoffJobId","reworkJobId","acceptRepairJobId"].forEach(k=>url.searchParams.delete(k));
+    window.history.replaceState({},"",url.pathname+(url.search?url.search:"")+url.hash);
+  }catch(e){}
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
   let bootstrap = null;
 
-  // อ่าน LINE User ID จาก LIFF
   if (typeof liff !== "undefined") {
     try {
       await liff.init({ liffId: LIFF_ID });
-
       if (liff.isLoggedIn()) {
         const profile = await liff.getProfile();
         lineUserId = profile.userId || "";
         lineDisplayName = profile.displayName || "";
         updateLineUserIdTest(lineDisplayName, lineUserId, "");
       } else {
-        console.warn("ยังไม่ได้เข้าสู่ระบบ LINE");
         updateLineUserIdTest("ยังไม่ได้เข้าสู่ระบบ LINE", "", "กรุณาเปิดหน้านี้ผ่าน LINE LIFF");
       }
-
     } catch (err) {
       console.error("LIFF init error:", err);
       updateLineUserIdTest("อ่านข้อมูล LINE ไม่สำเร็จ", "", err && err.message ? err.message : "LIFF error");
     }
   }
 
-  // SPEED: ขอ Role + งานช่าง active ใน request เดียว
+  const urlParams = new URLSearchParams(window.location.search);
+  const jobIdFromUrl = urlParams.get("jobId");
+  const handoffJobIdFromUrl = urlParams.get("handoffJobId");
+  const reworkJobIdFromUrl = urlParams.get("reworkJobId");
+  const acceptRepairJobIdFromUrl = urlParams.get("acceptRepairJobId");
+  const fastClaimMode = !!(jobIdFromUrl || handoffJobIdFromUrl);
+
+  // ถ้ามาจากปุ่มรับงาน ให้ claim ก่อนโหลด Jobs/RepairLog ทั้งก้อน ลดเวลาค้างตอนหลายคนกดพร้อมกัน
   if (lineUserId) {
-    bootstrap = await loadRepairBootstrap();
+    if (fastClaimMode) {
+      const roleInfo = await checkCurrentUserRole();
+      bootstrap = {
+        status:"success",
+        role:roleInfo.isTechnician?"technician":"requester",
+        isTechnician:roleInfo.isTechnician===true,
+        technician:roleInfo.technician||null,
+        jobs:[]
+      };
+    } else {
+      bootstrap = await loadRepairBootstrap();
+    }
   }
 
+  if(bootstrap&&bootstrap.syncToken) repairSyncToken=String(bootstrap.syncToken||"");
   const isTechnician = !!(bootstrap && bootstrap.isTechnician === true);
   currentTechnicianInfo = isTechnician ? (bootstrap.technician || null) : null;
   applyRoleUI(isTechnician, currentTechnicianInfo, bootstrap);
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const jobIdFromUrl = urlParams.get("jobId");
-  const acceptRepairJobIdFromUrl = urlParams.get("acceptRepairJobId");
-
-  // กดรับงานจาก Flex ต้องทำหลังรู้ Role
   if (jobIdFromUrl) {
-    if (currentUserRole === "technician" && lineUserId) {
-      await acceptJobFromFlex(jobIdFromUrl);
-    } else {
-      showToast("งานนี้รับได้เฉพาะผู้ที่ลงทะเบียนเป็นช่าง");
-    }
+    if (currentUserRole === "technician" && lineUserId) await acceptJobFromFlex(jobIdFromUrl);
+    else showToast("งานนี้รับได้เฉพาะผู้ที่ลงทะเบียนเป็นช่าง");
+    clearActionQueryParams();
+  }
+
+  if (handoffJobIdFromUrl) {
+    if (currentUserRole === "technician" && lineUserId) await acceptHandoffFromFlex(handoffJobIdFromUrl);
+    else showToast("งานส่งต่อนี้เปิดได้เฉพาะช่าง");
+    clearActionQueryParams();
   }
 
   if (currentUserRole === "requester") {
     try {
-      // Bootstrap มีข้อมูล RepairUsers อยู่แล้ว จึงไม่ยิง request ซ้ำถ้าไม่จำเป็น
-      if (bootstrap && Object.prototype.hasOwnProperty.call(bootstrap,"requester")) {
-        applyRequesterProfileData(bootstrap.requester);
-      } else {
-        await loadRequesterProfile();
-      }
-
-      if (acceptRepairJobIdFromUrl) {
-        await openReporterAcceptanceFromLink(acceptRepairJobIdFromUrl);
-      }
-    } catch (err) {
-      console.error("requester init error:", err);
-    }
+      if (bootstrap && Object.prototype.hasOwnProperty.call(bootstrap,"requester")) applyRequesterProfileData(bootstrap.requester, bootstrap.allowedLines||[]);
+      else await loadRequesterProfile();
+      if (acceptRepairJobIdFromUrl) await openReporterAcceptanceFromLink(acceptRepairJobIdFromUrl);
+    } catch (err) { console.error("requester init error:", err); }
   }
 
+  if (reworkJobIdFromUrl && currentUserRole === "technician") {
+    if(!technicianJobsLoaded) await loadTechnicianJobs(true);
+    setTimeout(()=>focusTechnicianJob(reworkJobIdFromUrl,true),120);
+    clearActionQueryParams();
+  }
+
+  startRepairAutoSync();
   finishAppBoot();
 });
 
@@ -1721,6 +1819,49 @@ async function checkCurrentUserRole() {
 }
 
 
+
+
+async function checkRepairAutoSync(force=false){
+  if(!lineUserId || repairSyncInFlight || (!force && document.hidden)) return;
+  repairSyncInFlight=true;
+  try{
+    const res=await fetch(GAS_WEB_APP_URL+"?action=getRepairSyncToken&userId="+encodeURIComponent(lineUserId));
+    const data=await res.json();
+    if(data.status!=="success" || !data.token) return;
+    const token=String(data.token||"");
+    if(!repairSyncToken){repairSyncToken=token;return;}
+    if(token===repairSyncToken)return;
+    repairSyncToken=token;
+
+    if(currentUserRole==="technician"){
+      await loadTechnicianJobs(true);
+      technicianTodayLoaded=false;
+      if(document.getElementById("technicianTodayPage").classList.contains("active")) await loadTechnicianTodayJobs(true);
+    }else if(currentUserRole==="requester"){
+      if(document.getElementById("reportedPage").classList.contains("active")) await loadMyReportedJobs(true);
+      else reportedJobsLoaded=false;
+    }
+  }catch(err){console.warn("repair auto sync",err);}
+  finally{repairSyncInFlight=false;}
+}
+
+function startRepairAutoSync(){
+  if(repairSyncTimer)clearInterval(repairSyncTimer);
+  repairSyncTimer=setInterval(()=>checkRepairAutoSync(false),5000);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkRepairAutoSync(true);});
+  window.addEventListener("focus",()=>checkRepairAutoSync(true));
+}
+
+function focusTechnicianJob(jobId,highlight=true){
+  switchTab("technician");
+  const key=String(jobId||"");
+  setTimeout(()=>{
+    const card=Array.from(document.querySelectorAll("[data-tech-job-id]")).find(el=>String(el.dataset.techJobId||"")===key);
+    if(!card){if(highlight)showToast("ไม่พบงานนี้ในงานของฉัน");return;}
+    if(highlight){card.style.boxShadow="0 0 0 3px rgba(217,107,59,.22),0 5px 15px rgba(25,58,70,.08)";setTimeout(()=>card.style.boxShadow="",3000);}
+    card.scrollIntoView({behavior:"smooth",block:"center"});
+  },80);
+}
 
 function applyRoleUI(isTechnician, technicianInfo, bootstrapData) {
   const repairBtn = document.getElementById("tabRepairBtn");
@@ -1771,23 +1912,8 @@ function applyRoleUI(isTechnician, technicianInfo, bootstrapData) {
 ========================================================= */
 
 function updateLineOptions() {
-  const floor = document.getElementById("floor").value;
-  const lineSelect = document.getElementById("line");
-  lineSelect.innerHTML = '<option value="">-- กรุณาเลือก LINE --</option>';
-
-  let lines = [];
-  if (floor === "ชั้น 3") {
-    lines = ["B", "C", "อะไหล่ชั้น 3"];
-  } else if (floor === "ชั้น 4") {
-    lines = ["D", "E", "F", "อะไหล่ชั้น 4"];
-  }
-
-  lines.forEach(line => {
-    const option = document.createElement("option");
-    option.value = line;
-    option.textContent = line;
-    lineSelect.appendChild(option);
-  });
+  const floor=document.getElementById("floor").value;
+  populateRequesterLineOptions(floor,[]);
 }
 
 
@@ -1808,7 +1934,7 @@ function switchTab(tab) {
     document.getElementById("reportedPage").classList.add("active");
     document.getElementById("tabReportedBtn").classList.add("active");
     updateRequesterChrome("reported");
-    loadMyReportedJobs();
+    if(reportedJobsLoaded) checkRepairAutoSync(true); else loadMyReportedJobs();
   }
 
   if (tab === "technician") {
@@ -1878,55 +2004,62 @@ function requesterBack(){
 /* =========================================================
    REQUESTER PROFILE + MACHINE LOOKUP
 ========================================================= */
-function applyRequesterProfileData(info){
+function getAllowedLinesForFloorClient(floor){
+  const f=String(floor||"").replace(/\s+/g,"");
+  if(f==="ชั้น3"||f==="3"||f==="ชั้นที่3")return ["B","C","อะไหล่ชั้น 3"];
+  if(f==="ชั้น4"||f==="4"||f==="ชั้นที่4")return ["D","E","F","อะไหล่ชั้น 4"];
+  return [];
+}
+
+function populateRequesterLineOptions(floor,serverAllowed){
+  const select=document.getElementById("requesterLineSelect");
+  const lines=Array.isArray(serverAllowed)&&serverAllowed.length?serverAllowed:getAllowedLinesForFloorClient(floor);
+  select.innerHTML='<option value="">-- เลือก LINE ที่เครื่องเสีย --</option>'+lines.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
+  select.disabled=!lines.length;
+  document.getElementById("line").value="";
+}
+
+function selectRequesterLine(value){
+  document.getElementById("line").value=String(value||"").trim();
+}
+
+function applyRequesterProfileData(info,allowedLines){
   const nameEl=document.getElementById("autoReporterName");
   const floorEl=document.getElementById("autoRequesterFloor");
-  const lineEl=document.getElementById("autoRequesterLine");
   const noteEl=document.getElementById("requesterAccountNote");
   const data=info||null;
 
-  requesterIsRegistered=!!(data&&data.name&&data.floor&&data.line);
+  requesterIsRegistered=!!(data&&data.name&&data.floor);
   registeredReporterName=requesterIsRegistered?String(data.name).trim():"";
   document.getElementById("reporter").value=registeredReporterName;
   document.getElementById("floor").value=data&&data.floor?String(data.floor).trim():"";
-  document.getElementById("line").value=data&&data.line?String(data.line).trim():"";
+  document.getElementById("line").value="";
 
   nameEl.textContent=data&&data.name?String(data.name):"ยังไม่ได้ลงทะเบียน";
   floorEl.textContent=data&&data.floor?String(data.floor):"-";
-  lineEl.textContent=data&&data.line?String(data.line):"-";
+  populateRequesterLineOptions(data&&data.floor?String(data.floor):"",allowedLines||[]);
 
   if(requesterIsRegistered){
-    [nameEl,floorEl,lineEl].forEach(el=>el.classList.remove("waiting"));
-    noteEl.textContent="* ระบบดึงชื่อผู้แจ้งและพื้นที่จาก LINE User ID ให้อัตโนมัติ";
+    [nameEl,floorEl].forEach(el=>el.classList.remove("waiting"));
+    noteEl.textContent="* ระบบล็อกชื่อผู้แจ้งและชั้นจาก LINE • กรุณาเลือก LINE ที่เครื่องเสีย";
   }else{
-    noteEl.textContent=data?"ข้อมูลผู้แจ้งยังไม่ครบ กรุณาเติม ชื่อจริง / ชั้น / LINE ใน RepairUsers":"LINE นี้ยังไม่ได้ลงทะเบียนใน RepairUsers กรุณาติดต่อผู้ดูแลระบบ";
+    noteEl.textContent=data?"ข้อมูลผู้แจ้งยังไม่ครบ กรุณาเติม ชื่อจริง / ชั้น ใน RepairUsers":"LINE นี้ยังไม่ได้ลงทะเบียนใน RepairUsers กรุณาติดต่อผู้ดูแลระบบ";
   }
 }
 
 async function loadRequesterProfile(){
   const nameEl=document.getElementById("autoReporterName");
   const floorEl=document.getElementById("autoRequesterFloor");
-  const lineEl=document.getElementById("autoRequesterLine");
   const noteEl=document.getElementById("requesterAccountNote");
   requesterIsRegistered=false;registeredReporterName="";
   document.getElementById("reporter").value="";document.getElementById("floor").value="";document.getElementById("line").value="";
-  if(!lineUserId){nameEl.textContent="กรุณาเปิดผ่าน LINE";floorEl.textContent="-";lineEl.textContent="-";noteEl.textContent="ไม่พบ LINE User ID — กรุณาเปิดระบบผ่าน LINE";return;}
+  if(!lineUserId){nameEl.textContent="กรุณาเปิดผ่าน LINE";floorEl.textContent="-";noteEl.textContent="ไม่พบ LINE User ID — กรุณาเปิดระบบผ่าน LINE";populateRequesterLineOptions("",[]);return;}
   try{
     const res=await fetch(GAS_WEB_APP_URL+"?action=getRequesterProfile&userId="+encodeURIComponent(lineUserId));
     const data=await res.json();
-    if(data&&data.registered===true&&data.name&&data.floor&&data.line){
-      registeredReporterName=String(data.name).trim();requesterIsRegistered=true;
-      const floor=String(data.floor).trim(),line=String(data.line).trim();
-      document.getElementById("reporter").value=registeredReporterName;document.getElementById("floor").value=floor;document.getElementById("line").value=line;
-      nameEl.textContent=registeredReporterName;floorEl.textContent=floor;lineEl.textContent=line;
-      [nameEl,floorEl,lineEl].forEach(el=>el.classList.remove("waiting"));
-      noteEl.textContent="* ระบบดึงชื่อผู้แจ้งและพื้นที่จาก LINE User ID ให้อัตโนมัติ";return;
-    }
-    nameEl.textContent=(data&&data.name)?String(data.name):"ยังไม่ได้ลงทะเบียน";
-    floorEl.textContent=(data&&data.floor)?String(data.floor):"-";
-    lineEl.textContent=(data&&data.line)?String(data.line):"-";
-    noteEl.textContent=(data&&data.found)?"ข้อมูลผู้แจ้งยังไม่ครบ กรุณาเติม ชื่อจริง / ชั้น / LINE ใน RepairUsers":"LINE นี้ยังไม่ได้ลงทะเบียนใน RepairUsers กรุณาติดต่อผู้ดูแลระบบ";
-  }catch(err){console.error(err);nameEl.textContent="ตรวจสอบข้อมูลไม่สำเร็จ";floorEl.textContent="-";lineEl.textContent="-";noteEl.textContent="เชื่อมต่อข้อมูลผู้แจ้งไม่สำเร็จ กรุณาลองใหม่";}
+    if(data&&data.registered===true&&data.name&&data.floor){applyRequesterProfileData(data,data.allowedLines||[]);return;}
+    applyRequesterProfileData(data&&data.found?data:null,data&&data.allowedLines?data.allowedLines:[]);
+  }catch(err){console.error(err);nameEl.textContent="ตรวจสอบข้อมูลไม่สำเร็จ";floorEl.textContent="-";noteEl.textContent="เชื่อมต่อข้อมูลผู้แจ้งไม่สำเร็จ กรุณาลองใหม่";populateRequesterLineOptions("",[]);}
 }
 function clearMachineInfo(){
   currentMachineInfo=null;
@@ -2090,137 +2223,59 @@ async function submitRepair(){
   const floor=document.getElementById("floor").value.trim();
   const line=document.getElementById("line").value.trim();
   const issue=buildIssueText();
-  const isManualMachine=!!(currentMachineInfo&&currentMachineInfo.manual===true);
-
   if(!lineUserId){showToast("กรุณาเปิดระบบผ่าน LINE");return;}
-  if(!requesterIsRegistered||!registeredReporterName||!floor||!line){alert("ข้อมูลผู้แจ้งยังไม่พร้อม\nกรุณาให้ผู้ดูแลลงทะเบียน ชื่อจริง / ชั้น / LINE ใน RepairUsers");return;}
-  if(!machineName || (!machineCode && !isManualMachine)){showToast("กรุณาสแกนหรือกรอกเครื่องจักรก่อน");return;}
+  if(!requesterIsRegistered||!registeredReporterName||!floor){alert("ข้อมูลผู้แจ้งยังไม่พร้อม\nกรุณาให้ผู้ดูแลลงทะเบียน ชื่อจริง / ชั้น ใน RepairUsers");return;}
+  if(!line){showToast("กรุณาเลือก LINE ที่เครื่องเสีย");document.getElementById("requesterLineSelect").focus();return;}
+  if(!machineName){showToast("กรุณาสแกนหรือกรอกชื่อเครื่องจักรก่อน");return;}
   if(!issue){showToast("กรุณากรอกอาการที่พบ");return;}
 
+  const isManualMachine=!!(currentMachineInfo&&currentMachineInfo.manual===true);
   const payload={
-    action:"CREATE_REPAIR_JOB",
-    userId:lineUserId,
-    machineCode:machineCode,
-    issue:issue,
-    image:beforeImageBase64,
+    action:"CREATE_REPAIR_JOB",userId:lineUserId,line:line,
+    machineCode:machineCode,issue:issue,image:beforeImageBase64,
     manualMachine:isManualMachine,
     manualMachineCode:isManualMachine?machineCode:"",
     manualMachineName:isManualMachine?machineName:""
   };
-
-  const btn=document.getElementById("requesterSubmitBtn");
-  btn.disabled=true;btn.textContent="กำลังส่ง...";
+  const btn=document.getElementById("requesterSubmitBtn");btn.disabled=true;btn.textContent="กำลังส่ง...";
   try{
     const response=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
     const result=await response.json();
     if(result.success===true||result.status==="success"){
       alert("ส่งแจ้งซ่อมเรียบร้อยแล้ว"+(result.jobId?"\n"+result.jobId:""));
-      resetForm();
-      switchTab("reported");
+      resetForm();reportedJobsLoaded=false;switchTab("reported");
     }else alert(result.message||result.error||"ส่งข้อมูลไม่สำเร็จ");
-  }catch(err){
-    console.error(err);alert("เกิดข้อผิดพลาดในการส่งข้อมูล");
-  }finally{
-    btn.disabled=false;btn.innerHTML="➤ &nbsp;ส่งแจ้งซ่อม";
-  }
+  }catch(err){console.error(err);alert("เกิดข้อผิดพลาดในการส่งข้อมูล");}
+  finally{btn.disabled=false;btn.innerHTML="➤ &nbsp;ส่งแจ้งซ่อม";}
 }
 
 /* =========================================================
    RESET
 ========================================================= */
 
-function resetForm(){clearMachineInfo();document.getElementById("issue").value="";document.getElementById("issueDetail").value="";document.getElementById("imageInput").value="";beforeImageBase64="";const img=document.getElementById("imagePreview");img.src="";img.style.display="none";document.getElementById("reporter").value=registeredReporterName||"";}
+function resetForm(){
+  clearMachineInfo();document.getElementById("issue").value="";document.getElementById("issueDetail").value="";document.getElementById("imageInput").value="";beforeImageBase64="";
+  const img=document.getElementById("imagePreview");img.src="";img.style.display="none";
+  document.getElementById("reporter").value=registeredReporterName||"";
+  document.getElementById("line").value="";
+  const sel=document.getElementById("requesterLineSelect");if(sel)sel.value="";
+}
 
 /* =========================================================
    REPORTED JOBS
 ========================================================= */
 
-async function loadMyReportedJobs() {
-
+async function loadMyReportedJobs(silent=false) {
   const box = document.getElementById("reportedContent");
-
-  if (!lineUserId) {
-    box.innerHTML =
-      `<div class="empty">กรุณาเปิดหน้านี้ผ่าน LINE เพื่อดูงานของคุณ</div>`;
-    return;
-  }
-
-  if (
-    !GAS_WEB_APP_URL ||
-    GAS_WEB_APP_URL === "YOUR_GAS_WEB_APP_URL"
-  ) {
-
-    box.innerHTML = `
-      <div class="job-card">
-        <div class="job-head">
-          <div class="job-id">JOB-260905-001</div>
-          <div class="status status-wait">🟡 รอช่างรับงาน</div>
-        </div>
-        <div class="machine-name">เครื่องจักร A-103</div>
-        <div class="issue">ปุ่ม Start กดไม่ได้ เครื่องไม่ทำงาน</div>
-        <div class="meta">
-          📍 ชั้น 3<br>
-          🕐 แจ้งเมื่อ: 05/09/2026 09:15
-        </div>
-        <div class="timeline">
-          <div class="timeline-item active">แจ้งซ่อมแล้ว</div>
-          <div class="timeline-item">รอช่างรับงาน</div>
-          <div class="timeline-item">กำลังซ่อม</div>
-          <div class="timeline-item">ซ่อมเสร็จ</div>
-        </div>
-      </div>
-
-      <div class="job-card">
-        <div class="job-head">
-          <div class="job-id">JOB-260904-018</div>
-          <div class="status status-done">🟢 ซ่อมเสร็จแล้ว</div>
-        </div>
-        <div class="machine-name">เครื่องจักร C-015</div>
-        <div class="issue">สายพานหย่อนและมีเสียงดัง</div>
-        <div class="meta">
-          📍 ชั้น 3<br>
-          🔧 ผลงาน: ซ่อมเสร็จ ใช้งานได้
-        </div>
-        <div class="timeline">
-          <div class="timeline-item active">แจ้งซ่อมแล้ว</div>
-          <div class="timeline-item active">ช่างรับงานแล้ว</div>
-          <div class="timeline-item active">กำลังซ่อม</div>
-          <div class="timeline-item active">ซ่อมเสร็จแล้ว</div>
-        </div>
-      </div>
-    `;
-
-    return;
-  }
-
-  box.innerHTML = `<div class="loading">กำลังโหลด...</div>`;
-
-  try {
-
-    const url =
-      GAS_WEB_APP_URL +
-      "?action=getMyRepairJobs&userId=" +
-      encodeURIComponent(lineUserId);
-
-    const res = await fetch(url);
-    const data = await res.json();
-
-    if (!data.jobs || !data.jobs.length) {
-      box.innerHTML =
-        `<div class="empty">ยังไม่มีงานที่คุณแจ้งซ่อม</div>`;
-      return;
-    }
-
-    box.innerHTML = data.jobs
-      .map(renderReportedJob)
-      .join("");
-
-  } catch (err) {
-
-    console.error(err);
-    box.innerHTML =
-      `<div class="empty">โหลดข้อมูลไม่สำเร็จ</div>`;
-  }
+  if (!lineUserId) {box.innerHTML=`<div class="empty">กรุณาเปิดหน้านี้ผ่าน LINE เพื่อดูงานของคุณ</div>`;return;}
+  if(!silent) box.innerHTML=`<div class="loading">กำลังโหลด...</div>`;
+  try{
+    const url=GAS_WEB_APP_URL+"?action=getMyRepairJobs&userId="+encodeURIComponent(lineUserId);
+    const res=await fetch(url);const data=await res.json();
+    const jobs=Array.isArray(data.jobs)?data.jobs:[];
+    reportedJobsLoaded=true;
+    box.innerHTML=jobs.length?jobs.map(renderReportedJob).join(""):`<div class="empty">ยังไม่มีงานที่คุณแจ้งซ่อม</div>`;
+  }catch(err){console.error(err);if(!silent||!reportedJobsLoaded)box.innerHTML=`<div class="empty">โหลดข้อมูลไม่สำเร็จ</div>`;}
 }
 
 
@@ -2229,7 +2284,7 @@ function getRequesterProgress(status){
   if(!s || s==="รอดำเนินการ" || s==="แจ้งแล้ว") return 1;
   if(s.includes("เสร็จสิ้น") || s.includes("ซ่อมเสร็จ")) return 5;
   if(s.includes("รอตรวจรับ") || s.includes("ส่งตรวจรับ")) return 4;
-  if(s.includes("กำลังซ่อม") || s.includes("กำลังดำเนินการ") || s.includes("พักการซ่อม") || s.includes("รออะไหล่")) return 3;
+  if(s.includes("กำลังซ่อม") || s.includes("กำลังดำเนินการ") || s.includes("พักการซ่อม") || s.includes("รออะไหล่") || s==="รอช่างรับต่อ" || s==="รอช่างภายนอก" || s==="ส่งกลับแก้ไข") return 3;
   if(s.includes("รับงานแล้ว") || s.includes("รอเริ่มงาน") || s.includes("รอเริ่ม")) return 2;
   return 1;
 }
@@ -2238,13 +2293,14 @@ function getRequesterStatusText(status){
   if(!s || s==="รอดำเนินการ" || s==="แจ้งแล้ว") return "🟡 แจ้งแล้ว รอช่างรับงาน";
   if(s.includes("เสร็จสิ้น") || s.includes("ซ่อมเสร็จ")) return "✓ เสร็จสิ้น";
   if(s.includes("รอตรวจรับ") || s.includes("ส่งตรวจรับ")) return "🔎 รอตรวจรับ";
+  if(s==="ส่งกลับแก้ไข") return "↩ ส่งกลับให้ช่างแก้ไข";
+  if(s==="รอช่างรับต่อ") return "🔄 รอช่างคนใหม่รับต่อ";
+  if(s==="รอช่างภายนอก") return "🧰 รอช่างภายนอก";
   if(s.includes("รออะไหล่")) return "🔩 ช่างกำลังรออะไหล่";
   if(s.includes("พักการซ่อม")) return "⏸ ช่างพักการซ่อมชั่วคราว";
   if(s.includes("กำลังซ่อม") || s.includes("กำลังดำเนินการ")) return "🔧 ช่างกำลังซ่อม";
   if(s.includes("รับงานแล้ว") || s.includes("รอเริ่มงาน") || s.includes("รอเริ่ม")) return "👨‍🔧 ช่างรับงานแล้ว";
-  if(s.includes("ซ่อมไม่ได้")) return "⚠️ ซ่อมไม่ได้";
-  if(s.includes("ส่งต่อ")) return "🔄 กำลังส่งต่องาน";
-  return "🟡 แจ้งแล้ว รอช่างรับงาน";
+  return s||"🟡 แจ้งแล้ว รอช่างรับงาน";
 }
 function renderProgressSteps(status){
   const current=getRequesterProgress(status),steps=[["✓","แจ้งแล้ว"],["✓","รับงานแล้ว"],["🔧","กำลังซ่อม"],["🔎","รอตรวจรับ"],["⚑","เสร็จสิ้น"]];
@@ -2258,85 +2314,80 @@ function renderReportedJob(job){
   const status=String(job.status||"รอดำเนินการ");
   const isComplete=status.includes("เสร็จสิ้น") || status.includes("ปิดงาน");
   const waitingAcceptance=status.includes("รอตรวจรับ") || status.includes("ส่งตรวจรับ");
+  const isRework=status==="ส่งกลับแก้ไข";
   const history=[];
-
   if(job.reportTime||job.reportDate)history.push(`<div class="mock-history-row"><span>${escapeHtml(job.reportTime||"")}</span><strong>แจ้งซ่อม</strong></div>`);
   if(job.technician)history.push(`<div class="mock-history-row"><span></span><strong>ช่างรับงาน: ${escapeHtml(job.technician)}</strong></div>`);
   if(job.startTime||job.startDate)history.push(`<div class="mock-history-row"><span>${escapeHtml(job.startTime||"")}</span><strong>เริ่มซ่อม</strong></div>`);
   if(job.finishTime||job.finishDate)history.push(`<div class="mock-history-row"><span>${escapeHtml(job.finishTime||"")}</span><strong>${waitingAcceptance?"ช่างส่งตรวจรับ":"ช่างซ่อมเสร็จ"}</strong></div>`);
 
-  const image=job.beforeImage
-    ? `<img class="mock-job-thumb" src="${escapeHtml(job.beforeImage)}" alt="รูปตอนแจ้ง" onerror="this.outerHTML='<div class=&quot;mock-job-thumb-fallback&quot;>⚙️</div>'">`
-    : `<div class="mock-job-thumb-fallback">⚙️</div>`;
-
-  const showRepairResult = waitingAcceptance || isComplete;
-  const repairSeconds = Number(job.repairElapsedSeconds||0);
-  const repairResult = showRepairResult ? `
-    <div class="mock-repair-result">
+  const image=job.beforeImage?`<img class="mock-job-thumb" src="${escapeHtml(job.beforeImage)}" alt="รูปตอนแจ้ง" onerror="this.outerHTML='<div class=&quot;mock-job-thumb-fallback&quot;>⚙️</div>'">`:`<div class="mock-job-thumb-fallback">⚙️</div>`;
+  const showRepairResult=waitingAcceptance||isComplete;
+  const repairSeconds=Number(job.repairElapsedSeconds||0);
+  const repairResult=showRepairResult?`<div class="mock-repair-result">
       <div class="mock-repair-result-title">🔧 ผลการซ่อมจากช่าง</div>
       <div class="mock-repair-result-row"><span>ช่าง</span><strong>${escapeHtml(job.technician||"-")}</strong></div>
       <div class="mock-repair-result-row"><span>ประเภท</span><strong>${escapeHtml(job.repairType||"-")}</strong></div>
       <div class="mock-repair-result-row"><span>รายละเอียด</span><strong>${escapeHtml(job.repairDetail||"-")}</strong></div>
       ${repairSeconds>0?`<div class="mock-repair-result-row"><span>เวลาซ่อมจริง</span><strong>${formatRepairDuration(repairSeconds)}</strong></div>`:""}
       ${job.afterImage?`<img class="mock-after-photo" src="${escapeHtml(job.afterImage)}" alt="รูปหลังซ่อม">`:""}
-    </div>` : "";
+    </div>`:"";
 
-  const acceptanceAction = waitingAcceptance
-    ? `<div class="mock-accept-note">ตรวจสอบเครื่องและผลการซ่อมก่อนกดยืนยัน</div>
-       <button type="button" class="mock-accept-btn" onclick="acceptRepairJob('${escapeJs(job.jobId)}')">✓ ตรวจรับงาน</button>`
-    : (isComplete ? `<div class="mock-accepted-note">✓ ตรวจรับและปิดงานแล้ว</div>` : "");
+  const acceptanceAction=waitingAcceptance?`<div class="mock-accept-note">ทดลองเครื่องก่อน แล้วเลือกว่าผ่านหรือยังต้องแก้ไข</div>
+    <div class="mock-accept-actions">
+      <button type="button" class="mock-accept-btn" style="margin-top:0" onclick="acceptRepairJob('${escapeJs(job.jobId)}')">✓ ใช้งานได้</button>
+      <button type="button" class="mock-reject-btn" onclick="openRejectRepairModal('${escapeJs(job.jobId)}')">↩ ยังใช้ไม่ได้</button>
+    </div>`:(isComplete?`<div class="mock-accepted-note">✓ ตรวจรับและปิดงานแล้ว</div>`:"");
+  const reworkNote=isRework&&job.reworkReason?`<div class="rework-reason-note">↩ เหตุผลที่ส่งกลับ: ${escapeHtml(job.reworkReason)}</div>`:"";
 
   return `<div id="${reporterCardDomId(job.jobId)}" class="mock-job-card" data-reporter-job-id="${escapeHtml(job.jobId||"")}">
-    <div class="mock-job-main">
-      ${image}
-      <div>
-        <div class="mock-job-id">${escapeHtml(job.jobId||"-")}</div>
-        <div class="mock-job-name">${escapeHtml(job.machineName||job.machineCode||"-")}</div>
-        <div class="mock-job-meta">${escapeHtml(job.floor||"-")}${job.line?" • LINE "+escapeHtml(job.line):""}<br>อาการ: ${escapeHtml(job.issue||"-")}</div>
-      </div>
-      <div class="mock-job-chevron">›</div>
-    </div>
+    <div class="mock-job-main">${image}<div><div class="mock-job-id">${escapeHtml(job.jobId||"-")}</div><div class="mock-job-name">${escapeHtml(job.machineName||job.machineCode||"-")}</div><div class="mock-job-meta">${escapeHtml(job.floor||"-")}${job.line?" • LINE "+escapeHtml(job.line):""}<br>อาการ: ${escapeHtml(job.issue||"-")}</div></div><div class="mock-job-chevron">›</div></div>
     ${renderProgressSteps(status)}
     <div class="mock-state-chip ${isComplete?"complete":""}">${getRequesterStatusText(status)}</div>
-    ${repairResult}
-    ${acceptanceAction}
+    ${reworkNote}${repairResult}${acceptanceAction}
     ${history.length?`<div class="mock-history"><div class="mock-history-head">▣ ประวัติงาน</div><div class="mock-history-body">${history.join("")}</div></div>`:""}
   </div>`;
 }
 
 async function acceptRepairJob(jobId){
-  if(!jobId || !lineUserId) return;
-
-  const ok = window.confirm("ยืนยันตรวจรับงานนี้?\n\nกรุณาตรวจสอบว่าเครื่องใช้งานได้เรียบร้อยก่อนกดยืนยัน");
-  if(!ok) return;
-
+  if(!jobId||!lineUserId)return;
+  const ok=window.confirm("ยืนยันว่าเครื่องใช้งานได้เรียบร้อย และต้องการปิดงานนี้?");
+  if(!ok)return;
   try{
     showToast("กำลังตรวจรับงาน...");
-
-    const res = await fetch(GAS_WEB_APP_URL,{
-      method:"POST",
-      headers:{"Content-Type":"text/plain;charset=utf-8"},
-      body:JSON.stringify({
-        action:"REPORTER_ACCEPT_REPAIR_JOB",
-        jobId:jobId,
-        userId:lineUserId
-      })
-    });
-
-    const data = await res.json();
-
-    if(data.status==="success" || data.status==="already_accepted"){
+    const res=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"REPORTER_ACCEPT_REPAIR_JOB",jobId:jobId,userId:lineUserId})});
+    const data=await res.json();
+    if(data.status==="success"||data.status==="already_accepted"){
       showToast("✓ ตรวจรับเรียบร้อยแล้ว");
-      await loadMyReportedJobs();
-      focusReporterAcceptanceJob(jobId,false);
-      return;
+      await loadMyReportedJobs(true);focusReporterAcceptanceJob(jobId,false);return;
     }
-
     alert(data.message||"ตรวจรับงานไม่สำเร็จ");
-  }catch(err){
-    console.error(err);
-    alert("เกิดข้อผิดพลาดในการตรวจรับงาน");
-  }
+  }catch(err){console.error(err);alert("เกิดข้อผิดพลาดในการตรวจรับงาน");}
+}
+
+
+function openRejectRepairModal(jobId){
+  currentRejectJobId=String(jobId||"");
+  document.getElementById("rejectRepairReason").value="";
+  document.getElementById("rejectRepairModal").classList.add("show");
+  setTimeout(()=>document.getElementById("rejectRepairReason").focus(),120);
+}
+
+async function submitRejectRepairJob(){
+  const jobId=currentRejectJobId;
+  const reason=String(document.getElementById("rejectRepairReason").value||"").trim();
+  const btn=document.getElementById("rejectRepairSubmitBtn");
+  if(!jobId)return;if(!reason){showToast("กรุณาระบุเหตุผลที่ยังใช้งานไม่ได้");return;}
+  try{
+    if(btn){btn.disabled=true;btn.textContent="กำลังส่ง...";}
+    const res=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"REPORTER_REJECT_REPAIR_JOB",jobId:jobId,userId:lineUserId,reason:reason})});
+    const data=await res.json();
+    if(data.status==="success"){
+      closeModal("rejectRepairModal");currentRejectJobId="";showToast("↩ ส่งกลับให้ช่างแก้ไขแล้ว");await loadMyReportedJobs(true);return;
+    }
+    alert(data.message||"ส่งกลับแก้ไขไม่สำเร็จ");
+  }catch(err){console.error(err);alert("เกิดข้อผิดพลาดในการส่งกลับแก้ไข");}
+  finally{if(btn){btn.disabled=false;btn.textContent="ส่งกลับให้ช่างแก้ไข";}}
 }
 
 function focusReporterAcceptanceJob(jobId,highlight=true){
@@ -2372,25 +2423,19 @@ async function openReporterAcceptanceFromLink(jobId){
 
 function isTechTerminalStatus(status){
   const s=String(status||"").trim();
-  return s.includes("เสร็จสิ้น") || s.includes("ซ่อมเสร็จ") ||
-         s.includes("ซ่อมไม่ได้") || s.includes("ส่งต่อช่างอื่น");
+  return s.includes("เสร็จสิ้น") || s.includes("ปิดงาน");
 }
 
 function techStatusInfo(status){
   const s=String(status||"").trim();
-  if(s.includes("รอตรวจรับ") || s.includes("ส่งตรวจรับ")){
-    return {label:"รอตรวจรับ", cls:"tech-status-inspect"};
-  }
-  if(s.includes("พักการซ่อม")){
-    return {label:"พักการซ่อม", cls:"tech-status-inspect"};
-  }
-  if(s.includes("กำลัง") || s.includes("ดำเนินการ") || s.includes("รออะไหล่")){
-    return {label:s.includes("รออะไหล่")?"รออะไหล่":"กำลังซ่อม", cls:"tech-status-doing"};
-  }
-  if(isTechTerminalStatus(s)){
-    return {label:s.includes("เสร็จ")?"เสร็จสิ้น":s, cls:"tech-status-done"};
-  }
-  return {label:"รอเริ่มซ่อม", cls:"tech-status-wait"};
+  if(s==="ส่งกลับแก้ไข")return {label:"ต้องแก้ไข",cls:"tech-status-inspect"};
+  if(s==="รอช่างรับต่อ")return {label:"รอช่างรับต่อ",cls:"tech-status-inspect"};
+  if(s==="รอช่างภายนอก")return {label:"รอช่างภายนอก",cls:"tech-status-inspect"};
+  if(s.includes("รอตรวจรับ")||s.includes("ส่งตรวจรับ"))return {label:"รอตรวจรับ",cls:"tech-status-inspect"};
+  if(s.includes("พักการซ่อม"))return {label:"พักการซ่อม",cls:"tech-status-inspect"};
+  if(s.includes("กำลัง")||s.includes("ดำเนินการ")||s.includes("รออะไหล่"))return {label:s.includes("รออะไหล่")?"รออะไหล่":"กำลังซ่อม",cls:"tech-status-doing"};
+  if(isTechTerminalStatus(s))return {label:"เสร็จสิ้น",cls:"tech-status-done"};
+  return {label:"รอเริ่มซ่อม",cls:"tech-status-wait"};
 }
 
 function applyTechnicianPayload(data){
@@ -2416,30 +2461,16 @@ function renderTechnicianJobList(){
   startTechnicianTimers();
 }
 
-async function loadTechnicianJobs() {
-  const box = document.getElementById("technicianContent");
-
-  if (!lineUserId) {
-    box.innerHTML = `<div class="tech-empty">กรุณาเปิดผ่าน LINE</div>`;
-    return;
-  }
-
-  if(!technicianJobsLoaded){
-    box.innerHTML = `<div class="loading">กำลังโหลดงานของคุณ...</div>`;
-  }
-
-  try {
-    const url = GAS_WEB_APP_URL+
-      "?action=getMyTechnicianJobs&activeOnly=1&userId="+
-      encodeURIComponent(lineUserId);
-    const res = await fetch(url);
-    const data = await res.json();
-    if(data.status && data.status !== "success") throw new Error(data.message||"โหลดงานช่างไม่สำเร็จ");
+async function loadTechnicianJobs(silent=false) {
+  const box=document.getElementById("technicianContent");
+  if(!lineUserId){box.innerHTML=`<div class="tech-empty">กรุณาเปิดผ่าน LINE</div>`;return;}
+  if(!silent&&!technicianJobsLoaded)box.innerHTML=`<div class="loading">กำลังโหลดงานของคุณ...</div>`;
+  try{
+    const res=await fetch(GAS_WEB_APP_URL+"?action=getMyTechnicianJobs&activeOnly=1&userId="+encodeURIComponent(lineUserId));
+    const data=await res.json();
+    if(data.status&&data.status!=="success")throw new Error(data.message||"โหลดงานช่างไม่สำเร็จ");
     applyTechnicianPayload(data);
-  } catch (err) {
-    console.error(err);
-    if(!technicianJobsLoaded) box.innerHTML=`<div class="tech-empty">โหลดงานช่างไม่สำเร็จ</div>`;
-  }
+  }catch(err){console.error(err);if(!technicianJobsLoaded)box.innerHTML=`<div class="tech-empty">โหลดงานช่างไม่สำเร็จ</div>`;}
 }
 
 function invalidateTechnicianToday(){
@@ -2453,24 +2484,15 @@ function formatTodayThai(dateStr){
   return `วันนี้ ${Number(parts[2])}/${Number(parts[1])}/${Number(parts[0])+543}`;
 }
 
-async function loadTechnicianTodayJobs(){
+async function loadTechnicianTodayJobs(silent=false){
   const box=document.getElementById("technicianTodayContent");
   if(!lineUserId){box.innerHTML=`<div class="tech-empty">กรุณาเปิดผ่าน LINE</div>`;return;}
-  box.innerHTML=`<div class="loading">กำลังโหลดงานวันนี้...</div>`;
-
+  if(!silent)box.innerHTML=`<div class="loading">กำลังโหลดงานวันนี้...</div>`;
   try{
     const res=await fetch(GAS_WEB_APP_URL+"?action=getMyTechnicianTodayJobs&userId="+encodeURIComponent(lineUserId));
-    const data=await res.json();
-    if(data.status!=="success")throw new Error(data.message||"โหลดงานวันนี้ไม่สำเร็จ");
-    technicianTodayDate=data.date||"";
-    technicianTodaySummary=data.summary||{total:0,finished:0,active:0,paused:0};
-    technicianTodayJobs=Array.isArray(data.jobs)?data.jobs:[];
-    technicianTodayLoaded=true;
-    renderTechnicianToday();
-  }catch(err){
-    console.error(err);
-    box.innerHTML=`<div class="tech-empty">โหลดงานวันนี้ไม่สำเร็จ</div>`;
-  }
+    const data=await res.json();if(data.status!=="success")throw new Error(data.message||"โหลดงานวันนี้ไม่สำเร็จ");
+    technicianTodayDate=data.date||"";technicianTodaySummary=data.summary||{total:0,finished:0,active:0,paused:0};technicianTodayJobs=Array.isArray(data.jobs)?data.jobs:[];technicianTodayLoaded=true;renderTechnicianToday();
+  }catch(err){console.error(err);if(!silent)box.innerHTML=`<div class="tech-empty">โหลดงานวันนี้ไม่สำเร็จ</div>`;}
 }
 
 function renderTechnicianToday(){
@@ -2525,6 +2547,14 @@ function patchTechnicianJob(jobId,patch){
 }
 
 
+
+function removeTechnicianJob(jobId){
+  const key=String(jobId||"");
+  technicianJobs=technicianJobs.filter(j=>String(j.jobId||"")!==key);
+  delete technicianJobsById[key];
+  renderTechnicianJobList();invalidateTechnicianToday();
+}
+
 let technicianTimerInterval = null;
 
 function formatRepairDuration(totalSeconds){
@@ -2560,78 +2590,40 @@ function startTechnicianTimers(){
 function renderTechnicianJob(job) {
   const status=String(job.status||"รับงานแล้ว");
   const info=techStatusInfo(status);
-  const image=job.beforeImage
-    ? `<img class="tech-job-image" src="${escapeHtml(job.beforeImage)}" alt="รูปตอนแจ้ง" onerror="this.outerHTML='<div class=&quot;tech-job-image-fallback&quot;>⚙️</div>'">`
-    : `<div class="tech-job-image-fallback">⚙️</div>`;
-
-  const started = !!job.startTime;
-  const paused = status.includes("พักการซ่อม");
-  const repairing = status.includes("กำลัง") || status.includes("ดำเนินการ");
-  const waitingAcceptance = status.includes("รอตรวจรับ") || status.includes("ส่งตรวจรับ");
-  const elapsed = Number(job.repairElapsedSeconds||0);
+  const image=job.beforeImage?`<img class="tech-job-image" src="${escapeHtml(job.beforeImage)}" alt="รูปตอนแจ้ง" onerror="this.outerHTML='<div class=&quot;tech-job-image-fallback&quot;>⚙️</div>'">`:`<div class="tech-job-image-fallback">⚙️</div>`;
+  const rework=status==="ส่งกลับแก้ไข";
+  const started=!!job.startTime && !(status.includes("รับงาน")||status.includes("รอเริ่ม")||rework);
+  const paused=status==="พักการซ่อม";
+  const external=status==="รอช่างภายนอก";
+  const waitingHandoff=status==="รอช่างรับต่อ";
+  const repairing=status.includes("กำลัง")||status.includes("ดำเนินการ");
+  const waitingAcceptance=status.includes("รอตรวจรับ")||status.includes("ส่งตรวจรับ");
+  const elapsed=Number(job.repairElapsedSeconds||0);
 
   let action="";
-  if(status.includes("รับงาน") || status.includes("รอเริ่ม")){
-    action=`<button class="tech-job-action" onclick="event.stopPropagation();openTechVerify('${escapeJs(job.jobId)}')">▶ &nbsp;เริ่มซ่อม</button>`;
+  if(rework){
+    action=`<button class="tech-job-action rework" onclick="event.stopPropagation();openTechVerify('${escapeJs(job.jobId)}')">↩ เริ่มแก้ไข</button>`;
+  }else if(status.includes("รับงาน")||status.includes("รอเริ่ม")){
+    action=`<div class="tech-job-actions"><button class="tech-job-action" onclick="event.stopPropagation();openTechVerify('${escapeJs(job.jobId)}')">▶ เริ่มซ่อม</button><button class="tech-job-action cancel" onclick="event.stopPropagation();cancelAcceptedJob('${escapeJs(job.jobId)}')">↩ ยกเลิกรับ</button></div>`;
   }else if(paused){
-    action=`<div class="tech-job-actions">
-      <button class="tech-job-action resume" onclick="event.stopPropagation();resumeTechnicianJob('${escapeJs(job.jobId)}')">▶ ทำซ่อมต่อ</button>
-      <button class="tech-job-action finish" onclick="event.stopPropagation();openFinishModal('${escapeJs(job.jobId)}')">✓ ซ่อมเสร็จ</button>
-    </div>`;
+    action=`<div class="tech-job-actions three"><button class="tech-job-action resume" onclick="event.stopPropagation();resumeTechnicianJob('${escapeJs(job.jobId)}')">▶ ทำต่อ</button><button class="tech-job-action handoff" onclick="event.stopPropagation();openHandoffModal('${escapeJs(job.jobId)}')">🔄 ส่งต่อ</button><button class="tech-job-action finish" onclick="event.stopPropagation();openFinishModal('${escapeJs(job.jobId)}')">✓ เสร็จ</button></div>`;
   }else if(repairing){
-    action=`<div class="tech-job-actions">
-      <button class="tech-job-action pause" onclick="event.stopPropagation();openPauseReasonModal('${escapeJs(job.jobId)}')">Ⅱ พักชั่วคราว</button>
-      <button class="tech-job-action finish" onclick="event.stopPropagation();openFinishModal('${escapeJs(job.jobId)}')">✓ ซ่อมเสร็จ</button>
-    </div>`;
+    action=`<div class="tech-job-actions three"><button class="tech-job-action pause" onclick="event.stopPropagation();openPauseReasonModal('${escapeJs(job.jobId)}')">Ⅱ พัก</button><button class="tech-job-action handoff" onclick="event.stopPropagation();openHandoffModal('${escapeJs(job.jobId)}')">🔄 ส่งต่อ</button><button class="tech-job-action finish" onclick="event.stopPropagation();openFinishModal('${escapeJs(job.jobId)}')">✓ เสร็จ</button></div>`;
+  }else if(external){
+    action=`<div class="tech-job-actions"><button class="tech-job-action resume" onclick="event.stopPropagation();resumeTechnicianJob('${escapeJs(job.jobId)}')">▶ ทำซ่อมต่อ</button><button class="tech-job-action finish" onclick="event.stopPropagation();openFinishModal('${escapeJs(job.jobId)}')">✓ ซ่อมเสร็จ</button></div>`;
+  }else if(waitingHandoff){
+    action=`<div class="tech-wait-note">กำลังรอช่างที่ส่งต่อให้กดรับงาน</div>`;
   }else if(waitingAcceptance){
-    action=`<button class="tech-job-action locked" type="button">🔎 &nbsp;รอผู้แจ้งตรวจรับ</button>`;
+    action=`<button class="tech-job-action locked" type="button">🔎 รอผู้แจ้งตรวจรับ</button>`;
   }
 
-  const timer = started
-    ? `<div class="tech-repair-timer ${paused?"paused":""}" data-tech-timer data-seconds="${elapsed}" data-running="${repairing&&!paused?"1":"0"}">
-        ${paused?"⏸ เวลาซ่อมหยุดชั่วคราว":waitingAcceptance?"⏱ เวลาซ่อมจริง":"⏱ เวลาซ่อม"} <span data-timer-value>${formatRepairDuration(elapsed)}</span>
-      </div>`
-    : "";
+  const timer=started?`<div class="tech-repair-timer ${(paused||external||waitingHandoff)?"paused":""}" data-tech-timer data-seconds="${elapsed}" data-running="${repairing?"1":"0"}">${paused?"⏸ เวลาซ่อมหยุดชั่วคราว":external?"🧰 รอช่างภายนอก — ไม่นับเวลา":waitingHandoff?"🔄 รอช่างรับต่อ — ไม่นับเวลา":waitingAcceptance?"⏱ เวลาซ่อมจริง":"⏱ เวลาซ่อม"} <span data-timer-value>${formatRepairDuration(elapsed)}</span></div>`:"";
+  const reworkNote=rework&&job.reworkReason?`<div class="rework-reason-note">↩ ผู้แจ้งแจ้งว่า: ${escapeHtml(job.reworkReason)}</div>`:"";
 
   return `<div class="tech-job-card" data-tech-job-id="${escapeHtml(job.jobId||"")}">
-    <div class="tech-job-top" role="button" tabindex="0"
-      onclick="showJobDetail('${escapeJs(job.jobId)}')">
-      ${image}
-      <div>
-        <div class="tech-job-headline">
-          <div class="tech-job-id">${escapeHtml(job.jobId||"-")}</div>
-          <span class="tech-status-pill ${info.cls}">${escapeHtml(info.label)}</span>
-        </div>
-        <div class="tech-job-name">${escapeHtml(job.machineName||job.machineCode||"-")}</div>
-        <div class="tech-job-meta">
-          รหัสเครื่อง: ${escapeHtml(displayMachineCode(job)||"-")}<br>
-          ${escapeHtml(job.floor||"-")}${job.line?" &nbsp;|&nbsp; LINE "+escapeHtml(job.line):""}
-        </div>
-      </div>
-    </div>
-
-    <div class="tech-job-detail-lines" role="button" tabindex="0"
-      onclick="showJobDetail('${escapeJs(job.jobId)}')">
-      <div class="tech-job-detail-line">
-        <span class="tech-job-detail-icon">📋</span>
-        <span><b>อาการ:</b> ${escapeHtml(job.issue||"-")}</span>
-      </div>
-      <div class="tech-job-detail-line">
-        <span class="tech-job-detail-icon">🕐</span>
-        <span>แจ้งเมื่อ: ${escapeHtml(job.dateTime||"-")}</span>
-      </div>
-      <div class="tech-job-detail-line">
-        <span class="tech-job-detail-icon">👤</span>
-        <span>ผู้แจ้ง: ${escapeHtml(job.reporter||"-")}</span>
-      </div>
-      ${job.startTime?`<div class="tech-job-detail-line">
-        <span class="tech-job-detail-icon">🔧</span>
-        <span>เริ่มซ่อม: ${escapeHtml(job.startTime)}</span>
-      </div>`:""}
-    </div>
-
-    ${timer}
-    ${action}
+    <div class="tech-job-top" role="button" tabindex="0" onclick="showJobDetail('${escapeJs(job.jobId)}')">${image}<div><div class="tech-job-headline"><div class="tech-job-id">${escapeHtml(job.jobId||"-")}</div><span class="tech-status-pill ${info.cls}">${escapeHtml(info.label)}</span></div><div class="tech-job-name">${escapeHtml(job.machineName||job.machineCode||"-")}</div><div class="tech-job-meta">รหัสเครื่อง: ${escapeHtml(displayMachineCode(job)||"-")}<br>${escapeHtml(job.floor||"-")}${job.line?" &nbsp;|&nbsp; LINE "+escapeHtml(job.line):""}</div></div></div>
+    <div class="tech-job-detail-lines" role="button" tabindex="0" onclick="showJobDetail('${escapeJs(job.jobId)}')"><div class="tech-job-detail-line"><span class="tech-job-detail-icon">📋</span><span><b>อาการ:</b> ${escapeHtml(job.issue||"-")}</span></div><div class="tech-job-detail-line"><span class="tech-job-detail-icon">🕐</span><span>แจ้งเมื่อ: ${escapeHtml(job.dateTime||"-")}</span></div><div class="tech-job-detail-line"><span class="tech-job-detail-icon">👤</span><span>ผู้แจ้ง: ${escapeHtml(job.reporter||"-")}</span></div>${job.startTime?`<div class="tech-job-detail-line"><span class="tech-job-detail-icon">🔧</span><span>เริ่มซ่อมครั้งแรก: ${escapeHtml(job.startTime)}</span></div>`:""}</div>
+    ${reworkNote}${timer}${action}
   </div>`;
 }
 
@@ -2639,58 +2631,90 @@ function renderTechnicianJob(job) {
    FLEX ACCEPT — 1 JOB = 1 TECH, DUPLICATE CLICK SILENT
 ========================================================= */
 async function acceptJobFromFlex(jobId) {
-  try {
-    const payload={
-      action:"acceptJobViaLIFF",
-      jobId:jobId,
-      userId:lineUserId
-    };
-
-    const res=await fetch(GAS_WEB_APP_URL,{
-      method:"POST",
-      headers:{"Content-Type":"text/plain;charset=utf-8"},
-      body:JSON.stringify(payload)
-    });
+  try{
+    showToast("กำลังรับงาน...");
+    const res=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"acceptJobViaLIFF",jobId:jobId,userId:lineUserId})});
     const data=await res.json();
-
     if(data.status==="success"){
-      showToast("✓ รับงานแล้ว");
-      technicianJobsLoaded=false;
-      document.getElementById("technicianPage").classList.add("active");
-      updateTechnicianChrome("technician");
-      await loadTechnicianJobs();
-      return;
+      showToast("✓ รับงานแล้ว");technicianJobsLoaded=false;await loadTechnicianJobs(true);focusTechnicianJob(jobId,false);return;
     }
-
-    // ถ้าเป็นเจ้าของงานนี้อยู่แล้ว ให้เข้าหน้า "งานของฉัน" ได้เลย
     if(data.status==="already_owned"){
-      technicianJobsLoaded=false;
-      switchTab("technician");
-      return;
+      technicianJobsLoaded=false;await loadTechnicianJobs(true);focusTechnicianJob(jobId,false);return;
     }
-
-    // คนอื่นกด Flex หลังงานมีเจ้าของแล้ว: เงียบและปิดหน้ารับงาน
-    if(
-      data.status==="already_taken" ||
-      data.status==="closed_for_accept" ||
-      data.status==="already_started" ||
-      data.status==="already_done" ||
-      data.silent===true
-    ){
-      if(typeof liff!=="undefined" && liff.isInClient()){
-        try{liff.closeWindow();return;}catch(e){}
-      }
-      switchTab("technician");
-      return;
+    if(data.status==="already_taken"){
+      alert("งานนี้ช่าง "+(data.techName||"คนอื่น")+" รับไปแล้ว");technicianJobsLoaded=false;await loadTechnicianJobs(true);switchTab("technician");return;
     }
-
+    if(data.status==="closed_for_accept"){
+      showToast(data.message||"งานนี้ไม่เปิดให้รับแล้ว");technicianJobsLoaded=false;await loadTechnicianJobs(true);switchTab("technician");return;
+    }
     alert(data.message||"รับงานไม่สำเร็จ");
-    switchTab("technician");
+  }catch(err){console.error(err);alert("เกิดข้อผิดพลาดในการรับงาน");}
+}
 
-  }catch(err){
-    console.error(err);
-    alert("เกิดข้อผิดพลาดในการรับงาน");
-  }
+
+async function acceptHandoffFromFlex(jobId){
+  try{
+    showToast("กำลังรับงานต่อ...");
+    const res=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"ACCEPT_HANDOFF_JOB",jobId:jobId,userId:lineUserId})});
+    const data=await res.json();
+    if(data.status==="success"||data.status==="already_owned"){
+      showToast("✓ รับงานต่อแล้ว");technicianJobsLoaded=false;await loadTechnicianJobs(true);focusTechnicianJob(jobId,false);return;
+    }
+    alert(data.message||"รับงานต่อไม่สำเร็จ");technicianJobsLoaded=false;await loadTechnicianJobs(true);
+  }catch(err){console.error(err);alert("เกิดข้อผิดพลาดในการรับงานต่อ");}
+}
+
+async function cancelAcceptedJob(jobId){
+  if(!window.confirm("ยกเลิกรับงานนี้และส่งกลับเข้ากลุ่มให้ช่างคนอื่นรับใหม่?"))return;
+  try{
+    showToast("กำลังคืนงานเข้ากลุ่ม...");
+    const res=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"CANCEL_ACCEPT_REPAIR_JOB",jobId:jobId,userId:lineUserId})});
+    const data=await res.json();
+    if(data.status==="success"){showToast("↩ คืนงานเข้ากลุ่มแล้ว");removeTechnicianJob(jobId);return;}
+    alert(data.message||"ยกเลิกรับงานไม่สำเร็จ");
+  }catch(err){console.error(err);alert("เกิดข้อผิดพลาดในการยกเลิกรับงาน");}
+}
+
+async function openHandoffModal(jobId){
+  currentHandoffJobId=String(jobId||"");
+  document.getElementById("handoffReason").value="";
+  document.getElementById("handoffTargetTech").innerHTML='<option value="">-- เลือกช่าง --</option>';
+  document.getElementById("handoffTargetWrap").classList.remove("show");
+  document.getElementById("handoffModal").classList.add("show");
+}
+
+async function onHandoffReasonChange(){
+  const reason=document.getElementById("handoffReason").value;
+  const wrap=document.getElementById("handoffTargetWrap");
+  if(reason!=="ต้องการช่างคนอื่นช่วย"){wrap.classList.remove("show");return;}
+  wrap.classList.add("show");
+  const select=document.getElementById("handoffTargetTech");select.innerHTML='<option value="">กำลังโหลดช่าง...</option>';
+  try{
+    const floor=(currentTechnicianInfo&&currentTechnicianInfo.floor)||"";
+    const res=await fetch(GAS_WEB_APP_URL+"?action=getTechniciansByFloor&floor="+encodeURIComponent(floor)+"&excludeUserId="+encodeURIComponent(lineUserId));
+    const data=await res.json();const list=Array.isArray(data.technicians)?data.technicians:[];
+    select.innerHTML='<option value="">-- เลือกช่าง --</option>'+list.map(t=>`<option value="${escapeHtml(t.userId)}">${escapeHtml(t.name)}</option>`).join("");
+  }catch(err){console.error(err);select.innerHTML='<option value="">โหลดรายชื่อไม่สำเร็จ</option>';}
+}
+
+async function submitHandoffJob(){
+  const jobId=currentHandoffJobId;const reason=document.getElementById("handoffReason").value;const btn=document.getElementById("handoffSubmitBtn");
+  if(!jobId)return;if(!reason){showToast("กรุณาเลือกเหตุผลส่งต่องาน");return;}
+  const targetTechUserId=reason==="ต้องการช่างคนอื่นช่วย"?document.getElementById("handoffTargetTech").value:"";
+  if(reason==="ต้องการช่างคนอื่นช่วย"&&!targetTechUserId){showToast("กรุณาเลือกช่าง");return;}
+  try{
+    if(btn){btn.disabled=true;btn.textContent="กำลังส่ง...";}
+    const res=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"HANDOFF_REPAIR_JOB",jobId:jobId,userId:lineUserId,reason:reason,targetTechUserId:targetTechUserId})});
+    const data=await res.json();
+    if(data.status==="success"){
+      closeModal("handoffModal");currentHandoffJobId="";showToast("🔄 อัปเดตการส่งต่องานแล้ว");
+      if(reason==="ซ่อมไม่สำเร็จ")removeTechnicianJob(jobId);
+      else patchTechnicianJob(jobId,{status:data.jobStatus||"รอช่างรับต่อ",repairPaused:true,repairElapsedSeconds:getTimerSecondsForJob(jobId)});
+      return;
+    }
+    alert(data.message||"ส่งต่องานไม่สำเร็จ");
+  }catch(err){console.error(err);alert("เกิดข้อผิดพลาดในการส่งต่องาน");}
+  finally{if(btn){btn.disabled=false;btn.textContent="ยืนยันส่งต่อ";}}
 }
 
 /* =========================================================
@@ -2774,11 +2798,12 @@ async function startTechnicianJobConfirmed(jobId,machineCode,verifyMethod){
     if(data.status==="success"){
       showToast("✓ เริ่มซ่อมแล้ว");
       currentVerifyJobId="";
+      const existing=technicianJobsById[String(jobId||"")]||{};
       patchTechnicianJob(jobId,{
         status:data.jobStatus||"กำลังซ่อม",
-        startDate:data.startDate||"",
-        startTime:data.startTime||"",
-        repairElapsedSeconds:0,
+        startDate:existing.startDate||data.startDate||"",
+        startTime:existing.startTime||data.startTime||"",
+        repairElapsedSeconds:Number(existing.repairElapsedSeconds||0),
         repairPaused:false
       });
       return;
@@ -2862,19 +2887,11 @@ function resumeTechnicianJob(jobId){
 ========================================================= */
 
 function openFinishModal(jobId) {
-
-  currentFinishJobId = jobId;
-  afterImageBase64 = "";
-
-  document.getElementById("afterImageInput").value = "";
-  document.getElementById("afterImagePreview").style.display = "none";
-  document.getElementById("afterImagePreview").src = "";
-  document.getElementById("repairType").value = "";
-  document.getElementById("repairDetail").value = "";
-
-  document
-    .getElementById("finishModal")
-    .classList.add("show");
+  currentFinishJobId=jobId;afterImageBase64="";
+  ["afterCameraInput","afterGalleryInput"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  const img=document.getElementById("afterImagePreview");img.style.display="none";img.src="";
+  document.getElementById("repairType").value="";document.getElementById("repairDetail").value="";
+  document.getElementById("finishModal").classList.add("show");
 }
 
 async function previewAfterImage(event) {
@@ -2974,57 +2991,20 @@ async function submitFinishJob() {
    DETAIL
 ========================================================= */
 function showJobDetail(jobId) {
-  const job=technicianJobsById[String(jobId||"")];
-  if(!job){showToast("ไม่พบข้อมูลงาน");return;}
-
-  const status=String(job.status||"");
-  const info=techStatusInfo(status);
-  const beforeImage=job.beforeImage
-    ? `<div class="tech-detail-before"><div style="font-size:.74rem;font-weight:800;color:#42535f;margin:9px 0 7px;">รูปภาพตอนแจ้ง</div><img src="${escapeHtml(job.beforeImage)}" alt="รูปตอนแจ้ง"></div>`
-    : "";
-
+  const job=technicianJobsById[String(jobId||"")];if(!job){showToast("ไม่พบข้อมูลงาน");return;}
+  const status=String(job.status||"");const info=techStatusInfo(status);
+  const beforeImage=job.beforeImage?`<div class="tech-detail-before"><div style="font-size:.74rem;font-weight:800;color:#42535f;margin:9px 0 7px;">รูปภาพตอนแจ้ง</div><img src="${escapeHtml(job.beforeImage)}" alt="รูปตอนแจ้ง"></div>`:"";
+  const rework=status==="ส่งกลับแก้ไข",paused=status==="พักการซ่อม",repairing=status.includes("กำลัง")||status.includes("ดำเนินการ"),external=status==="รอช่างภายนอก",waitingHandoff=status==="รอช่างรับต่อ";
   let action="";
-  if(status.includes("รับงาน") || status.includes("รอเริ่ม")){
-    action=`<button class="tech-job-action" onclick="closeModal('detailModal');openTechVerify('${escapeJs(job.jobId)}')">▶ &nbsp;เริ่มซ่อม</button>`;
-  }else if(status.includes("พักการซ่อม")){
-    action=`<div class="tech-job-actions">
-      <button class="tech-job-action resume" onclick="closeModal('detailModal');resumeTechnicianJob('${escapeJs(job.jobId)}')">▶ ทำซ่อมต่อ</button>
-      <button class="tech-job-action finish" onclick="closeModal('detailModal');openFinishModal('${escapeJs(job.jobId)}')">✓ ซ่อมเสร็จ</button>
-    </div>`;
-  }else if(status.includes("กำลัง") || status.includes("ดำเนินการ")){
-    action=`<div class="tech-job-actions">
-      <button class="tech-job-action pause" onclick="closeModal('detailModal');openPauseReasonModal('${escapeJs(job.jobId)}')">Ⅱ พักชั่วคราว</button>
-      <button class="tech-job-action finish" onclick="closeModal('detailModal');openFinishModal('${escapeJs(job.jobId)}')">✓ ซ่อมเสร็จ</button>
-    </div>`;
-  }else if(status.includes("รอตรวจรับ")){
-    action=`<button class="tech-job-action locked" type="button">🔎 &nbsp;รอผู้แจ้งตรวจรับ</button>`;
-  }
+  if(rework)action=`<button class="tech-job-action rework" onclick="closeModal('detailModal');openTechVerify('${escapeJs(job.jobId)}')">↩ เริ่มแก้ไข</button>`;
+  else if(status.includes("รับงาน")||status.includes("รอเริ่ม"))action=`<div class="tech-job-actions"><button class="tech-job-action" onclick="closeModal('detailModal');openTechVerify('${escapeJs(job.jobId)}')">▶ เริ่มซ่อม</button><button class="tech-job-action cancel" onclick="closeModal('detailModal');cancelAcceptedJob('${escapeJs(job.jobId)}')">↩ ยกเลิกรับ</button></div>`;
+  else if(paused)action=`<div class="tech-job-actions three"><button class="tech-job-action resume" onclick="closeModal('detailModal');resumeTechnicianJob('${escapeJs(job.jobId)}')">▶ ทำต่อ</button><button class="tech-job-action handoff" onclick="closeModal('detailModal');openHandoffModal('${escapeJs(job.jobId)}')">🔄 ส่งต่อ</button><button class="tech-job-action finish" onclick="closeModal('detailModal');openFinishModal('${escapeJs(job.jobId)}')">✓ เสร็จ</button></div>`;
+  else if(repairing)action=`<div class="tech-job-actions three"><button class="tech-job-action pause" onclick="closeModal('detailModal');openPauseReasonModal('${escapeJs(job.jobId)}')">Ⅱ พัก</button><button class="tech-job-action handoff" onclick="closeModal('detailModal');openHandoffModal('${escapeJs(job.jobId)}')">🔄 ส่งต่อ</button><button class="tech-job-action finish" onclick="closeModal('detailModal');openFinishModal('${escapeJs(job.jobId)}')">✓ เสร็จ</button></div>`;
+  else if(external)action=`<div class="tech-job-actions"><button class="tech-job-action resume" onclick="closeModal('detailModal');resumeTechnicianJob('${escapeJs(job.jobId)}')">▶ ทำซ่อมต่อ</button><button class="tech-job-action finish" onclick="closeModal('detailModal');openFinishModal('${escapeJs(job.jobId)}')">✓ ซ่อมเสร็จ</button></div>`;
+  else if(waitingHandoff)action=`<div class="tech-wait-note">กำลังรอช่างที่ส่งต่อให้กดรับงาน</div>`;
+  else if(status.includes("รอตรวจรับ"))action=`<button class="tech-job-action locked" type="button">🔎 รอผู้แจ้งตรวจรับ</button>`;
 
-  document.getElementById("detailContent").innerHTML=`
-    <div class="tech-detail-card">
-      <div class="tech-detail-hero">
-        <div class="tech-detail-main">
-          ${job.beforeImage
-            ? `<img class="tech-detail-photo" src="${escapeHtml(job.beforeImage)}" alt="รูปเครื่อง">`
-            : `<div class="tech-job-image-fallback" style="width:86px;height:86px;">⚙️</div>`}
-          <div>
-            <div class="tech-detail-job">${escapeHtml(job.jobId||"-")}</div>
-            <div class="tech-detail-title">${escapeHtml(job.machineName||job.machineCode||"-")}</div>
-            <div class="tech-job-meta">${escapeHtml(job.floor||"-")}${job.line?" • LINE "+escapeHtml(job.line):""}<br>อาการ: ${escapeHtml(job.issue||"-")}</div>
-            <span class="tech-detail-status ${info.cls}">${escapeHtml(info.label)}</span>
-          </div>
-        </div>
-      </div>
-      <div class="tech-detail-list">
-        <div class="tech-detail-row"><span>📅</span><span class="tech-detail-label">วันที่แจ้ง</span><span class="tech-detail-value">${escapeHtml(job.dateTime||"-")}</span></div>
-        <div class="tech-detail-row"><span>👤</span><span class="tech-detail-label">ผู้แจ้ง</span><span class="tech-detail-value">${escapeHtml(job.reporter||"-")}</span></div>
-        <div class="tech-detail-row"><span>⚙️</span><span class="tech-detail-label">รหัสเครื่อง</span><span class="tech-detail-value">${escapeHtml(displayMachineCode(job)||"-")}</span></div>
-        <div class="tech-detail-row"><span>💬</span><span class="tech-detail-label">อาการ</span><span class="tech-detail-value">${escapeHtml(job.issue||"-")}</span></div>
-      </div>
-      ${beforeImage}
-      <div class="tech-detail-actions">${action}</div>
-    </div>`;
-
+  document.getElementById("detailContent").innerHTML=`<div class="tech-detail-card"><div class="tech-detail-hero"><div class="tech-detail-main">${job.beforeImage?`<img class="tech-detail-photo" src="${escapeHtml(job.beforeImage)}" alt="รูปเครื่อง">`:`<div class="tech-job-image-fallback" style="width:86px;height:86px;">⚙️</div>`}<div><div class="tech-detail-job">${escapeHtml(job.jobId||"-")}</div><div class="tech-detail-title">${escapeHtml(job.machineName||job.machineCode||"-")}</div><div class="tech-job-meta">${escapeHtml(job.floor||"-")}${job.line?" • LINE "+escapeHtml(job.line):""}<br>อาการ: ${escapeHtml(job.issue||"-")}</div><span class="tech-detail-status ${info.cls}">${escapeHtml(info.label)}</span></div></div></div><div class="tech-detail-list"><div class="tech-detail-row"><span>📅</span><span class="tech-detail-label">วันที่แจ้ง</span><span class="tech-detail-value">${escapeHtml(job.dateTime||"-")}</span></div><div class="tech-detail-row"><span>👤</span><span class="tech-detail-label">ผู้แจ้ง</span><span class="tech-detail-value">${escapeHtml(job.reporter||"-")}</span></div><div class="tech-detail-row"><span>⚙️</span><span class="tech-detail-label">รหัสเครื่อง</span><span class="tech-detail-value">${escapeHtml(displayMachineCode(job)||"-")}</span></div><div class="tech-detail-row"><span>💬</span><span class="tech-detail-label">อาการ</span><span class="tech-detail-value">${escapeHtml(job.issue||"-")}</span></div>${job.reworkReason?`<div class="tech-detail-row"><span>↩</span><span class="tech-detail-label">ส่งกลับเพราะ</span><span class="tech-detail-value">${escapeHtml(job.reworkReason)}</span></div>`:""}</div>${beforeImage}<div class="tech-detail-actions">${action}</div></div>`;
   document.getElementById("detailModal").classList.add("show");
 }
 

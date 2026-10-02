@@ -1327,6 +1327,7 @@
       </div>
     </button>
     <button type="button" class="mock-manual-link" onclick="openManualMachineModal()">สแกนไม่ติด? กรอกรหัสเครื่องแทน</button>
+    <button type="button" class="mock-manual-link" style="padding-top:2px;color:#0f806d;font-weight:700;" onclick="openNoBarcodeMachineModal()">ไม่มีบาร์โค้ด? กรอกเครื่องจักรเอง</button>
 
     <div class="mock-info-card">
       <div class="mock-info-row">
@@ -1482,7 +1483,22 @@
      MANUAL MACHINE CODE MODAL
 ========================== -->
 
-<div id="manualMachineModal" class="modal-bg"><div class="modal"><h3>⌨️ กรอกรหัสเครื่องจักร</h3><div class="sub-title">ใช้เฉพาะตอนสแกนบาร์โค้ดไม่ได้</div><input id="manualMachineCodeInput" type="text" placeholder="เช่น MC-3F-024" autocomplete="off"><div class="manual-modal-actions"><button type="button" class="btn btn-cancel" onclick="closeModal('manualMachineModal')">ยกเลิก</button><button type="button" class="btn btn-submit" onclick="confirmManualMachineCode()">ยืนยัน</button></div></div></div>
+<div id="manualMachineModal" class="modal-bg"><div class="modal"><h3>⌨️ กรอกรหัสเครื่องจักร</h3><div class="sub-title">ใช้เฉพาะตอนสแกนบาร์โค้ดไม่ได้ แต่เครื่องมีรหัสอยู่ในระบบ</div><input id="manualMachineCodeInput" type="text" placeholder="เช่น MC-3F-024" autocomplete="off"><div class="manual-modal-actions"><button type="button" class="btn btn-cancel" onclick="closeModal('manualMachineModal')">ยกเลิก</button><button type="button" class="btn btn-submit" onclick="confirmManualMachineCode()">ยืนยัน</button></div></div></div>
+
+<div id="noBarcodeMachineModal" class="modal-bg">
+  <div class="modal">
+    <h3>⚙️ กรอกเครื่องจักรเอง</h3>
+    <div class="sub-title">ใช้สำหรับเครื่องที่ไม่มีบาร์โค้ด หากมีรหัสเครื่องสามารถกรอกไว้ได้</div>
+    <label for="noBarcodeMachineCode">รหัสเครื่องจักร <span style="font-weight:500;color:#819087;">(ถ้ามี)</span></label>
+    <input id="noBarcodeMachineCode" type="text" placeholder="เช่น T8-01 หรือเว้นว่างได้" autocomplete="off">
+    <label for="noBarcodeMachineName">ชื่อเครื่องจักร <span style="color:#e53e3e;">*จำเป็น</span></label>
+    <input id="noBarcodeMachineName" type="text" placeholder="เช่น จักรลา / เครื่องตัดผ้า" autocomplete="off">
+    <div class="manual-modal-actions">
+      <button type="button" class="btn btn-cancel" onclick="closeModal('noBarcodeMachineModal')">ยกเลิก</button>
+      <button type="button" class="btn btn-submit" onclick="confirmNoBarcodeMachine()">ใช้ข้อมูลนี้</button>
+    </div>
+  </div>
+</div>
 
 <!-- =========================
      TECHNICIAN MACHINE VERIFY
@@ -1494,9 +1510,10 @@
       <div class="tech-verify-title">ยืนยันเครื่องก่อนเริ่มซ่อม</div>
       <div class="tech-verify-sub">สแกน Barcode ที่เครื่อง เพื่อป้องกันการเริ่มงานผิดเครื่อง</div>
       <div id="techVerifyMachine" class="tech-verify-machine">-</div>
-      <button type="button" class="tech-verify-btn primary" onclick="openScanner('technician')">▥ สแกน Barcode เครื่อง</button>
-      <div style="font-size:.72rem;color:#89949a;margin:9px 0 1px;">หรือ</div>
-      <button type="button" class="tech-verify-btn light" onclick="openTechManualVerify()">กรอกรหัสเครื่องแทน</button>
+      <button id="techScanVerifyBtn" type="button" class="tech-verify-btn primary" onclick="openScanner('technician')">▥ สแกน Barcode เครื่อง</button>
+      <div id="techVerifyOrText" style="font-size:.72rem;color:#89949a;margin:9px 0 1px;">หรือ</div>
+      <button id="techManualVerifyBtn" type="button" class="tech-verify-btn light" onclick="openTechManualVerify()">กรอกรหัสเครื่องแทน</button>
+      <button id="techNoBarcodeVerifyBtn" type="button" class="tech-verify-btn primary" style="display:none;" onclick="confirmNoBarcodeStart()">✓ ยืนยันเครื่องนี้และเริ่มซ่อม</button>
       <button type="button" class="modal-close" onclick="closeModal('techVerifyModal')">ยกเลิก</button>
     </div>
   </div>
@@ -1934,6 +1951,48 @@ async function lookupMachine(codeOverride){
 }
 function openManualMachineModal(){const input=document.getElementById("manualMachineCodeInput");input.value=document.getElementById("machineCode").value||"";document.getElementById("manualMachineModal").classList.add("show");setTimeout(()=>input.focus(),120);}
 async function confirmManualMachineCode(){const code=String(document.getElementById("manualMachineCodeInput").value||"").trim();if(!code){showToast("กรุณากรอกรหัสเครื่องจักร");return;}closeModal("manualMachineModal");await lookupMachine(code);}
+
+function openNoBarcodeMachineModal(){
+  const codeInput=document.getElementById("noBarcodeMachineCode");
+  const nameInput=document.getElementById("noBarcodeMachineName");
+  codeInput.value="";
+  nameInput.value="";
+  document.getElementById("noBarcodeMachineModal").classList.add("show");
+  setTimeout(()=>nameInput.focus(),120);
+}
+
+function confirmNoBarcodeMachine(){
+  const code=String(document.getElementById("noBarcodeMachineCode").value||"").trim().toUpperCase();
+  const name=String(document.getElementById("noBarcodeMachineName").value||"").trim();
+  if(!name){showToast("กรุณากรอกชื่อเครื่องจักร");return;}
+
+  currentMachineInfo={code:code,name:name,manual:true,noBarcode:!code};
+  document.getElementById("machineCode").value=code;
+  document.getElementById("machineName").value=name;
+
+  const codeEl=document.getElementById("autoMachineCode");
+  const nameEl=document.getElementById("autoMachineName");
+  codeEl.textContent=code||"ไม่มีบาร์โค้ด";
+  nameEl.textContent=name;
+  codeEl.classList.remove("waiting");
+  nameEl.classList.remove("waiting");
+
+  closeModal("noBarcodeMachineModal");
+  showToast("✓ ใช้ข้อมูลเครื่องที่กรอกเองแล้ว");
+}
+
+function isNoBarcodeMachineCode(code){
+  return String(code||"").toUpperCase().indexOf("NO-BAR-")===0;
+}
+
+function displayMachineCode(jobOrCode){
+  const code=typeof jobOrCode==="object"&&jobOrCode!==null
+    ? String(jobOrCode.machineCode||"")
+    : String(jobOrCode||"");
+  const flagged=typeof jobOrCode==="object"&&jobOrCode!==null&&jobOrCode.noBarcode===true;
+  return (flagged||isNoBarcodeMachineCode(code))?"ไม่มีบาร์โค้ด":code;
+}
+
 function buildIssueText(){return document.getElementById("issueDetail").value.trim();}
 
 /* =========================================================
@@ -2007,13 +2066,44 @@ async function previewImage(event) {
 ========================================================= */
 
 async function submitRepair(){
-  const machineCode=document.getElementById("machineCode").value.trim(),machineName=document.getElementById("machineName").value.trim(),floor=document.getElementById("floor").value.trim(),line=document.getElementById("line").value.trim(),issue=buildIssueText();
+  const machineCode=document.getElementById("machineCode").value.trim();
+  const machineName=document.getElementById("machineName").value.trim();
+  const floor=document.getElementById("floor").value.trim();
+  const line=document.getElementById("line").value.trim();
+  const issue=buildIssueText();
+  const isManualMachine=!!(currentMachineInfo&&currentMachineInfo.manual===true);
+
   if(!lineUserId){showToast("กรุณาเปิดระบบผ่าน LINE");return;}
   if(!requesterIsRegistered||!registeredReporterName||!floor||!line){alert("ข้อมูลผู้แจ้งยังไม่พร้อม\nกรุณาให้ผู้ดูแลลงทะเบียน ชื่อจริง / ชั้น / LINE ใน RepairUsers");return;}
-  if(!machineCode||!machineName){showToast("กรุณาสแกนเครื่องจักรก่อน");return;}
+  if(!machineName || (!machineCode && !isManualMachine)){showToast("กรุณาสแกนหรือกรอกเครื่องจักรก่อน");return;}
   if(!issue){showToast("กรุณากรอกอาการที่พบ");return;}
-  const payload={action:"CREATE_REPAIR_JOB",userId:lineUserId,machineCode,issue,image:beforeImageBase64};const btn=document.getElementById("requesterSubmitBtn");btn.disabled=true;btn.textContent="กำลังส่ง...";
-  try{const response=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});const result=await response.json();if(result.success===true||result.status==="success"){alert("ส่งแจ้งซ่อมเรียบร้อยแล้ว"+(result.jobId?"\n"+result.jobId:""));resetForm();switchTab("reported");}else alert(result.message||result.error||"ส่งข้อมูลไม่สำเร็จ");}catch(err){console.error(err);alert("เกิดข้อผิดพลาดในการส่งข้อมูล");}finally{btn.disabled=false;btn.innerHTML="➤ &nbsp;ส่งแจ้งซ่อม";}
+
+  const payload={
+    action:"CREATE_REPAIR_JOB",
+    userId:lineUserId,
+    machineCode:machineCode,
+    issue:issue,
+    image:beforeImageBase64,
+    manualMachine:isManualMachine,
+    manualMachineCode:isManualMachine?machineCode:"",
+    manualMachineName:isManualMachine?machineName:""
+  };
+
+  const btn=document.getElementById("requesterSubmitBtn");
+  btn.disabled=true;btn.textContent="กำลังส่ง...";
+  try{
+    const response=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
+    const result=await response.json();
+    if(result.success===true||result.status==="success"){
+      alert("ส่งแจ้งซ่อมเรียบร้อยแล้ว"+(result.jobId?"\n"+result.jobId:""));
+      resetForm();
+      switchTab("reported");
+    }else alert(result.message||result.error||"ส่งข้อมูลไม่สำเร็จ");
+  }catch(err){
+    console.error(err);alert("เกิดข้อผิดพลาดในการส่งข้อมูล");
+  }finally{
+    btn.disabled=false;btn.innerHTML="➤ &nbsp;ส่งแจ้งซ่อม";
+  }
 }
 
 /* =========================================================
@@ -2495,7 +2585,7 @@ function renderTechnicianJob(job) {
         </div>
         <div class="tech-job-name">${escapeHtml(job.machineName||job.machineCode||"-")}</div>
         <div class="tech-job-meta">
-          รหัสเครื่อง: ${escapeHtml(job.machineCode||"-")}<br>
+          รหัสเครื่อง: ${escapeHtml(displayMachineCode(job)||"-")}<br>
           ${escapeHtml(job.floor||"-")}${job.line?" &nbsp;|&nbsp; LINE "+escapeHtml(job.line):""}
         </div>
       </div>
@@ -2592,8 +2682,15 @@ function openTechVerify(jobId){
   if(!job){showToast("ไม่พบข้อมูลงาน");return;}
 
   currentVerifyJobId=String(jobId);
+  const noBarcode=job.noBarcode===true||isNoBarcodeMachineCode(job.machineCode);
   document.getElementById("techVerifyMachine").innerHTML=
-    `<b>${escapeHtml(job.machineCode||"-")}</b><br>${escapeHtml(job.machineName||"-")}`;
+    `<b>${escapeHtml(noBarcode?"ไม่มีบาร์โค้ด":(job.machineCode||"-"))}</b><br>${escapeHtml(job.machineName||"-")}`;
+
+  document.getElementById("techScanVerifyBtn").style.display=noBarcode?"none":"";
+  document.getElementById("techManualVerifyBtn").style.display=noBarcode?"none":"";
+  document.getElementById("techVerifyOrText").style.display=noBarcode?"none":"";
+  document.getElementById("techNoBarcodeVerifyBtn").style.display=noBarcode?"":"none";
+
   document.getElementById("techVerifyModal").classList.add("show");
 }
 
@@ -2605,6 +2702,13 @@ function openTechManualVerify(){
   closeModal("techVerifyModal");
   document.getElementById("techManualVerifyModal").classList.add("show");
   setTimeout(()=>input.focus(),120);
+}
+
+async function confirmNoBarcodeStart(){
+  const job=technicianJobsById[currentVerifyJobId];
+  if(!job){showToast("ไม่พบข้อมูลงาน");return;}
+  closeModal("techVerifyModal");
+  await startTechnicianJobConfirmed(job.jobId,String(job.machineCode||""),"no_barcode_confirm");
 }
 
 async function confirmTechManualVerify(){
@@ -2895,7 +2999,7 @@ function showJobDetail(jobId) {
       <div class="tech-detail-list">
         <div class="tech-detail-row"><span>📅</span><span class="tech-detail-label">วันที่แจ้ง</span><span class="tech-detail-value">${escapeHtml(job.dateTime||"-")}</span></div>
         <div class="tech-detail-row"><span>👤</span><span class="tech-detail-label">ผู้แจ้ง</span><span class="tech-detail-value">${escapeHtml(job.reporter||"-")}</span></div>
-        <div class="tech-detail-row"><span>⚙️</span><span class="tech-detail-label">รหัสเครื่อง</span><span class="tech-detail-value">${escapeHtml(job.machineCode||"-")}</span></div>
+        <div class="tech-detail-row"><span>⚙️</span><span class="tech-detail-label">รหัสเครื่อง</span><span class="tech-detail-value">${escapeHtml(displayMachineCode(job)||"-")}</span></div>
         <div class="tech-detail-row"><span>💬</span><span class="tech-detail-label">อาการ</span><span class="tech-detail-value">${escapeHtml(job.issue||"-")}</span></div>
       </div>
       ${beforeImage}

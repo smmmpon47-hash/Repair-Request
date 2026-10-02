@@ -1327,7 +1327,7 @@
       </div>
     </button>
     <button type="button" class="mock-manual-link" onclick="openManualMachineModal()">สแกนไม่ติด? กรอกรหัสเครื่องแทน</button>
-    <button type="button" class="mock-manual-link" style="padding-top:2px;color:#0f806d;font-weight:700;" onclick="openNoBarcodeMachineModal()">ไม่มีบาร์โค้ด? กรอกเครื่องจักรเอง</button>
+    <button type="button" class="mock-manual-link" style="padding-top:2px;color:#0f806d;font-weight:700;" onclick="openNoBarcodeMachineModal()">ไม่มีบาร์โค้ด? กรอกชื่อเครื่องจักรเอง</button>
 
     <div class="mock-info-card">
       <div class="mock-info-row">
@@ -1487,10 +1487,8 @@
 
 <div id="noBarcodeMachineModal" class="modal-bg">
   <div class="modal">
-    <h3>⚙️ กรอกเครื่องจักรเอง</h3>
-    <div class="sub-title">ใช้สำหรับเครื่องที่ไม่มีบาร์โค้ด หากมีรหัสเครื่องสามารถกรอกไว้ได้</div>
-    <label for="noBarcodeMachineCode">รหัสเครื่องจักร <span style="font-weight:500;color:#819087;">(ถ้ามี)</span></label>
-    <input id="noBarcodeMachineCode" type="text" placeholder="เช่น T8-01 หรือเว้นว่างได้" autocomplete="off">
+    <h3 id="manualMachineNameTitle">⚙️ กรอกเครื่องจักรเอง</h3>
+    <div id="manualMachineNameSub" class="sub-title">ใช้สำหรับเครื่องที่ไม่มีบาร์โค้ด</div>
     <label for="noBarcodeMachineName">ชื่อเครื่องจักร <span style="color:#e53e3e;">*จำเป็น</span></label>
     <input id="noBarcodeMachineName" type="text" placeholder="เช่น จักรลา / เครื่องตัดผ้า" autocomplete="off">
     <div class="manual-modal-actions">
@@ -1572,6 +1570,7 @@ let technicianJobs = [];
 let technicianJobsById = {};
 let currentVerifyJobId = "";
 let scannerPurpose = "requester";
+let pendingManualMachineCode = "";
 let currentPauseJobId = "";
 let technicianJobsLoaded = false;
 let technicianTodayLoaded = false;
@@ -1944,8 +1943,16 @@ function fillMachineInfo(info){
 async function lookupMachine(codeOverride){
   const code=String(codeOverride||document.getElementById("machineCode").value||"").trim().toUpperCase();if(!code){clearMachineInfo();return false;}
   try{showToast("กำลังตรวจสอบเครื่อง...");const res=await fetch(GAS_WEB_APP_URL+"?action=getMachineInfo&code="+encodeURIComponent(code));const data=await res.json();
-    if(!data||data.found!==true){clearMachineInfo();showToast("ไม่พบรหัสเครื่องนี้ในระบบ");return false;}
-    if(!data.name){clearMachineInfo();alert("เครื่องนี้ยังไม่มีชื่อเครื่องจักรใน MachineMaster");return false;}
+    if(!data||data.found!==true){
+      clearMachineInfo();
+      openUnknownMachineNameModal(code);
+      return false;
+    }
+    if(!data.name){
+      clearMachineInfo();
+      openUnknownMachineNameModal(code);
+      return false;
+    }
     fillMachineInfo({code:String(data.code||code).trim().toUpperCase(),name:String(data.name||"").trim()});showToast("✓ พบข้อมูลเครื่องแล้ว");return true;
   }catch(err){console.error(err);clearMachineInfo();showToast("ค้นหาข้อมูลเครื่องไม่สำเร็จ");return false;}
 }
@@ -1953,16 +1960,28 @@ function openManualMachineModal(){const input=document.getElementById("manualMac
 async function confirmManualMachineCode(){const code=String(document.getElementById("manualMachineCodeInput").value||"").trim();if(!code){showToast("กรุณากรอกรหัสเครื่องจักร");return;}closeModal("manualMachineModal");await lookupMachine(code);}
 
 function openNoBarcodeMachineModal(){
-  const codeInput=document.getElementById("noBarcodeMachineCode");
+  pendingManualMachineCode="";
   const nameInput=document.getElementById("noBarcodeMachineName");
-  codeInput.value="";
+  document.getElementById("manualMachineNameTitle").textContent="⚙️ กรอกเครื่องจักรเอง";
+  document.getElementById("manualMachineNameSub").textContent="ใช้สำหรับเครื่องที่ไม่มีบาร์โค้ด";
+  nameInput.value="";
+  document.getElementById("noBarcodeMachineModal").classList.add("show");
+  setTimeout(()=>nameInput.focus(),120);
+}
+
+function openUnknownMachineNameModal(code){
+  pendingManualMachineCode=String(code||"").trim().toUpperCase();
+  const nameInput=document.getElementById("noBarcodeMachineName");
+  document.getElementById("manualMachineNameTitle").textContent="⚙️ กรอกชื่อเครื่องจักร";
+  document.getElementById("manualMachineNameSub").textContent=
+    "รหัส "+pendingManualMachineCode+" ยังไม่มีข้อมูลใน MachineMaster กรุณากรอกชื่อเครื่องจักร";
   nameInput.value="";
   document.getElementById("noBarcodeMachineModal").classList.add("show");
   setTimeout(()=>nameInput.focus(),120);
 }
 
 function confirmNoBarcodeMachine(){
-  const code=String(document.getElementById("noBarcodeMachineCode").value||"").trim().toUpperCase();
+  const code=String(pendingManualMachineCode||"").trim().toUpperCase();
   const name=String(document.getElementById("noBarcodeMachineName").value||"").trim();
   if(!name){showToast("กรุณากรอกชื่อเครื่องจักร");return;}
 
@@ -1978,7 +1997,7 @@ function confirmNoBarcodeMachine(){
   nameEl.classList.remove("waiting");
 
   closeModal("noBarcodeMachineModal");
-  showToast("✓ ใช้ข้อมูลเครื่องที่กรอกเองแล้ว");
+  showToast(code?"✓ ใช้รหัสและชื่อเครื่องที่กรอกแล้ว":"✓ ใช้ชื่อเครื่องที่กรอกเองแล้ว");
 }
 
 function isNoBarcodeMachineCode(code){

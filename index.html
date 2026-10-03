@@ -1370,6 +1370,70 @@
     .modal-help{font-size:.72rem;color:#7b878d;line-height:1.45;margin-top:7px}
     @media(max-width:360px){.tech-job-actions.three{grid-template-columns:1fr}.mock-accept-actions{grid-template-columns:1fr}}
 
+  
+    /* ===== POST-SCAN LOADING OVERLAY ===== */
+    .scan-loading-overlay{
+      display:none;
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      background:rgba(8,24,28,.62);
+      backdrop-filter:blur(2px);
+      -webkit-backdrop-filter:blur(2px);
+      align-items:center;
+      justify-content:center;
+      padding:22px;
+    }
+    .scan-loading-overlay.show{display:flex;}
+    .scan-loading-card{
+      width:min(88vw,360px);
+      background:#fff;
+      border-radius:22px;
+      padding:28px 24px 24px;
+      text-align:center;
+      box-shadow:0 18px 48px rgba(0,0,0,.22);
+    }
+    .scan-loading-check{
+      width:52px;height:52px;border-radius:50%;
+      margin:0 auto 13px;
+      display:flex;align-items:center;justify-content:center;
+      background:#e9f8f2;color:#0e9f6e;
+      font-size:28px;font-weight:900;
+    }
+    .scan-loading-spinner{
+      width:42px;height:42px;
+      margin:0 auto 15px;
+      border:5px solid #dce9e8;
+      border-top-color:#0f766e;
+      border-radius:50%;
+      animation:scanLoadSpin .72s linear infinite;
+    }
+    .scan-loading-title{
+      font-size:1.08rem;
+      font-weight:900;
+      color:#173047;
+      line-height:1.35;
+      margin-bottom:6px;
+    }
+    .scan-loading-sub{
+      font-size:.84rem;
+      color:#71808c;
+      line-height:1.45;
+    }
+    .scan-loading-code{
+      margin-top:10px;
+      display:inline-block;
+      max-width:100%;
+      padding:6px 10px;
+      border-radius:9px;
+      background:#f1f6f6;
+      color:#0f766e;
+      font-size:.79rem;
+      font-weight:800;
+      word-break:break-all;
+    }
+    @keyframes scanLoadSpin{to{transform:rotate(360deg);}}
+
   </style>
 </head>
 
@@ -1705,6 +1769,17 @@
   </div>
 </div>
 
+
+
+<div id="scanLoadingOverlay" class="scan-loading-overlay" role="status" aria-live="assertive" aria-busy="true">
+  <div class="scan-loading-card">
+    <div class="scan-loading-check">✓</div>
+    <div class="scan-loading-spinner"></div>
+    <div id="scanLoadingTitle" class="scan-loading-title">สแกนสำเร็จ กำลังโหลดข้อมูล...</div>
+    <div id="scanLoadingSub" class="scan-loading-sub">รอสักครู่นะคะ ระบบกำลังตรวจสอบข้อมูลเครื่อง</div>
+    <div id="scanLoadingCode" class="scan-loading-code" style="display:none;"></div>
+  </div>
+</div>
 
 <div id="toast" class="toast"></div>
 
@@ -3208,18 +3283,59 @@ async function scannerNoBarcodeFallback(){
   openNoBarcodeMachineModal();
 }
 
+
+function showScanLoading(title,sub,code){
+  const overlay=document.getElementById("scanLoadingOverlay");
+  const titleEl=document.getElementById("scanLoadingTitle");
+  const subEl=document.getElementById("scanLoadingSub");
+  const codeEl=document.getElementById("scanLoadingCode");
+  if(titleEl)titleEl.textContent=title||"สแกนสำเร็จ กำลังโหลดข้อมูล...";
+  if(subEl)subEl.textContent=sub||"รอสักครู่นะคะ ระบบกำลังตรวจสอบข้อมูลเครื่อง";
+  if(codeEl){
+    const value=String(code||"").trim();
+    codeEl.textContent=value?"รหัส: "+value:"";
+    codeEl.style.display=value?"inline-block":"none";
+  }
+  if(overlay)overlay.classList.add("show");
+}
+
+function hideScanLoading(){
+  const overlay=document.getElementById("scanLoadingOverlay");
+  if(overlay)overlay.classList.remove("show");
+}
+
 async function handleRepairBarcodeDecoded(decodedText){
   const value=String(decodedText||"").trim();
   if(!value)return;
   const purposeNow=scannerPurpose;
   if(scannerFallbackTimer){clearTimeout(scannerFallbackTimer);scannerFallbackTimer=null;}
+
+  // ปิดกล้องก่อน แล้วขึ้นสถานะทันที กันผู้ใช้คิดว่าหน้าค้าง
   await closeScanner();
 
   if(purposeNow==="technician"){
     closeModal("techVerifyModal");
-    await verifyAndStartTechnicianJob(value,"scan");
+    showScanLoading(
+      "✓ สแกนสำเร็จ กำลังเปิดงาน...",
+      "กำลังตรวจสอบรหัสเครื่องและเริ่มงานซ่อม",
+      value
+    );
+    try{
+      await verifyAndStartTechnicianJob(value,"scan");
+    }finally{
+      hideScanLoading();
+    }
   }else{
-    await lookupMachine(value);
+    showScanLoading(
+      "✓ สแกนสำเร็จ กำลังโหลดข้อมูลเครื่อง...",
+      "กำลังค้นหาชื่อเครื่องจักรและข้อมูลที่เกี่ยวข้อง",
+      value
+    );
+    try{
+      await lookupMachine(value);
+    }finally{
+      hideScanLoading();
+    }
   }
 }
 

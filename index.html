@@ -3307,32 +3307,45 @@ async function handleRepairBarcodeDecoded(decodedText){
   const purposeNow=scannerPurpose;
   if(scannerFallbackTimer){clearTimeout(scannerFallbackTimer);scannerFallbackTimer=null;}
 
-  // ปิดกล้องก่อน แล้วขึ้นสถานะทันที กันผู้ใช้คิดว่าหน้าค้าง
-  await closeScanner();
-
+  // ขึ้น Loading "ทันที" ก่อนรอปิดกล้อง เพื่อให้คนหน้างานเห็นว่าระบบรับสแกนแล้ว
+  const loadingStartedAt=Date.now();
   if(purposeNow==="technician"){
-    closeModal("techVerifyModal");
     showScanLoading(
       "✓ สแกนสำเร็จ กำลังเปิดงาน...",
       "กำลังตรวจสอบรหัสเครื่องและเริ่มงานซ่อม",
       value
     );
-    try{
-      await verifyAndStartTechnicianJob(value,"scan");
-    }finally{
-      hideScanLoading();
-    }
   }else{
     showScanLoading(
       "✓ สแกนสำเร็จ กำลังโหลดข้อมูลเครื่อง...",
       "กำลังค้นหาชื่อเครื่องจักรและข้อมูลที่เกี่ยวข้อง",
       value
     );
-    try{
-      await lookupMachine(value);
-    }finally{
-      hideScanLoading();
+  }
+
+  // บังคับให้ browser/LINE WebView มีโอกาสวาด Loading ก่อนเริ่มงาน async หนัก ๆ
+  await new Promise(resolve=>{
+    if(typeof requestAnimationFrame==="function"){
+      requestAnimationFrame(()=>requestAnimationFrame(resolve));
+    }else{
+      setTimeout(resolve,32);
     }
+  });
+
+  await closeScanner();
+
+  try{
+    if(purposeNow==="technician"){
+      closeModal("techVerifyModal");
+      await verifyAndStartTechnicianJob(value,"scan");
+    }else{
+      await lookupMachine(value);
+    }
+  }finally{
+    // ให้เห็น Loading อย่างน้อย 900ms ต่อให้ข้อมูลกลับเร็วมาก
+    const remain=900-(Date.now()-loadingStartedAt);
+    if(remain>0)await new Promise(resolve=>setTimeout(resolve,remain));
+    hideScanLoading();
   }
 }
 

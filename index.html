@@ -481,6 +481,16 @@
     .scanner-fallback-note.show {
       color: #b56a00;
       font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .scanner-fallback-note.permission {
+      color: #9b4d00;
+      background: #fff7e8;
+      border: 1px solid #f2d49b;
+      border-radius: 10px;
+      padding: 10px 12px;
+      text-align: left;
     }
 
     .scanner-close {
@@ -1681,8 +1691,12 @@
     <div id="reader"></div>
     <div class="scanner-tools">
       <button id="scannerTorchBtn" type="button" class="scanner-tool-btn" onclick="toggleScannerTorch()" style="display:none;">🔦 เปิดไฟช่วยสแกน</button>
+      <button id="scannerRetryBtn" type="button" class="scanner-tool-btn" onclick="retryScannerCamera()" style="display:none;">🔄 ลองเปิดกล้องอีกครั้ง</button>
+      <button id="scannerPhotoBtn" type="button" class="scanner-tool-btn" onclick="openBarcodePhotoCapture()">📷 ถ่ายรูปบาร์โค้ด</button>
       <button id="scannerManualBtn" type="button" class="scanner-tool-btn primary" onclick="scannerManualFallback()">⌨️ กรอกรหัสแทน</button>
     </div>
+    <input id="barcodePhotoInput" type="file" accept="image/*" capture="environment" style="display:none;" onchange="scanBarcodePhoto(this)">
+    <div id="barcodePhotoReader" style="position:fixed;left:-10000px;top:-10000px;width:320px;height:240px;overflow:hidden;"></div>
     <div id="scannerNoBarcodeWrap" class="scanner-tools" style="grid-template-columns:1fr;display:none;">
       <button type="button" class="scanner-tool-btn" onclick="scannerNoBarcodeFallback()">⚙️ ไม่มีบาร์โค้ด — กรอกชื่อเครื่อง</button>
     </div>
@@ -3098,6 +3112,7 @@ function showJobDetail(jobId) {
 ========================================================= */
 let scannerFallbackTimer=null;
 let scannerTorchOn=false;
+let scannerStarting=false;
 
 function getRepairBarcodeFormats(){
   if(typeof Html5QrcodeSupportedFormats==="undefined")return null;
@@ -3108,6 +3123,17 @@ function getRepairBarcodeFormats(){
   ].filter(v=>typeof v!=="undefined");
 }
 
+function createRepairScanner(elementId="reader"){
+  const formats=getRepairBarcodeFormats();
+  try{
+    return formats&&formats.length
+      ? new Html5Qrcode(elementId,{formatsToSupport:formats,verbose:false})
+      : new Html5Qrcode(elementId);
+  }catch(e){
+    return new Html5Qrcode(elementId);
+  }
+}
+
 function updateScannerFallbackUI(){
   const isTech=scannerPurpose==="technician";
   const manualBtn=document.getElementById("scannerManualBtn");
@@ -3116,11 +3142,23 @@ function updateScannerFallbackUI(){
   if(noBarcodeWrap)noBarcodeWrap.style.display=isTech?"none":"grid";
 }
 
-function showScannerFallbackHint(){
+function setScannerNote(message,{permission=false}={}){
   const note=document.getElementById("scannerFallbackNote");
   if(!note)return;
-  note.textContent="ยังไม่ติด? ลองขยับเข้า-ออกช้า ๆ หรือใช้ปุ่มกรอกรหัสแทนได้เลย";
+  note.textContent=message||"";
   note.classList.add("show");
+  note.classList.toggle("permission",!!permission);
+}
+
+function resetScannerNote(){
+  const note=document.getElementById("scannerFallbackNote");
+  if(!note)return;
+  note.textContent="ระบบกำลังจับบาร์โค้ดอัตโนมัติ…";
+  note.classList.remove("show","permission");
+}
+
+function showScannerFallbackHint(){
+  setScannerNote("ยังไม่ติด? ลองขยับเข้า-ออกช้า ๆ หรือใช้ “ถ่ายรูปบาร์โค้ด” / “กรอกรหัสแทน” ได้เลย");
 }
 
 async function tryEnableScannerCameraFeatures(){
@@ -3170,69 +3208,180 @@ async function scannerNoBarcodeFallback(){
   openNoBarcodeMachineModal();
 }
 
+async function handleRepairBarcodeDecoded(decodedText){
+  const value=String(decodedText||"").trim();
+  if(!value)return;
+  const purposeNow=scannerPurpose;
+  if(scannerFallbackTimer){clearTimeout(scannerFallbackTimer);scannerFallbackTimer=null;}
+  await closeScanner();
+
+  if(purposeNow==="technician"){
+    closeModal("techVerifyModal");
+    await verifyAndStartTechnicianJob(value,"scan");
+  }else{
+    await lookupMachine(value);
+  }
+}
+
+function isCameraPermissionError(err){
+  const t=String((err&&err.name)||"")+" "+String((err&&err.message)||err||"");
+  return /notallowed|permission|denied|securityerror|permission dismissed/i.test(t);
+}
+
+async function releaseLiveScannerOnly(){
+  if(scanner){
+    try{await scanner.stop();}catch(e){}
+    try{await scanner.clear();}catch(e){}
+    scanner=null;
+  }
+}
+
+async function pickBackCameraId(){
+  try{
+    if(typeof Html5Qrcode==="undefined" || typeof Html5Qrcode.getCameras!=="function")return "";
+    const cams=await Html5Qrcode.getCameras();
+    if(!Array.isArray(cams)||!cams.length)return "";
+    const rear=cams.find(c=>/back|rear|environment|หลัง/i.test(String(c.label||"")));
+    return String((rear||cams[cams.length-1]).id||"");
+  }catch(e){
+    console.warn("getCameras:",e);
+    return "";
+  }
+}
+
+function getRepairScanConfig(){
+  return {
+    fps:18,
+    qrbox:(viewfinderWidth,viewfinderHeight)=>{
+      const safeW=Math.max(180,viewfinderWidth-24);
+      const boxW=Math.min(safeW,Math.floor(viewfinderWidth*0.92),420);
+      const safeH=Math.max(90,viewfinderHeight-24);
+      const boxH=Math.min(safeH,Math.max(90,Math.floor(boxW*0.28)),145);
+      return {width:boxW,height:boxH};
+    },
+    disableFlip:false
+  };
+}
+
+async function startLiveRepairScanner(){
+  if(scannerStarting)return false;
+  scannerStarting=true;
+
+  const retryBtn=document.getElementById("scannerRetryBtn");
+  const torchBtn=document.getElementById("scannerTorchBtn");
+  if(retryBtn)retryBtn.style.display="none";
+  if(torchBtn){torchBtn.style.display="none";torchBtn.textContent="🔦 เปิดไฟช่วยสแกน";}
+  resetScannerNote();
+
+  let lastErr=null;
+  try{
+    await releaseLiveScannerOnly();
+
+    // LINE/iPhone บางเครื่องยอมเปิดด้วย cameraId มากกว่า facingMode
+    const backCameraId=await pickBackCameraId();
+    const cameraAttempts=[];
+    if(backCameraId)cameraAttempts.push(backCameraId);
+    cameraAttempts.push({facingMode:"environment"});
+    cameraAttempts.push({facingMode:{ideal:"environment"}});
+
+    for(const cameraConfig of cameraAttempts){
+      try{
+        await releaseLiveScannerOnly();
+        scanner=createRepairScanner("reader");
+        await scanner.start(
+          cameraConfig,
+          getRepairScanConfig(),
+          decodedText=>{handleRepairBarcodeDecoded(decodedText);},
+          ()=>{}
+        );
+        scannerStarting=false;
+        if(scannerFallbackTimer)clearTimeout(scannerFallbackTimer);
+        scannerFallbackTimer=setTimeout(showScannerFallbackHint,6000);
+        tryEnableScannerCameraFeatures();
+        return true;
+      }catch(err){
+        lastErr=err;
+        console.warn("Camera start attempt failed:",err);
+      }
+    }
+  }finally{
+    scannerStarting=false;
+  }
+
+  await releaseLiveScannerOnly();
+  if(scannerFallbackTimer){clearTimeout(scannerFallbackTimer);scannerFallbackTimer=null;}
+  if(retryBtn)retryBtn.style.display="";
+
+  if(isCameraPermissionError(lastErr)){
+    setScannerNote(
+      "LINE ยังไม่ได้รับสิทธิ์ใช้กล้องค่ะ — iPhone ไปที่ การตั้งค่า > LINE > เปิด “กล้อง” แล้วกลับมากด “ลองเปิดกล้องอีกครั้ง” หรือใช้ “ถ่ายรูปบาร์โค้ด” / “กรอกรหัสแทน” ได้",
+      {permission:true}
+    );
+  }else{
+    setScannerNote(
+      "เปิดกล้องสดไม่สำเร็จค่ะ ลองกด “ลองเปิดกล้องอีกครั้ง” หรือใช้ “ถ่ายรูปบาร์โค้ด” / “กรอกรหัสแทน” ได้ทันที",
+      {permission:true}
+    );
+  }
+  return false;
+}
+
+async function retryScannerCamera(){
+  if(scannerStarting)return;
+  const btn=document.getElementById("scannerRetryBtn");
+  if(btn){btn.disabled=true;btn.textContent="กำลังเปิดกล้อง…";}
+  try{
+    await startLiveRepairScanner();
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent="🔄 ลองเปิดกล้องอีกครั้ง";}
+  }
+}
+
+function openBarcodePhotoCapture(){
+  const input=document.getElementById("barcodePhotoInput");
+  if(!input)return;
+
+  // เริ่มปล่อย live camera แต่เรียก input.click() ทันทีเพื่อรักษา user gesture บน iPhone
+  releaseLiveScannerOnly().catch(()=>{});
+  input.click();
+}
+
+async function scanBarcodePhoto(input){
+  const file=input&&input.files&&input.files[0];
+  if(input)input.value="";
+  if(!file)return;
+
+  setScannerNote("กำลังอ่านบาร์โค้ดจากรูป…");
+  let photoScanner=null;
+  try{
+    await releaseLiveScannerOnly();
+    photoScanner=createRepairScanner("barcodePhotoReader");
+    const decoded=await photoScanner.scanFile(file,false);
+    try{await photoScanner.clear();}catch(e){}
+    await handleRepairBarcodeDecoded(decoded);
+  }catch(err){
+    console.error("Barcode photo scan failed:",err);
+    try{if(photoScanner)await photoScanner.clear();}catch(e){}
+    setScannerNote("ยังอ่านบาร์โค้ดจากรูปไม่ได้ค่ะ ลองถ่ายให้บาร์เต็มภาพและคมชัด หรือกด “กรอกรหัสแทน”");
+  }
+}
+
 function openScanner(purpose="requester") {
   scannerPurpose=purpose||"requester";
   scannerTorchOn=false;
   updateScannerFallbackUI();
 
   const torchBtn=document.getElementById("scannerTorchBtn");
+  const retryBtn=document.getElementById("scannerRetryBtn");
   if(torchBtn){torchBtn.style.display="none";torchBtn.textContent="🔦 เปิดไฟช่วยสแกน";}
-  const note=document.getElementById("scannerFallbackNote");
-  if(note){note.textContent="ระบบกำลังจับบาร์โค้ดอัตโนมัติ…";note.classList.remove("show");}
+  if(retryBtn)retryBtn.style.display="none";
+  resetScannerNote();
 
   if(scannerFallbackTimer)clearTimeout(scannerFallbackTimer);
-  scannerFallbackTimer=setTimeout(showScannerFallbackHint,6000);
   document.getElementById("scannerModal").classList.add("show");
 
-  setTimeout(()=>{
-    if(scanner)return;
-    const formats=getRepairBarcodeFormats();
-    try{
-      scanner=formats&&formats.length
-        ? new Html5Qrcode("reader",{formatsToSupport:formats,verbose:false})
-        : new Html5Qrcode("reader");
-    }catch(e){
-      scanner=new Html5Qrcode("reader");
-    }
-
-    const scanConfig={
-      fps:18,
-      qrbox:(viewfinderWidth,viewfinderHeight)=>{
-        const safeW=Math.max(180,viewfinderWidth-24);
-        const boxW=Math.min(safeW,Math.floor(viewfinderWidth*0.92),420);
-        const safeH=Math.max(90,viewfinderHeight-24);
-        const boxH=Math.min(safeH,Math.max(90,Math.floor(boxW*0.28)),145);
-        return {width:boxW,height:boxH};
-      },
-      disableFlip:false
-    };
-
-    scanner.start(
-      {facingMode:{ideal:"environment"}},
-      scanConfig,
-      async decodedText=>{
-        const purposeNow=scannerPurpose;
-        if(scannerFallbackTimer){clearTimeout(scannerFallbackTimer);scannerFallbackTimer=null;}
-        await closeScanner();
-
-        if(purposeNow==="technician"){
-          closeModal("techVerifyModal");
-          await verifyAndStartTechnicianJob(decodedText,"scan");
-        }else{
-          await lookupMachine(decodedText);
-        }
-      },
-      ()=>{}
-    ).then(()=>{
-      tryEnableScannerCameraFeatures();
-    }).catch(err=>{
-      console.error(err);
-      if(scannerFallbackTimer){clearTimeout(scannerFallbackTimer);scannerFallbackTimer=null;}
-      const note=document.getElementById("scannerFallbackNote");
-      if(note){note.textContent="เปิดกล้องไม่ได้ — ใช้กรอกรหัสแทนได้ทันที";note.classList.add("show");}
-      alert("เปิดกล้องไม่สำเร็จ กรุณาตรวจสอบสิทธิ์กล้อง หรือใช้กรอกรหัสแทน");
-    });
-  },180);
+  // รอ modal แสดงก่อนเล็กน้อย แล้วค่อยขอกล้อง
+  setTimeout(()=>{startLiveRepairScanner();},180);
 }
 
 async function closeScanner() {

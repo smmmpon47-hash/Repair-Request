@@ -1755,7 +1755,7 @@
     <div class="scanner-tools">
       <button id="scannerTorchBtn" type="button" class="scanner-tool-btn" onclick="toggleScannerTorch()" style="display:none;">🔦 เปิดไฟช่วยสแกน</button>
       <button id="scannerRetryBtn" type="button" class="scanner-tool-btn" onclick="retryScannerCamera()" style="display:none;">🔄 ลองเปิดกล้องอีกครั้ง</button>
-      <button id="scannerPhotoBtn" type="button" class="scanner-tool-btn" onclick="openBarcodePhotoCapture()">📷 ถ่ายรูปบาร์โค้ด</button>
+      <button id="scannerPhotoBtn" type="button" class="scanner-tool-btn" onclick="openBarcodePhotoCapture()">📷 ถ่ายรูปให้อ่านบาร์/ตัวหนังสือ</button>
       <button id="scannerManualBtn" type="button" class="scanner-tool-btn primary" onclick="scannerManualFallback()">⌨️ กรอกรหัสแทน</button>
     </div>
     <input id="barcodePhotoInput" type="file" accept="image/*" capture="environment" style="display:none;" onchange="scanBarcodePhoto(this)">
@@ -3185,6 +3185,8 @@ function showJobDetail(jobId) {
 let scannerFallbackTimer=null;
 let scannerTorchOn=false;
 let scannerStarting=false;
+let repairOcrScriptPromise=null;
+let repairOcrBusy=false;
 
 function getRepairBarcodeFormats(){
   if(typeof Html5QrcodeSupportedFormats==="undefined")return null;
@@ -3242,9 +3244,21 @@ async function tryEnableScannerCameraFeatures(){
       if(torchBtn && caps.torch){torchBtn.style.display="";}
 
       const advanced={};
-      if(Array.isArray(caps.focusMode) && caps.focusMode.includes("continuous"))advanced.focusMode="continuous";
-      if(Object.keys(advanced).length){
-        try{await scanner.applyVideoConstraints({advanced:[advanced]});}catch(e){}
+      if(Array.isArray(caps.focusMode) && caps.focusMode.includes("continuous")){
+        advanced.focusMode="continuous";
+      }
+
+      // ขอภาพคมขึ้นแบบ best-effort; เครื่องที่ไม่รองรับจะข้ามเอง
+      const constraints={
+        width:{ideal:1920},
+        height:{ideal:1080}
+      };
+      if(Object.keys(advanced).length)constraints.advanced=[advanced];
+
+      try{await scanner.applyVideoConstraints(constraints);}catch(e){
+        if(Object.keys(advanced).length){
+          try{await scanner.applyVideoConstraints({advanced:[advanced]});}catch(_){}
+        }
       }
     }
   }catch(e){console.warn("Scanner camera feature detection:",e);}
@@ -3463,11 +3477,159 @@ async function retryScannerCamera(){
   }
 }
 
+function loadRepairOcrLibrary(){
+  if(window.Tesseract&&typeof window.Tesseract.recognize==="function"){
+    return Promise.resolve(window.Tesseract);
+  }
+  if(repairOcrScriptPromise)return repairOcrScriptPromise;
+
+  repairOcrScriptPromise=new Promise((resolve,reject)=>{
+    const existing=document.querySelector('script[data-repair-ocr="1"]');
+    if(existing){
+      existing.addEventListener("load",()=>resolve(window.Tesseract),{once:true});
+      existing.addEventListener("error",()=>reject(new Error("โหลด OCR ไม่สำเร็จ")),{once:true});
+      return;
+    }
+
+    const script=document.createElement("script");
+    script.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    script.async=true;
+    script.dataset.repairOcr="1";
+    script.onload=()=>resolve(window.Tesseract);
+    script.onerror=()=>reject(new Error("โหลด OCR ไม่สำเร็จ"));
+    document.head.appendChild(script);
+  }).catch(err=>{
+    repairOcrScriptPromise=null;
+    throw err;
+  });
+
+  return repairOcrScriptPromise;
+}
+
+function normalizeRepairOcrCandidate(value){
+  return String(value||"")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g,"")
+    .trim();
+}
+
+function buildRepairOcrCandidates(text){
+  const raw=String(text||"").toUpperCase();
+  const lines=raw.split(/\r?\n/).map(v=>v.trim()).filter(Boolean);
+  const pool=[];
+
+  const add=value=>{
+    const code=normalizeRepairOcrCandidate(value);
+    if(code.length<3||code.length>24||!/\d/.test(code))return;
+    if(!pool.includes(code))pool.push(code);
+  };
+
+  // บาร์ของโรงงานมักพิมพ์ตัวอักษรแยกช่อง เช่น P K S M 1 6 0 0 6 8
+  lines.forEach(line=>{
+    add(line);
+
+    const chunks=line.match(/[A-Z0-9]+/g)||[];
+    chunks.forEach(add);
+
+    const spacedSingles=line.match(/(?:[A-Z0-9][\s._-]+){3,}[A-Z0-9]/g)||[];
+    spacedSingles.forEach(add);
+  });
+
+  // เผื่อ OCR อ่าน O/0 หรือ I/1 สลับกัน — จะยอมรับก็ต่อเมื่อไปเจอ MachineMaster/รหัสงานจริง
+  const base=pool.slice(0,12);
+  base.forEach(code=>{
+    add(code.replace(/[OQ]/g,"0"));
+    add(code.replace(/[IL]/g,"1"));
+    add(code.replace(/[OQ]/g,"0").replace(/[IL]/g,"1"));
+  });
+
+  return pool.slice(0,20);
+}
+
+async function findRequesterMachineFromOcrCandidates(candidates){
+  for(const code of (candidates||[])){
+    try{
+      const res=await fetch(
+        GAS_WEB_APP_URL+"?action=getMachineInfo&code="+encodeURIComponent(code),
+        {cache:"no-store"}
+      );
+      const data=await res.json();
+      if(data&&data.found===true){
+        return String(data.code||code).trim().toUpperCase();
+      }
+    }catch(e){}
+  }
+  return "";
+}
+
+function findTechnicianCodeFromOcrCandidates(candidates){
+  const job=technicianJobsById[String(currentVerifyJobId||"")]||null;
+  const expected=normalizeRepairOcrCandidate(job&&job.machineCode);
+  if(!expected)return "";
+
+  for(const code of (candidates||[])){
+    if(code===expected)return String(job.machineCode||expected).trim().toUpperCase();
+
+    const variants=[
+      code,
+      code.replace(/[OQ]/g,"0"),
+      code.replace(/[IL]/g,"1"),
+      code.replace(/[OQ]/g,"0").replace(/[IL]/g,"1")
+    ];
+    if(variants.includes(expected)){
+      return String(job.machineCode||expected).trim().toUpperCase();
+    }
+  }
+  return "";
+}
+
+async function tryRepairOcrFromPhoto(file){
+  if(!file||repairOcrBusy)return "";
+  repairOcrBusy=true;
+
+  try{
+    showScanLoading(
+      "กำลังอ่านตัวหนังสือใต้บาร์โค้ด...",
+      "บาร์โค้ดยังไม่ติด ระบบกำลังลองอ่านรหัสจากรูปให้อัตโนมัติ",
+      ""
+    );
+
+    const T=await loadRepairOcrLibrary();
+    if(!T||typeof T.recognize!=="function"){
+      throw new Error("OCR library unavailable");
+    }
+
+    const result=await T.recognize(file,"eng",{
+      logger:m=>{
+        if(!m||m.status!=="recognizing text")return;
+        const percent=Math.max(1,Math.min(99,Math.round((Number(m.progress)||0)*100)));
+        const sub=document.getElementById("scanLoadingSub");
+        if(sub)sub.textContent="กำลังอ่านรหัสจากตัวหนังสือ… "+percent+"%";
+      }
+    });
+
+    const text=String(result&&result.data&&result.data.text||"");
+    const candidates=buildRepairOcrCandidates(text);
+    console.log("Repair OCR text:",text,"candidates:",candidates);
+
+    if(scannerPurpose==="technician"){
+      return findTechnicianCodeFromOcrCandidates(candidates);
+    }
+
+    return await findRequesterMachineFromOcrCandidates(candidates);
+  }catch(err){
+    console.error("Repair OCR failed:",err);
+    return "";
+  }finally{
+    repairOcrBusy=false;
+  }
+}
+
 function openBarcodePhotoCapture(){
   const input=document.getElementById("barcodePhotoInput");
   if(!input)return;
 
-  // เริ่มปล่อย live camera แต่เรียก input.click() ทันทีเพื่อรักษา user gesture บน iPhone
+  // ปล่อย live camera แต่เรียก input.click() ทันทีเพื่อรักษา user gesture บน iPhone
   releaseLiveScannerOnly().catch(()=>{});
   input.click();
 }
@@ -3477,7 +3639,12 @@ async function scanBarcodePhoto(input){
   if(input)input.value="";
   if(!file)return;
 
-  setScannerNote("กำลังอ่านบาร์โค้ดจากรูป…");
+  showScanLoading(
+    "กำลังอ่านบาร์โค้ดจากรูป...",
+    "ระบบจะลองอ่านเส้นบาร์ก่อน ถ้าไม่ติดจะอ่านตัวหนังสือใต้บาร์ให้อัตโนมัติ",
+    ""
+  );
+
   let photoScanner=null;
   try{
     await releaseLiveScannerOnly();
@@ -3485,11 +3652,24 @@ async function scanBarcodePhoto(input){
     const decoded=await photoScanner.scanFile(file,false);
     try{await photoScanner.clear();}catch(e){}
     await handleRepairBarcodeDecoded(decoded);
+    return;
   }catch(err){
-    console.error("Barcode photo scan failed:",err);
+    console.warn("Barcode photo scan failed; trying OCR:",err);
     try{if(photoScanner)await photoScanner.clear();}catch(e){}
-    setScannerNote("ยังอ่านบาร์โค้ดจากรูปไม่ได้ค่ะ ลองถ่ายให้บาร์เต็มภาพและคมชัด หรือกด “กรอกรหัสแทน”");
   }
+
+  // เส้นบาร์ไม่ติด -> OCR ตัวหนังสือใต้บาร์ เช่น PKSM160068
+  const ocrCode=await tryRepairOcrFromPhoto(file);
+  if(ocrCode){
+    await handleRepairBarcodeDecoded(ocrCode);
+    return;
+  }
+
+  hideScanLoading();
+  setScannerNote(
+    "ยังอ่านรหัสจากรูปไม่ได้ค่ะ ลองถ่ายให้เห็นทั้งเส้นบาร์และตัวรหัสด้านล่างชัด ๆ หรือกด “กรอกรหัสแทน”",
+    {permission:true}
+  );
 }
 
 function openScanner(purpose="requester") {

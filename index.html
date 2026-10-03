@@ -421,6 +421,66 @@
 
     #reader {
       width: 100%;
+      overflow: hidden;
+      border-radius: 14px;
+      background: #111;
+      min-height: 250px;
+    }
+
+    .scanner-help {
+      margin: -3px 0 12px;
+      color: #5f6d76;
+      font-size: 14px;
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    .scanner-help strong {
+      color: #0f806d;
+    }
+
+    .scanner-tools {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .scanner-tool-btn {
+      width: 100%;
+      border: 1px solid #d7e0e5;
+      background: #fff;
+      border-radius: 11px;
+      padding: 12px 8px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 800;
+      color: #32454f;
+      cursor: pointer;
+    }
+
+    .scanner-tool-btn.primary {
+      border-color: #a8ded3;
+      background: #eefaf7;
+      color: #0f806d;
+    }
+
+    .scanner-tool-btn:disabled {
+      opacity: .5;
+      cursor: default;
+    }
+
+    .scanner-fallback-note {
+      min-height: 20px;
+      margin-top: 9px;
+      text-align: center;
+      font-size: 13px;
+      color: #7a858c;
+    }
+
+    .scanner-fallback-note.show {
+      color: #b56a00;
+      font-weight: 700;
     }
 
     .scanner-close {
@@ -1615,7 +1675,18 @@
 <div id="scannerModal" class="modal-bg">
   <div class="modal">
     <h3>📷 สแกนรหัสเครื่องจักร</h3>
+    <div class="scanner-help">
+      วางบาร์โค้ด <strong>แนวนอนให้เต็มกรอบ</strong><br>ถือห่างประมาณ 15–25 ซม. และอย่าให้แสงสะท้อน
+    </div>
     <div id="reader"></div>
+    <div class="scanner-tools">
+      <button id="scannerTorchBtn" type="button" class="scanner-tool-btn" onclick="toggleScannerTorch()" style="display:none;">🔦 เปิดไฟช่วยสแกน</button>
+      <button id="scannerManualBtn" type="button" class="scanner-tool-btn primary" onclick="scannerManualFallback()">⌨️ กรอกรหัสแทน</button>
+    </div>
+    <div id="scannerNoBarcodeWrap" class="scanner-tools" style="grid-template-columns:1fr;display:none;">
+      <button type="button" class="scanner-tool-btn" onclick="scannerNoBarcodeFallback()">⚙️ ไม่มีบาร์โค้ด — กรอกชื่อเครื่อง</button>
+    </div>
+    <div id="scannerFallbackNote" class="scanner-fallback-note">ระบบกำลังจับบาร์โค้ดอัตโนมัติ…</div>
     <button class="modal-close scanner-close" onclick="closeScanner()">ปิด</button>
   </div>
 </div>
@@ -3025,19 +3096,123 @@ function showJobDetail(jobId) {
 /* =========================================================
    SCANNER — REQUESTER + TECHNICIAN VERIFY
 ========================================================= */
+let scannerFallbackTimer=null;
+let scannerTorchOn=false;
+
+function getRepairBarcodeFormats(){
+  if(typeof Html5QrcodeSupportedFormats==="undefined")return null;
+  const F=Html5QrcodeSupportedFormats;
+  return [
+    F.CODE_128,F.CODE_39,F.CODE_93,F.CODABAR,
+    F.EAN_13,F.EAN_8,F.ITF,F.UPC_A,F.UPC_E,F.QR_CODE
+  ].filter(v=>typeof v!=="undefined");
+}
+
+function updateScannerFallbackUI(){
+  const isTech=scannerPurpose==="technician";
+  const manualBtn=document.getElementById("scannerManualBtn");
+  const noBarcodeWrap=document.getElementById("scannerNoBarcodeWrap");
+  if(manualBtn)manualBtn.textContent=isTech?"⌨️ กรอกรหัสยืนยันแทน":"⌨️ กรอกรหัสเครื่องแทน";
+  if(noBarcodeWrap)noBarcodeWrap.style.display=isTech?"none":"grid";
+}
+
+function showScannerFallbackHint(){
+  const note=document.getElementById("scannerFallbackNote");
+  if(!note)return;
+  note.textContent="ยังไม่ติด? ลองขยับเข้า-ออกช้า ๆ หรือใช้ปุ่มกรอกรหัสแทนได้เลย";
+  note.classList.add("show");
+}
+
+async function tryEnableScannerCameraFeatures(){
+  if(!scanner)return;
+  try{
+    if(typeof scanner.getRunningTrackCapabilities==="function" && typeof scanner.applyVideoConstraints==="function"){
+      const caps=scanner.getRunningTrackCapabilities()||{};
+      const torchBtn=document.getElementById("scannerTorchBtn");
+      if(torchBtn && caps.torch){torchBtn.style.display="";}
+
+      const advanced={};
+      if(Array.isArray(caps.focusMode) && caps.focusMode.includes("continuous"))advanced.focusMode="continuous";
+      if(Object.keys(advanced).length){
+        try{await scanner.applyVideoConstraints({advanced:[advanced]});}catch(e){}
+      }
+    }
+  }catch(e){console.warn("Scanner camera feature detection:",e);}
+}
+
+async function toggleScannerTorch(){
+  if(!scanner || typeof scanner.applyVideoConstraints!=="function")return;
+  const btn=document.getElementById("scannerTorchBtn");
+  try{
+    scannerTorchOn=!scannerTorchOn;
+    await scanner.applyVideoConstraints({advanced:[{torch:scannerTorchOn}]});
+    if(btn)btn.textContent=scannerTorchOn?"🔦 ปิดไฟช่วยสแกน":"🔦 เปิดไฟช่วยสแกน";
+  }catch(e){
+    scannerTorchOn=false;
+    if(btn){btn.style.display="none";btn.textContent="🔦 เปิดไฟช่วยสแกน";}
+    showToast("เครื่องนี้ไม่รองรับไฟช่วยสแกน");
+  }
+}
+
+async function scannerManualFallback(){
+  const purposeNow=scannerPurpose;
+  await closeScanner();
+  if(purposeNow==="technician"){
+    closeModal("techVerifyModal");
+    openTechManualVerify();
+  }else{
+    openManualMachineModal();
+  }
+}
+
+async function scannerNoBarcodeFallback(){
+  await closeScanner();
+  openNoBarcodeMachineModal();
+}
+
 function openScanner(purpose="requester") {
   scannerPurpose=purpose||"requester";
+  scannerTorchOn=false;
+  updateScannerFallbackUI();
+
+  const torchBtn=document.getElementById("scannerTorchBtn");
+  if(torchBtn){torchBtn.style.display="none";torchBtn.textContent="🔦 เปิดไฟช่วยสแกน";}
+  const note=document.getElementById("scannerFallbackNote");
+  if(note){note.textContent="ระบบกำลังจับบาร์โค้ดอัตโนมัติ…";note.classList.remove("show");}
+
+  if(scannerFallbackTimer)clearTimeout(scannerFallbackTimer);
+  scannerFallbackTimer=setTimeout(showScannerFallbackHint,6000);
   document.getElementById("scannerModal").classList.add("show");
 
   setTimeout(()=>{
     if(scanner)return;
-    scanner=new Html5Qrcode("reader");
+    const formats=getRepairBarcodeFormats();
+    try{
+      scanner=formats&&formats.length
+        ? new Html5Qrcode("reader",{formatsToSupport:formats,verbose:false})
+        : new Html5Qrcode("reader");
+    }catch(e){
+      scanner=new Html5Qrcode("reader");
+    }
+
+    const scanConfig={
+      fps:18,
+      qrbox:(viewfinderWidth,viewfinderHeight)=>{
+        const safeW=Math.max(180,viewfinderWidth-24);
+        const boxW=Math.min(safeW,Math.floor(viewfinderWidth*0.92),420);
+        const safeH=Math.max(90,viewfinderHeight-24);
+        const boxH=Math.min(safeH,Math.max(90,Math.floor(boxW*0.28)),145);
+        return {width:boxW,height:boxH};
+      },
+      disableFlip:false
+    };
 
     scanner.start(
-      {facingMode:"environment"},
-      {fps:10,qrbox:{width:240,height:160}},
+      {facingMode:{ideal:"environment"}},
+      scanConfig,
       async decodedText=>{
         const purposeNow=scannerPurpose;
+        if(scannerFallbackTimer){clearTimeout(scannerFallbackTimer);scannerFallbackTimer=null;}
         await closeScanner();
 
         if(purposeNow==="technician"){
@@ -3048,19 +3223,28 @@ function openScanner(purpose="requester") {
         }
       },
       ()=>{}
-    ).catch(err=>{
+    ).then(()=>{
+      tryEnableScannerCameraFeatures();
+    }).catch(err=>{
       console.error(err);
-      alert("เปิดกล้องไม่สำเร็จ กรุณาตรวจสอบสิทธิ์กล้อง");
+      if(scannerFallbackTimer){clearTimeout(scannerFallbackTimer);scannerFallbackTimer=null;}
+      const note=document.getElementById("scannerFallbackNote");
+      if(note){note.textContent="เปิดกล้องไม่ได้ — ใช้กรอกรหัสแทนได้ทันที";note.classList.add("show");}
+      alert("เปิดกล้องไม่สำเร็จ กรุณาตรวจสอบสิทธิ์กล้อง หรือใช้กรอกรหัสแทน");
     });
-  },200);
+  },180);
 }
 
 async function closeScanner() {
+  if(scannerFallbackTimer){clearTimeout(scannerFallbackTimer);scannerFallbackTimer=null;}
+  scannerTorchOn=false;
   if(scanner){
     try{await scanner.stop();}catch(e){}
     try{await scanner.clear();}catch(e){}
     scanner=null;
   }
+  const torchBtn=document.getElementById("scannerTorchBtn");
+  if(torchBtn){torchBtn.style.display="none";torchBtn.textContent="🔦 เปิดไฟช่วยสแกน";}
   document.getElementById("scannerModal").classList.remove("show");
 }
 

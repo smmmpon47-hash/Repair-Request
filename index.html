@@ -3244,7 +3244,7 @@ async function previewAfterImage(event) {
 
   try{
     note&&note.classList.add("show");
-    afterImageBase64=await compressImageFile(file,800,.58);
+    afterImageBase64=await compressImageFile(file,720,.52);
     img.src=afterImageBase64;
     img.style.display="block";
   }catch(err){
@@ -3392,6 +3392,7 @@ async function submitFinishJob() {
       technician:lineDisplayName,
       repairType:repairType,
       repairDetail:repairDetail,
+      repairElapsedSeconds:getTimerSecondsForJob(jobId),
       afterImage:afterImageBase64
     };
 

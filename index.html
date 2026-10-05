@@ -1441,6 +1441,28 @@
     }
     @keyframes scanLoadSpin{to{transform:rotate(360deg);}}
 
+    /* ===== TECH FINISH SEND OVERLAY ===== */
+    .finish-send-overlay{
+      display:none;position:fixed;inset:0;z-index:10050;
+      background:rgba(8,24,28,.68);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+      align-items:center;justify-content:center;padding:22px;
+    }
+    .finish-send-overlay.show{display:flex}
+    .finish-send-card{
+      width:min(88vw,360px);background:#fff;border-radius:22px;
+      padding:28px 24px 24px;text-align:center;box-shadow:0 18px 48px rgba(0,0,0,.24);
+    }
+    .finish-send-spinner{
+      width:46px;height:46px;margin:0 auto 15px;border:5px solid #dce9e8;
+      border-top-color:#0f766e;border-radius:50%;animation:scanLoadSpin .72s linear infinite;
+    }
+    .finish-send-title{font-size:1.08rem;font-weight:900;color:#173047;line-height:1.35;margin-bottom:7px}
+    .finish-send-sub{font-size:.82rem;color:#71808c;line-height:1.5}
+    .finish-send-job{
+      display:inline-block;margin-top:10px;padding:6px 10px;border-radius:9px;
+      background:#f1f6f6;color:#0f766e;font-size:.8rem;font-weight:800;
+    }
+
   
     /* ===== TECHNICIAN DAILY / CARRYOVER GROUPS ===== */
     .tech-job-group{margin:10px 0 18px;}
@@ -1820,6 +1842,15 @@
     <div id="scanLoadingTitle" class="scan-loading-title">สแกนสำเร็จ กำลังโหลดข้อมูล...</div>
     <div id="scanLoadingSub" class="scan-loading-sub">รอสักครู่นะคะ ระบบกำลังตรวจสอบข้อมูลเครื่อง</div>
     <div id="scanLoadingCode" class="scan-loading-code" style="display:none;"></div>
+  </div>
+</div>
+
+<div id="finishSendOverlay" class="finish-send-overlay" role="status" aria-live="assertive" aria-busy="true">
+  <div class="finish-send-card">
+    <div class="finish-send-spinner"></div>
+    <div id="finishSendTitle" class="finish-send-title">กำลังส่งงาน...</div>
+    <div id="finishSendSub" class="finish-send-sub">กรุณาอย่าปิดหน้านี้ ระบบกำลังบันทึกรูปและข้อมูลงาน</div>
+    <div id="finishSendJob" class="finish-send-job"></div>
   </div>
 </div>
 
@@ -3211,7 +3242,7 @@ async function previewAfterImage(event) {
 
   try{
     note&&note.classList.add("show");
-    afterImageBase64=await compressImageFile(file,1024,.68);
+    afterImageBase64=await compressImageFile(file,960,.64);
     img.src=afterImageBase64;
     img.style.display="block";
   }catch(err){
@@ -3226,6 +3257,77 @@ async function previewAfterImage(event) {
 
 
 
+function showFinishSendOverlay(jobId,title,sub){
+  const overlay=document.getElementById("finishSendOverlay");
+  const titleEl=document.getElementById("finishSendTitle");
+  const subEl=document.getElementById("finishSendSub");
+  const jobEl=document.getElementById("finishSendJob");
+  if(titleEl)titleEl.textContent=title||"กำลังส่งงาน...";
+  if(subEl)subEl.textContent=sub||"กรุณาอย่าปิดหน้านี้ ระบบกำลังบันทึกรูปและข้อมูลงาน";
+  if(jobEl)jobEl.textContent=jobId?String(jobId):"";
+  if(overlay)overlay.classList.add("show");
+}
+
+function hideFinishSendOverlay(){
+  const overlay=document.getElementById("finishSendOverlay");
+  if(overlay)overlay.classList.remove("show");
+}
+
+function waitMs(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+
+async function fetchJsonWithTimeout(url,options,timeoutMs){
+  const controller=typeof AbortController!=="undefined"?new AbortController():null;
+  const timer=controller?setTimeout(()=>controller.abort(),timeoutMs):null;
+  try{
+    const res=await fetch(url,Object.assign({},options||{},controller?{signal:controller.signal}:{}));
+    const text=await res.text();
+    let data={};
+    try{data=text?JSON.parse(text):{};}catch(e){
+      throw new Error("เซิร์ฟเวอร์ตอบกลับไม่สมบูรณ์");
+    }
+    return data;
+  }finally{
+    if(timer)clearTimeout(timer);
+  }
+}
+
+async function verifyFinishSaved(jobId){
+  for(let attempt=0;attempt<4;attempt++){
+    if(attempt>0)await waitMs(1800);
+    try{
+      const res=await fetch(
+        GAS_WEB_APP_URL+"?action=getJobDetail&jobId="+encodeURIComponent(jobId)+"&_="+Date.now(),
+        {cache:"no-store"}
+      );
+      const data=await res.json();
+      const status=String(data&&data.status||"").trim();
+      if(status==="รอตรวจรับ"||status==="เสร็จสิ้น"||status.includes("ส่งตรวจรับ")){
+        return data;
+      }
+    }catch(e){}
+  }
+  return null;
+}
+
+function applyFinishSavedToUi(jobId,data,repairType,repairDetail){
+  closeModal("finishModal");
+  const seconds=getTimerSecondsForJob(jobId);
+  patchTechnicianJob(jobId,{
+    status:(data&&data.jobStatus)||(data&&data.status)||"รอตรวจรับ",
+    finishDate:(data&&data.finishDate)||"",
+    finishTime:(data&&data.finishTime)||"",
+    result:(data&&data.result)||"ซ่อมเสร็จ ใช้งานได้",
+    repairType:(data&&data.repairType)||repairType,
+    repairDetail:(data&&data.repairDetail)||repairDetail,
+    afterImage:(data&&data.afterImage)||"",
+    repairElapsedSeconds:seconds,
+    repairPaused:false,
+    touchedToday:true
+  });
+  currentFinishJobId="";
+  afterImageBase64="";
+}
+
 async function submitFinishJob() {
   const jobId=currentFinishJobId;
   const repairType=document.getElementById("repairType").value;
@@ -3238,28 +3340,102 @@ async function submitFinishJob() {
 
   const action="finish";
   if(!beginRepairAction(jobId,action,"กำลังส่งตรวจรับ..."))return;
+
+  showFinishSendOverlay(
+    jobId,
+    "กำลังส่งงาน...",
+    "กรุณาอย่าปิดหน้านี้ ระบบกำลังส่งรูปและบันทึกงานให้เรียบร้อย"
+  );
+
   try{
-    if(btn){btn.disabled=true;btn.textContent="กำลังส่งรูป...";}
-    showToast("กำลังส่งรูปและบันทึกงาน...");
-    const payload={action:"FINISH_REPAIR_JOB",jobId:jobId,userId:lineUserId,technician:lineDisplayName,repairType:repairType,repairDetail:repairDetail,afterImage:afterImageBase64};
-    const res=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
-    const data=await res.json();
+    if(btn){btn.disabled=true;btn.textContent="กำลังส่งงาน...";}
 
-    if(data.status==="success"||data.success===true){
-      closeModal("finishModal");showToast("✓ ส่งตรวจรับแล้ว");
-      const seconds=getTimerSecondsForJob(jobId);
-      patchTechnicianJob(jobId,{
-        status:data.jobStatus||"รอตรวจรับ",finishDate:data.finishDate||"",finishTime:data.finishTime||"",
-        result:data.result||"ซ่อมเสร็จ ใช้งานได้",repairType:data.repairType||repairType,
-        repairDetail:data.repairDetail||repairDetail,afterImage:data.afterImage||"",
-        repairElapsedSeconds:seconds,repairPaused:false,touchedToday:true
-      });
-      currentFinishJobId="";afterImageBase64="";
-    }else alert(data.message||"ส่งตรวจรับไม่สำเร็จ");
-  }catch(err){console.error(err);alert("เกิดข้อผิดพลาด");}
-  finally{if(btn){btn.disabled=false;btn.textContent="✓ ยืนยันซ่อมเสร็จ";}endRepairAction(jobId,action);}
+    const payload={
+      action:"FINISH_REPAIR_JOB",
+      jobId:jobId,
+      userId:lineUserId,
+      technician:lineDisplayName,
+      repairType:repairType,
+      repairDetail:repairDetail,
+      afterImage:afterImageBase64
+    };
+
+    let data=null;
+    let requestError=null;
+
+    try{
+      data=await fetchJsonWithTimeout(
+        GAS_WEB_APP_URL,
+        {
+          method:"POST",
+          headers:{"Content-Type":"text/plain;charset=utf-8"},
+          body:JSON.stringify(payload)
+        },
+        45000
+      );
+    }catch(err){
+      requestError=err;
+      console.warn("Finish submit response problem:",err);
+    }
+
+    if(data&&(data.status==="success"||data.success===true||data.status==="already_finished")){
+      applyFinishSavedToUi(jobId,data,repairType,repairDetail);
+      hideFinishSendOverlay();
+      showToast("✓ ส่งตรวจรับแล้ว");
+      return;
+    }
+
+    // มือถือ/LINE บางครั้งหลุด response ทั้งที่ Apps Script บันทึกสำเร็จแล้ว
+    showFinishSendOverlay(
+      jobId,
+      "กำลังตรวจสอบผล...",
+      "ยังไม่ต้องกดซ้ำ ระบบกำลังเช็กว่างานถูกบันทึกเรียบร้อยแล้วหรือยัง"
+    );
+
+    const saved=await verifyFinishSaved(jobId);
+    if(saved){
+      applyFinishSavedToUi(jobId,saved,repairType,repairDetail);
+      hideFinishSendOverlay();
+      showToast("✓ ส่งตรวจรับแล้ว");
+      return;
+    }
+
+    hideFinishSendOverlay();
+
+    if(data&&data.message){
+      alert(data.message);
+    }else{
+      alert(
+        "ส่งงานยังไม่สำเร็จค่ะ\n" +
+        "ข้อมูลและรูปที่กรอกไว้ยังอยู่ ไม่ต้องเข้าออกใหม่\n" +
+        "กรุณากด “ซ่อมเสร็จ — ส่งตรวจรับ” อีกครั้ง"
+      );
+    }
+
+    if(requestError)console.error(requestError);
+
+  }catch(err){
+    console.error(err);
+    hideFinishSendOverlay();
+
+    // เช็กซ้ำครั้งสุดท้ายก่อนแจ้ง error
+    const saved=await verifyFinishSaved(jobId);
+    if(saved){
+      applyFinishSavedToUi(jobId,saved,repairType,repairDetail);
+      showToast("✓ ส่งตรวจรับแล้ว");
+      return;
+    }
+
+    alert(
+      "การเชื่อมต่อสะดุดค่ะ\n" +
+      "ข้อมูลที่กรอกไว้ยังอยู่ กรุณากดส่งอีกครั้ง ไม่ต้องออกจากหน้า"
+    );
+  }finally{
+    hideFinishSendOverlay();
+    if(btn){btn.disabled=false;btn.textContent="✓ ซ่อมเสร็จ — ส่งตรวจรับ";}
+    endRepairAction(jobId,action);
+  }
 }
-
 
 
 

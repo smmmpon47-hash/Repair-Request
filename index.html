@@ -1356,6 +1356,8 @@
     .finish-photo-btn{border:1px solid #dce5e7;border-radius:11px;padding:12px 8px;background:#f8fbfb;color:#1d5961;font-family:inherit;font-weight:800;font-size:.86rem;cursor:pointer}
     .finish-photo-btn.camera{background:#e9f7f2;border-color:#cfeadf;color:#0b7d59}
     .finish-photo-input{display:none!important}
+    .requester-photo-box{cursor:default}
+    .requester-photo-actions{width:100%;margin-top:10px}
     .mock-accept-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
     .mock-reject-btn{width:100%;border:1px solid #f0b7a6;border-radius:12px;padding:12px 8px;background:#fff3ee;color:#b64c28;font-family:inherit;font-size:.86rem;font-weight:800;cursor:pointer}
     .rework-reason-note{margin-top:9px;padding:9px 10px;border-radius:10px;background:#fff0eb;color:#a64c2c;font-size:.72rem;line-height:1.45}
@@ -1547,10 +1549,15 @@
 
     <textarea id="issueDetail" class="mock-issue-box" placeholder="กรอกอาการ / รายละเอียดที่พบ..."></textarea>
 
-    <label class="mock-photo-box">
-      <div>📷 &nbsp;+ แนบรูป<span class="mock-photo-sub">ถ่ายรูปหรือเลือกรูปจากอุปกรณ์ (ถ้ามี)</span></div>
-      <input id="imageInput" type="file" accept="image/*" onchange="previewImage(event)">
-    </label>
+    <div class="mock-photo-box requester-photo-box">
+      <div>📷 &nbsp;+ แนบรูป<span class="mock-photo-sub">ถ่ายรูปตอนนี้ หรือเลือกรูปจากเครื่อง (ถ้ามี)</span></div>
+      <div class="finish-photo-actions requester-photo-actions">
+        <button type="button" class="finish-photo-btn camera" onclick="document.getElementById('beforeCameraInput').click()">📷 ถ่ายรูปตอนนี้</button>
+        <button type="button" class="finish-photo-btn" onclick="document.getElementById('beforeGalleryInput').click()">🖼 เลือกรูป</button>
+      </div>
+      <input id="beforeCameraInput" class="finish-photo-input" type="file" accept="image/*" capture="environment" onchange="previewImage(event)">
+      <input id="beforeGalleryInput" class="finish-photo-input" type="file" accept="image/*" onchange="previewImage(event)">
+    </div>
     <img id="imagePreview">
 
     <button id="requesterSubmitBtn" type="button" class="mock-submit" onclick="submitRepair()">➤ &nbsp;ส่งแจ้งซ่อม</button>
@@ -2466,7 +2473,9 @@ async function submitRepair(){
 ========================================================= */
 
 function resetForm(){
-  clearMachineInfo();document.getElementById("issue").value="";document.getElementById("issueDetail").value="";document.getElementById("imageInput").value="";beforeImageBase64="";
+  clearMachineInfo();document.getElementById("issue").value="";document.getElementById("issueDetail").value="";
+  ["beforeCameraInput","beforeGalleryInput"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  beforeImageBase64="";
   const img=document.getElementById("imagePreview");img.src="";img.style.display="none";
   document.getElementById("reporter").value=registeredReporterName||"";
   document.getElementById("line").value="";

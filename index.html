@@ -1352,6 +1352,12 @@
       padding:6px 28px 6px 9px;outline:none;
     }
     .mock-line-select:disabled{background:#f1f4f5;color:#98a2a8}
+    .mock-inline-input{
+      width:100%;min-height:36px;border:1px solid #dbe4e6;border-radius:9px;
+      background:#fff;color:#173047;font-family:inherit;font-size:.83rem;font-weight:700;
+      padding:7px 10px;outline:none;box-sizing:border-box;
+    }
+    .mock-inline-input::placeholder{color:#a0a9ae;font-weight:500}
     .finish-photo-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:7px}
     .finish-photo-btn{border:1px solid #dce5e7;border-radius:11px;padding:12px 8px;background:#f8fbfb;color:#1d5961;font-family:inherit;font-weight:800;font-size:.86rem;cursor:pointer}
     .finish-photo-btn.camera{background:#e9f7f2;border-color:#cfeadf;color:#0b7d59}
@@ -1539,6 +1545,10 @@
         <select id="requesterLineSelect" class="mock-line-select" onchange="selectRequesterLine(this.value)" disabled>
           <option value="">กำลังตรวจสอบ...</option>
         </select>
+      </div>
+      <div class="mock-info-row">
+        <div class="mock-info-icon">👷</div><div class="mock-info-label">พนักงาน:</div>
+        <input id="machineEmployeeInput" class="mock-inline-input" type="text" placeholder="ชื่อพนักงานที่อยู่กับเครื่อง" autocomplete="off">
       </div>
       <div class="mock-info-row">
         <div class="mock-info-icon">👤</div><div class="mock-info-label">ผู้แจ้ง:</div>
@@ -2443,6 +2453,7 @@ async function submitRepair(){
   const machineName=document.getElementById("machineName").value.trim();
   const floor=document.getElementById("floor").value.trim();
   const line=document.getElementById("line").value.trim();
+  const employee=(document.getElementById("machineEmployeeInput")?.value||"").trim();
   const issue=buildIssueText();
   if(!lineUserId){showToast("กรุณาเปิดระบบผ่าน LINE");return;}
   if(!requesterIsRegistered||!registeredReporterName||!floor){alert("ข้อมูลผู้แจ้งยังไม่พร้อม\nกรุณาให้ผู้ดูแลลงทะเบียน ชื่อจริง / ชั้น ใน RepairUsers");return;}
@@ -2453,7 +2464,7 @@ async function submitRepair(){
   const btn=document.getElementById("requesterSubmitBtn");
   if(btn&&btn.dataset.sending==="1"){showToast("กำลังส่งอยู่ กรุณารอสักครู่");return;}
   const isManualMachine=!!(currentMachineInfo&&currentMachineInfo.manual===true);
-  const payload={action:"CREATE_REPAIR_JOB",userId:lineUserId,line:line,machineCode:machineCode,issue:issue,image:beforeImageBase64,manualMachine:isManualMachine,manualMachineCode:isManualMachine?machineCode:"",manualMachineName:isManualMachine?machineName:""};
+  const payload={action:"CREATE_REPAIR_JOB",userId:lineUserId,line:line,machineCode:machineCode,employee:employee,issue:issue,image:beforeImageBase64,manualMachine:isManualMachine,manualMachineCode:isManualMachine?machineCode:"",manualMachineName:isManualMachine?machineName:""};
 
   if(btn){btn.dataset.sending="1";btn.disabled=true;btn.textContent="กำลังส่งแจ้งซ่อม...";}
   showToast("กำลังส่งแจ้งซ่อม...");
@@ -2478,6 +2489,7 @@ function resetForm(){
   beforeImageBase64="";
   const img=document.getElementById("imagePreview");img.src="";img.style.display="none";
   document.getElementById("reporter").value=registeredReporterName||"";
+  const employeeInput=document.getElementById("machineEmployeeInput");if(employeeInput)employeeInput.value="";
   document.getElementById("line").value="";
   const sel=document.getElementById("requesterLineSelect");if(sel)sel.value="";
 }
@@ -2562,7 +2574,7 @@ function renderReportedJob(job){
   const reworkNote=isRework&&job.reworkReason?`<div class="rework-reason-note">↩ เหตุผลที่ส่งกลับ: ${escapeHtml(job.reworkReason)}</div>`:"";
 
   return `<div id="${reporterCardDomId(job.jobId)}" class="mock-job-card" data-reporter-job-id="${escapeHtml(job.jobId||"")}">
-    <div class="mock-job-main">${image}<div><div class="mock-job-id">${escapeHtml(job.jobId||"-")}</div><div class="mock-job-name">${escapeHtml(job.machineName||job.machineCode||"-")}</div><div class="mock-job-meta">${escapeHtml(job.floor||"-")}${job.line?" • LINE "+escapeHtml(job.line):""}<br>อาการ: ${escapeHtml(job.issue||"-")}</div></div><div class="mock-job-chevron">›</div></div>
+    <div class="mock-job-main">${image}<div><div class="mock-job-id">${escapeHtml(job.jobId||"-")}</div><div class="mock-job-name">${escapeHtml(job.machineName||job.machineCode||"-")}</div><div class="mock-job-meta">${escapeHtml(job.floor||"-")}${job.line?" • LINE "+escapeHtml(job.line):""}${job.employee?"<br>พนักงาน: "+escapeHtml(job.employee):""}<br>อาการ: ${escapeHtml(job.issue||"-")}</div></div><div class="mock-job-chevron">›</div></div>
     ${renderProgressSteps(status)}
     <div class="mock-state-chip ${isComplete?"complete":""}">${getRequesterStatusText(status)}</div>
     ${reworkNote}${repairResult}${acceptanceAction}
@@ -2898,7 +2910,7 @@ function renderTechnicianJob(job) {
 
   return `<div class="tech-job-card" data-tech-job-id="${escapeHtml(job.jobId||"")}">
     <div class="tech-job-top" role="button" tabindex="0" onclick="showJobDetail('${escapeJs(job.jobId)}')">${image}<div><div class="tech-job-headline"><div class="tech-job-id">${escapeHtml(job.jobId||"-")}</div><span class="tech-status-pill ${info.cls}">${escapeHtml(info.label)}</span></div><div class="tech-job-name">${escapeHtml(job.machineName||job.machineCode||"-")}</div><div class="tech-job-meta">รหัสเครื่อง: ${escapeHtml(displayMachineCode(job)||"-")}<br>${escapeHtml(job.floor||"-")}${job.line?" &nbsp;|&nbsp; LINE "+escapeHtml(job.line):""}</div></div></div>
-    <div class="tech-job-detail-lines" role="button" tabindex="0" onclick="showJobDetail('${escapeJs(job.jobId)}')"><div class="tech-job-detail-line"><span class="tech-job-detail-icon">📋</span><span><b>อาการ:</b> ${escapeHtml(job.issue||"-")}</span></div><div class="tech-job-detail-line"><span class="tech-job-detail-icon">🕐</span><span>แจ้งเมื่อ: ${escapeHtml(job.dateTime||"-")}</span></div><div class="tech-job-detail-line"><span class="tech-job-detail-icon">👤</span><span>ผู้แจ้ง: ${escapeHtml(job.reporter||"-")}</span></div>${job.startTime?`<div class="tech-job-detail-line"><span class="tech-job-detail-icon">🔧</span><span>เริ่มซ่อมครั้งแรก: ${escapeHtml(job.startTime)}</span></div>`:""}</div>
+    <div class="tech-job-detail-lines" role="button" tabindex="0" onclick="showJobDetail('${escapeJs(job.jobId)}')"><div class="tech-job-detail-line"><span class="tech-job-detail-icon">📋</span><span><b>อาการ:</b> ${escapeHtml(job.issue||"-")}</span></div><div class="tech-job-detail-line"><span class="tech-job-detail-icon">🕐</span><span>แจ้งเมื่อ: ${escapeHtml(job.dateTime||"-")}</span></div><div class="tech-job-detail-line"><span class="tech-job-detail-icon">👤</span><span>ผู้แจ้ง: ${escapeHtml(job.reporter||"-")}</span></div>${job.employee?`<div class="tech-job-detail-line"><span class="tech-job-detail-icon">👷</span><span><b>พนักงาน:</b> ${escapeHtml(job.employee)}</span></div>`:""}${job.startTime?`<div class="tech-job-detail-line"><span class="tech-job-detail-icon">🔧</span><span>เริ่มซ่อมครั้งแรก: ${escapeHtml(job.startTime)}</span></div>`:""}</div>
     ${reworkNote}${timer}${action}
   </div>`;
 }
@@ -3269,7 +3281,7 @@ function showJobDetail(jobId) {
   else if(waitingHandoff)action=`<div class="tech-wait-note">กำลังรอช่างที่ส่งต่อให้กดรับงาน</div>`;
   else if(status.includes("รอตรวจรับ"))action=`<button class="tech-job-action locked" type="button">🔎 รอผู้แจ้งตรวจรับ</button>`;
 
-  document.getElementById("detailContent").innerHTML=`<div class="tech-detail-card"><div class="tech-detail-hero"><div class="tech-detail-main">${job.beforeImage?`<img class="tech-detail-photo" src="${escapeHtml(job.beforeImage)}" alt="รูปเครื่อง">`:`<div class="tech-job-image-fallback" style="width:86px;height:86px;">⚙️</div>`}<div><div class="tech-detail-job">${escapeHtml(job.jobId||"-")}</div><div class="tech-detail-title">${escapeHtml(job.machineName||job.machineCode||"-")}</div><div class="tech-job-meta">${escapeHtml(job.floor||"-")}${job.line?" • LINE "+escapeHtml(job.line):""}<br>อาการ: ${escapeHtml(job.issue||"-")}</div><span class="tech-detail-status ${info.cls}">${escapeHtml(info.label)}</span></div></div></div><div class="tech-detail-list"><div class="tech-detail-row"><span>📅</span><span class="tech-detail-label">วันที่แจ้ง</span><span class="tech-detail-value">${escapeHtml(job.dateTime||"-")}</span></div><div class="tech-detail-row"><span>👤</span><span class="tech-detail-label">ผู้แจ้ง</span><span class="tech-detail-value">${escapeHtml(job.reporter||"-")}</span></div><div class="tech-detail-row"><span>⚙️</span><span class="tech-detail-label">รหัสเครื่อง</span><span class="tech-detail-value">${escapeHtml(displayMachineCode(job)||"-")}</span></div><div class="tech-detail-row"><span>💬</span><span class="tech-detail-label">อาการ</span><span class="tech-detail-value">${escapeHtml(job.issue||"-")}</span></div>${job.reworkReason?`<div class="tech-detail-row"><span>↩</span><span class="tech-detail-label">ส่งกลับเพราะ</span><span class="tech-detail-value">${escapeHtml(job.reworkReason)}</span></div>`:""}</div>${beforeImage}<div class="tech-detail-actions">${action}</div></div>`;
+  document.getElementById("detailContent").innerHTML=`<div class="tech-detail-card"><div class="tech-detail-hero"><div class="tech-detail-main">${job.beforeImage?`<img class="tech-detail-photo" src="${escapeHtml(job.beforeImage)}" alt="รูปเครื่อง">`:`<div class="tech-job-image-fallback" style="width:86px;height:86px;">⚙️</div>`}<div><div class="tech-detail-job">${escapeHtml(job.jobId||"-")}</div><div class="tech-detail-title">${escapeHtml(job.machineName||job.machineCode||"-")}</div><div class="tech-job-meta">${escapeHtml(job.floor||"-")}${job.line?" • LINE "+escapeHtml(job.line):""}<br>อาการ: ${escapeHtml(job.issue||"-")}</div><span class="tech-detail-status ${info.cls}">${escapeHtml(info.label)}</span></div></div></div><div class="tech-detail-list"><div class="tech-detail-row"><span>📅</span><span class="tech-detail-label">วันที่แจ้ง</span><span class="tech-detail-value">${escapeHtml(job.dateTime||"-")}</span></div><div class="tech-detail-row"><span>👤</span><span class="tech-detail-label">ผู้แจ้ง</span><span class="tech-detail-value">${escapeHtml(job.reporter||"-")}</span></div>${job.employee?`<div class="tech-detail-row"><span>👷</span><span class="tech-detail-label">พนักงาน</span><span class="tech-detail-value">${escapeHtml(job.employee)}</span></div>`:""}<div class="tech-detail-row"><span>⚙️</span><span class="tech-detail-label">รหัสเครื่อง</span><span class="tech-detail-value">${escapeHtml(displayMachineCode(job)||"-")}</span></div><div class="tech-detail-row"><span>💬</span><span class="tech-detail-label">อาการ</span><span class="tech-detail-value">${escapeHtml(job.issue||"-")}</span></div>${job.reworkReason?`<div class="tech-detail-row"><span>↩</span><span class="tech-detail-label">ส่งกลับเพราะ</span><span class="tech-detail-value">${escapeHtml(job.reworkReason)}</span></div>`:""}</div>${beforeImage}<div class="tech-detail-actions">${action}</div></div>`;
   document.getElementById("detailModal").classList.add("show");
 }
 

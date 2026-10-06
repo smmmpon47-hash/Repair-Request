@@ -1896,6 +1896,8 @@ let repairSyncToken = "";
 let repairSyncTimer = null;
 let repairSyncInFlight = false;
 let reportedJobsLoaded = false;
+let requesterCreateRequestId = "";
+let requesterSubmitInFlight = false;
 const REPAIR_SYNC_INTERVAL_MS = 3000;
 const repairActionLocks = new Set();
 const failedFinishDrafts = new Map();
@@ -2466,7 +2468,7 @@ async function previewImage(event) {
 
   try{
     showToast("กำลังเตรียมรูป...");
-    beforeImageBase64=await compressImageFile(file,1024,.68);
+    beforeImageBase64=await compressImageFile(file,900,.60);
     img.src=beforeImageBase64;
     img.style.display="block";
   }catch(err){
@@ -2482,6 +2484,81 @@ async function previewImage(event) {
    SUBMIT REPAIR
 ========================================================= */
 
+function makeRequesterCreateRequestId(){
+  return "REQ-"+Date.now()+"-"+Math.random().toString(36).slice(2,9);
+}
+
+function showRequesterSubmissionPending(snapshot){
+  document.querySelectorAll(".page").forEach(page=>page.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(btn=>btn.classList.remove("active"));
+
+  const page=document.getElementById("reportedPage");
+  const tab=document.getElementById("tabReportedBtn");
+  if(page)page.classList.add("active");
+  if(tab)tab.classList.add("active");
+  updateRequesterChrome("reported");
+
+  const box=document.getElementById("reportedContent");
+  if(box){
+    box.innerHTML=`<div class="mock-job-card">
+      <div class="mock-job-main">
+        <div class="mock-job-thumb-fallback">⚙️</div>
+        <div>
+          <div class="mock-job-id">กำลังส่งแจ้งซ่อม...</div>
+          <div class="mock-job-name">${escapeHtml(snapshot.machineName||snapshot.machineCode||"-")}</div>
+          <div class="mock-job-meta">${escapeHtml(snapshot.floor||"-")}${snapshot.line?" • LINE "+escapeHtml(snapshot.line):""}<br>อาการ: ${escapeHtml(snapshot.issue||"-")}</div>
+        </div>
+      </div>
+      <div class="mock-state-chip">⏳ ระบบกำลังบันทึกงาน</div>
+      <div class="mock-helper" style="margin-top:10px;">กดแล้วไปทำอย่างอื่นได้เลย ไม่ต้องรอหน้านี้</div>
+    </div>`;
+  }
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function showRequesterSubmissionSaved(jobId,snapshot){
+  const box=document.getElementById("reportedContent");
+  if(!box)return;
+  box.innerHTML=`<div class="mock-job-card">
+    <div class="mock-job-main">
+      <div class="mock-job-thumb-fallback">✓</div>
+      <div>
+        <div class="mock-job-id">${escapeHtml(jobId||"แจ้งซ่อมแล้ว")}</div>
+        <div class="mock-job-name">${escapeHtml(snapshot.machineName||snapshot.machineCode||"-")}</div>
+        <div class="mock-job-meta">${escapeHtml(snapshot.floor||"-")}${snapshot.line?" • LINE "+escapeHtml(snapshot.line):""}<br>อาการ: ${escapeHtml(snapshot.issue||"-")}</div>
+      </div>
+    </div>
+    <div class="mock-state-chip">🟡 แจ้งแล้ว รอช่างรับงาน</div>
+  </div>`;
+}
+
+async function sendNewRepairNotificationInBackground(jobId){
+  if(!jobId||!lineUserId)return;
+
+  const payload={
+    action:"SEND_NEW_REPAIR_NOTIFICATION",
+    jobId:String(jobId),
+    userId:lineUserId
+  };
+
+  for(let attempt=0;attempt<2;attempt++){
+    try{
+      const res=await fetch(GAS_WEB_APP_URL,{
+        method:"POST",
+        headers:{"Content-Type":"text/plain;charset=utf-8"},
+        body:JSON.stringify(payload),
+        keepalive:true
+      });
+      const data=await res.json();
+      if(data&&(data.status==="success"||data.status==="already_sent"))return;
+    }catch(err){
+      console.warn("New repair notify attempt failed:",err);
+    }
+    await waitMs(1500);
+  }
+}
+
 async function submitRepair(){
   const machineCode=document.getElementById("machineCode").value.trim();
   const machineName=document.getElementById("machineName").value.trim();
@@ -2489,28 +2566,119 @@ async function submitRepair(){
   const line=document.getElementById("line").value.trim();
   const employee=(document.getElementById("machineEmployeeInput")?.value||"").trim();
   const issue=buildIssueText();
+
   if(!lineUserId){showToast("กรุณาเปิดระบบผ่าน LINE");return;}
-  if(!requesterIsRegistered||!registeredReporterName||!floor){alert("ข้อมูลผู้แจ้งยังไม่พร้อม\nกรุณาให้ผู้ดูแลลงทะเบียน ชื่อจริง / ชั้น ใน RepairUsers");return;}
-  if(!line){showToast("กรุณาเลือก LINE ที่เครื่องเสีย");document.getElementById("requesterLineSelect").focus();return;}
+  if(!requesterIsRegistered||!registeredReporterName||!floor){
+    alert("ข้อมูลผู้แจ้งยังไม่พร้อม\nกรุณาให้ผู้ดูแลลงทะเบียน ชื่อจริง / ชั้น ใน RepairUsers");
+    return;
+  }
+  if(!line){
+    showToast("กรุณาเลือก LINE ที่เครื่องเสีย");
+    document.getElementById("requesterLineSelect").focus();
+    return;
+  }
   if(!machineName){showToast("กรุณาสแกนหรือกรอกชื่อเครื่องจักรก่อน");return;}
   if(!issue){showToast("กรุณากรอกอาการที่พบ");return;}
 
   const btn=document.getElementById("requesterSubmitBtn");
-  if(btn&&btn.dataset.sending==="1"){showToast("กำลังส่งอยู่ กรุณารอสักครู่");return;}
-  const isManualMachine=!!(currentMachineInfo&&currentMachineInfo.manual===true);
-  const payload={action:"CREATE_REPAIR_JOB",userId:lineUserId,line:line,machineCode:machineCode,employee:employee,issue:issue,image:beforeImageBase64,manualMachine:isManualMachine,manualMachineCode:isManualMachine?machineCode:"",manualMachineName:isManualMachine?machineName:""};
+  if(requesterSubmitInFlight||(btn&&btn.dataset.sending==="1")){
+    showToast("งานนี้กำลังส่งอยู่ ไม่ต้องกดซ้ำ");
+    return;
+  }
 
-  if(btn){btn.dataset.sending="1";btn.disabled=true;btn.textContent="กำลังส่งแจ้งซ่อม...";}
-  showToast("กำลังส่งแจ้งซ่อม...");
+  const isManualMachine=!!(currentMachineInfo&&currentMachineInfo.manual===true);
+  if(!requesterCreateRequestId)requesterCreateRequestId=makeRequesterCreateRequestId();
+
+  const payload={
+    action:"CREATE_REPAIR_JOB",
+    clientRequestId:requesterCreateRequestId,
+    userId:lineUserId,
+    line:line,
+    machineCode:machineCode,
+    employee:employee,
+    issue:issue,
+    image:beforeImageBase64,
+    manualMachine:isManualMachine,
+    manualMachineCode:isManualMachine?machineCode:"",
+    manualMachineName:isManualMachine?machineName:""
+  };
+
+  const snapshot={machineCode,machineName,floor,line,employee,issue};
+
+  requesterSubmitInFlight=true;
+  repairActionLocks.add("requester-create");
+  if(btn){
+    btn.dataset.sending="1";
+    btn.disabled=true;
+    btn.textContent="กำลังส่ง...";
+  }
+
+  // OPTIMISTIC UI: ผู้แจ้งไม่ต้องยืนรอหน้า form
+  reportedJobsLoaded=true;
+  showRequesterSubmissionPending(snapshot);
+  showToast("รับคำสั่งแล้ว กำลังส่งเข้าระบบ...");
+
   try{
-    const response=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
-    const result=await response.json();
-    if(result.success===true||result.status==="success"){
-      alert("ส่งแจ้งซ่อมเรียบร้อยแล้ว"+(result.jobId?"\n"+result.jobId:""));
-      resetForm();reportedJobsLoaded=false;repairSyncToken="";switchTab("reported");
-    }else alert(result.message||result.error||"ส่งข้อมูลไม่สำเร็จ");
-  }catch(err){console.error(err);alert("เกิดข้อผิดพลาดในการส่งข้อมูล");}
-  finally{if(btn){btn.dataset.sending="0";btn.disabled=false;btn.innerHTML="➤ &nbsp;ส่งแจ้งซ่อม";}}
+    const response=await fetchJsonWithTimeout(
+      GAS_WEB_APP_URL,
+      {
+        method:"POST",
+        headers:{"Content-Type":"text/plain;charset=utf-8"},
+        body:JSON.stringify(payload)
+      },
+      45000
+    );
+
+    const result=response||{};
+
+    if(
+      result.success===true||
+      result.status==="success"||
+      result.status==="already_created"
+    ){
+      const jobId=String(result.jobId||"");
+      showRequesterSubmissionSaved(jobId,snapshot);
+      showToast(jobId?"✓ แจ้งซ่อมแล้ว "+jobId:"✓ แจ้งซ่อมแล้ว");
+
+      if(result.notificationDeferred===true&&jobId){
+        sendNewRepairNotificationInBackground(jobId);
+      }
+
+      requesterCreateRequestId="";
+      resetForm();
+      repairSyncToken="";
+
+      // โหลดรายการจริงตามหลัง ไม่บล็อกผู้แจ้ง
+      setTimeout(()=>{
+        reportedJobsLoaded=false;
+        loadMyReportedJobs(true);
+      },500);
+      return;
+    }
+
+    throw new Error(result.message||result.error||"ส่งข้อมูลไม่สำเร็จ");
+
+  }catch(err){
+    console.error(err);
+    reportedJobsLoaded=false;
+
+    // form ยังอยู่ครบ เพราะ reset เฉพาะตอน backend ยืนยันสำเร็จ
+    switchTab("repair");
+    alert(
+      "ส่งแจ้งซ่อมยังไม่สำเร็จค่ะ\n"+
+      "ข้อมูลที่กรอกไว้ยังอยู่ กดส่งอีกครั้งได้เลย\n\n"+
+      (err&&err.message?err.message:"การเชื่อมต่อสะดุด")
+    );
+  }finally{
+    requesterSubmitInFlight=false;
+    repairActionLocks.delete("requester-create");
+
+    if(btn){
+      btn.dataset.sending="0";
+      btn.disabled=false;
+      btn.innerHTML="➤ &nbsp;ส่งแจ้งซ่อม";
+    }
+  }
 }
 
 /* =========================================================

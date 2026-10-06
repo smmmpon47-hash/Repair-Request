@@ -1898,6 +1898,7 @@ let repairSyncInFlight = false;
 let reportedJobsLoaded = false;
 const REPAIR_SYNC_INTERVAL_MS = 3000;
 const repairActionLocks = new Set();
+const failedFinishDrafts = new Map();
 
 
 
@@ -3222,10 +3223,25 @@ function markCurrentFinishWaitingParts(){
 ========================================================= */
 
 function openFinishModal(jobId) {
-  currentFinishJobId=jobId;afterImageBase64="";
+  const key=String(jobId||"");
+  const draft=failedFinishDrafts.get(key)||null;
+
+  currentFinishJobId=jobId;
+  afterImageBase64=draft&&draft.afterImage?String(draft.afterImage):"";
+
   ["afterCameraInput","afterGalleryInput"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
-  const img=document.getElementById("afterImagePreview");img.style.display="none";img.src="";
-  document.getElementById("repairType").value="";document.getElementById("repairDetail").value="";
+
+  const img=document.getElementById("afterImagePreview");
+  if(afterImageBase64){
+    img.src=afterImageBase64;
+    img.style.display="block";
+  }else{
+    img.style.display="none";
+    img.src="";
+  }
+
+  document.getElementById("repairType").value=draft&&draft.repairType?String(draft.repairType):"";
+  document.getElementById("repairDetail").value=draft&&draft.repairDetail?String(draft.repairDetail):"";
   document.getElementById("finishModal").classList.add("show");
 }
 
@@ -3344,9 +3360,13 @@ async function sendReporterAcceptanceNotificationInBackground(jobId){
   }
 }
 
-function applyFinishSavedToUi(jobId,data,repairType,repairDetail){
-  closeModal("finishModal");
-  const seconds=getTimerSecondsForJob(jobId);
+function applyFinishSavedToUi(jobId,data,repairType,repairDetail,elapsedOverride){
+  const key=String(jobId||"");
+  const elapsedNumber=Number(elapsedOverride);
+  const seconds=Number.isFinite(elapsedNumber)
+    ? Math.max(0,elapsedNumber)
+    : getTimerSecondsForJob(jobId);
+
   patchTechnicianJob(jobId,{
     status:(data&&data.jobStatus)||(data&&data.status)||"รอตรวจรับ",
     finishDate:(data&&data.finishDate)||"",
@@ -3359,15 +3379,139 @@ function applyFinishSavedToUi(jobId,data,repairType,repairDetail){
     repairPaused:false,
     touchedToday:true
   });
-  currentFinishJobId="";
-  afterImageBase64="";
+
+  failedFinishDrafts.delete(key);
+
+  // อย่าไปเคลียร์ modal ของ Job อื่น ถ้าช่างเปิดงานถัดไประหว่างที่ Job นี้กำลังส่งอยู่
+  if(String(currentFinishJobId||"")===key){
+    closeModal("finishModal");
+    currentFinishJobId="";
+    afterImageBase64="";
+  }
 }
 
-async function submitFinishJob() {
-  const jobId=currentFinishJobId;
+function restoreFinishDraftAfterFailure(snapshot,message){
+  const key=String(snapshot&&snapshot.jobId||"");
+  if(!key)return;
+
+  const previous=snapshot.previousJob?Object.assign({},snapshot.previousJob):null;
+  const current=technicianJobsById[key];
+
+  if(previous&&current){
+    Object.keys(current).forEach(k=>delete current[k]);
+    Object.assign(current,previous);
+    renderTechnicianJobList();
+  }else if(previous){
+    technicianJobs.push(previous);
+    technicianJobsById[key]=previous;
+    renderTechnicianJobList();
+  }
+
+  failedFinishDrafts.set(key,snapshot);
+  invalidateTechnicianToday();
+
+  const msg=message||"การเชื่อมต่อสะดุด";
+  showToast("⚠ "+key+" ส่งงานไม่สำเร็จ");
+  setTimeout(()=>{
+    alert(
+      "⚠ "+key+" ส่งงานไม่สำเร็จ\n"+
+      msg+"\n\n"+
+      "งานถูกคืนกลับมาแล้ว กด “เสร็จ” อีกครั้งได้เลย\n"+
+      "ประเภท / รายละเอียด / รูปเดิมยังเก็บไว้ ไม่ต้องกรอกใหม่"
+    );
+  },80);
+}
+
+async function runFinishJobInBackground(snapshot){
+  const jobId=String(snapshot.jobId||"");
+  const action="finish";
+  let data=null;
+  let requestError=null;
+
+  try{
+    try{
+      data=await fetchJsonWithTimeout(
+        GAS_WEB_APP_URL,
+        {
+          method:"POST",
+          headers:{"Content-Type":"text/plain;charset=utf-8"},
+          body:JSON.stringify(snapshot.payload)
+        },
+        45000
+      );
+    }catch(err){
+      requestError=err;
+      console.warn("Finish background response problem:",err);
+    }
+
+    if(data&&(data.status==="success"||data.success===true||data.status==="already_finished")){
+      applyFinishSavedToUi(
+        jobId,
+        data,
+        snapshot.repairType,
+        snapshot.repairDetail,
+        snapshot.elapsedSeconds
+      );
+      showToast("✓ "+jobId+" ส่งตรวจรับแล้ว");
+      if(data.acceptanceNotificationDeferred===true){
+        sendReporterAcceptanceNotificationInBackground(jobId);
+      }
+      return;
+    }
+
+    // response หลุดไม่ได้แปลว่าเซฟไม่สำเร็จ — เช็กสถานะจริงก่อนคืนงาน
+    const saved=await verifyFinishSaved(jobId);
+    if(saved){
+      applyFinishSavedToUi(
+        jobId,
+        saved,
+        snapshot.repairType,
+        snapshot.repairDetail,
+        snapshot.elapsedSeconds
+      );
+      showToast("✓ "+jobId+" ส่งตรวจรับแล้ว");
+      sendReporterAcceptanceNotificationInBackground(jobId);
+      return;
+    }
+
+    restoreFinishDraftAfterFailure(
+      snapshot,
+      (data&&data.message)||
+      (requestError&&requestError.message)||
+      "ระบบยังยืนยันการบันทึกงานไม่ได้"
+    );
+
+  }catch(err){
+    console.error(err);
+
+    const saved=await verifyFinishSaved(jobId);
+    if(saved){
+      applyFinishSavedToUi(
+        jobId,
+        saved,
+        snapshot.repairType,
+        snapshot.repairDetail,
+        snapshot.elapsedSeconds
+      );
+      showToast("✓ "+jobId+" ส่งตรวจรับแล้ว");
+      sendReporterAcceptanceNotificationInBackground(jobId);
+      return;
+    }
+
+    restoreFinishDraftAfterFailure(
+      snapshot,
+      (err&&err.message)||"การเชื่อมต่อสะดุด"
+    );
+  }finally{
+    endRepairAction(jobId,action);
+  }
+}
+
+function submitFinishJob() {
+  const jobId=String(currentFinishJobId||"");
   const repairType=document.getElementById("repairType").value;
   const repairDetail=document.getElementById("repairDetail").value.trim();
-  const btn=document.getElementById("finishSubmitBtn");
+
   if(!jobId)return;
   if(!repairType){alert("กรุณาเลือกประเภทการซ่อม");return;}
   if(!repairDetail){alert("กรุณาระบุรายละเอียดการซ่อม");return;}
@@ -3376,106 +3520,51 @@ async function submitFinishJob() {
   const action="finish";
   if(!beginRepairAction(jobId,action,"กำลังส่งตรวจรับ..."))return;
 
-  showFinishSendOverlay(
-    jobId,
-    "กำลังส่งงาน...",
-    "กรุณาอย่าปิดหน้านี้ ระบบกำลังส่งรูปและบันทึกงานให้เรียบร้อย"
-  );
+  const elapsedSeconds=getTimerSecondsForJob(jobId);
+  const previousJob=cloneTechnicianJob(jobId);
+  const imageSnapshot=afterImageBase64;
 
-  try{
-    if(btn){btn.disabled=true;btn.textContent="กำลังส่งงาน...";}
-
-    const payload={
+  const snapshot={
+    jobId:jobId,
+    repairType:repairType,
+    repairDetail:repairDetail,
+    elapsedSeconds:elapsedSeconds,
+    afterImage:imageSnapshot,
+    previousJob:previousJob,
+    payload:{
       action:"FINISH_REPAIR_JOB",
       jobId:jobId,
       userId:lineUserId,
       technician:lineDisplayName,
       repairType:repairType,
       repairDetail:repairDetail,
-      repairElapsedSeconds:getTimerSecondsForJob(jobId),
-      afterImage:afterImageBase64
-    };
-
-    let data=null;
-    let requestError=null;
-
-    try{
-      data=await fetchJsonWithTimeout(
-        GAS_WEB_APP_URL,
-        {
-          method:"POST",
-          headers:{"Content-Type":"text/plain;charset=utf-8"},
-          body:JSON.stringify(payload)
-        },
-        45000
-      );
-    }catch(err){
-      requestError=err;
-      console.warn("Finish submit response problem:",err);
+      repairElapsedSeconds:elapsedSeconds,
+      afterImage:imageSnapshot
     }
+  };
 
-    if(data&&(data.status==="success"||data.success===true||data.status==="already_finished")){
-      applyFinishSavedToUi(jobId,data,repairType,repairDetail);
-      hideFinishSendOverlay();
-      showToast("✓ ส่งตรวจรับแล้ว");
-      if(data.acceptanceNotificationDeferred===true){
-        sendReporterAcceptanceNotificationInBackground(jobId);
-      }
-      return;
-    }
+  failedFinishDrafts.delete(jobId);
 
-    // มือถือ/LINE บางครั้งหลุด response ทั้งที่ Apps Script บันทึกสำเร็จแล้ว
-    showFinishSendOverlay(
-      jobId,
-      "กำลังตรวจสอบผล...",
-      "ยังไม่ต้องกดซ้ำ ระบบกำลังเช็กว่างานถูกบันทึกเรียบร้อยแล้วหรือยัง"
-    );
+  // OPTIMISTIC UI:
+  // ปิด modal และคืนการควบคุมให้ช่างทันที ไม่รอ Drive / Sheet / LINE
+  closeModal("finishModal");
+  patchTechnicianJob(jobId,{
+    status:"รอตรวจรับ",
+    result:"ซ่อมเสร็จ ใช้งานได้",
+    repairType:repairType,
+    repairDetail:repairDetail,
+    repairElapsedSeconds:elapsedSeconds,
+    repairPaused:false,
+    touchedToday:true
+  });
 
-    const saved=await verifyFinishSaved(jobId);
-    if(saved){
-      applyFinishSavedToUi(jobId,saved,repairType,repairDetail);
-      hideFinishSendOverlay();
-      showToast("✓ ส่งตรวจรับแล้ว");
-      sendReporterAcceptanceNotificationInBackground(jobId);
-      return;
-    }
+  currentFinishJobId="";
+  afterImageBase64="";
 
-    hideFinishSendOverlay();
+  showToast("✓ รับคำสั่งแล้ว ไปทำงานอื่นได้เลย");
 
-    if(data&&data.message){
-      alert(data.message);
-    }else{
-      alert(
-        "ส่งงานยังไม่สำเร็จค่ะ\n" +
-        "ข้อมูลและรูปที่กรอกไว้ยังอยู่ ไม่ต้องเข้าออกใหม่\n" +
-        "กรุณากด “ซ่อมเสร็จ — ส่งตรวจรับ” อีกครั้ง"
-      );
-    }
-
-    if(requestError)console.error(requestError);
-
-  }catch(err){
-    console.error(err);
-    hideFinishSendOverlay();
-
-    // เช็กซ้ำครั้งสุดท้ายก่อนแจ้ง error
-    const saved=await verifyFinishSaved(jobId);
-    if(saved){
-      applyFinishSavedToUi(jobId,saved,repairType,repairDetail);
-      showToast("✓ ส่งตรวจรับแล้ว");
-      sendReporterAcceptanceNotificationInBackground(jobId);
-      return;
-    }
-
-    alert(
-      "การเชื่อมต่อสะดุดค่ะ\n" +
-      "ข้อมูลที่กรอกไว้ยังอยู่ กรุณากดส่งอีกครั้ง ไม่ต้องออกจากหน้า"
-    );
-  }finally{
-    hideFinishSendOverlay();
-    if(btn){btn.disabled=false;btn.textContent="✓ ซ่อมเสร็จ — ส่งตรวจรับ";}
-    endRepairAction(jobId,action);
-  }
+  // ไม่ await: request ยังทำต่อในหน้า LIFF เดิม ช่างกดดู/ทำ Job อื่นได้ทันที
+  void runFinishJobInBackground(snapshot);
 }
 
 

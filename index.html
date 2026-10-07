@@ -3830,10 +3830,10 @@ async function tryEnableScannerCameraFeatures(){
         advanced.focusMode="continuous";
       }
 
-      // ขอภาพคมขึ้นแบบ best-effort; เครื่องที่ไม่รองรับจะข้ามเอง
+      // QR ไม่ต้องใช้ภาพ 1080p ตลอดเวลา: 720p decode เร็วกว่าและยังคมพอสำหรับ QR หน้าจักร
       const constraints={
-        width:{ideal:1920},
-        height:{ideal:1080}
+        width:{ideal:1280},
+        height:{ideal:720}
       };
       if(Object.keys(advanced).length)constraints.advanced=[advanced];
 
@@ -3928,19 +3928,21 @@ async function handleRepairBarcodeDecoded(decodedText){
     }
   });
 
-  await closeScanner();
+  // ปิดกล้องกับโหลดข้อมูลทำพร้อมกัน ไม่ต้องรอทีละขั้น
+  const closePromise=closeScanner();
 
   try{
+    let workPromise;
     if(purposeNow==="technician"){
       closeModal("techVerifyModal");
-      await verifyAndStartTechnicianJob(value,"scan");
+      workPromise=verifyAndStartTechnicianJob(value,"scan");
     }else{
-      await lookupMachine(value);
+      workPromise=lookupMachine(value);
     }
+
+    await Promise.all([closePromise,workPromise]);
   }finally{
-    // ให้เห็น Loading อย่างน้อย 900ms ต่อให้ข้อมูลกลับเร็วมาก
-    const remain=900-(Date.now()-loadingStartedAt);
-    if(remain>0)await new Promise(resolve=>setTimeout(resolve,remain));
+    // ไม่หน่วง 900ms แบบเดิม — QR อ่านได้แล้วให้ไปต่อทันที
     hideScanLoading();
   }
 }
@@ -3973,11 +3975,11 @@ async function pickBackCameraId(){
 
 function getRepairScanConfig(){
   return {
-    // QR ใช้กรอบสี่เหลี่ยมและอ่านเฉพาะ QR_CODE เพื่อให้จับเร็วและนิ่งกว่าเดิม
-    fps:20,
+    // อ่านเฉพาะ QR_CODE + เพิ่มรอบ decode เพื่อให้จับได้ไวขึ้นเมื่อ QR เข้ากรอบ
+    fps:30,
     qrbox:(viewfinderWidth,viewfinderHeight)=>{
       const minSide=Math.min(viewfinderWidth,viewfinderHeight);
-      const box=Math.max(190,Math.min(Math.floor(minSide*0.78),340));
+      const box=Math.max(190,Math.min(Math.floor(minSide*0.74),330));
       return {width:box,height:box};
     },
     disableFlip:false
@@ -3998,12 +4000,12 @@ async function startLiveRepairScanner(){
   try{
     await releaseLiveScannerOnly();
 
-    // LINE/iPhone บางเครื่องยอมเปิดด้วย cameraId มากกว่า facingMode
-    const backCameraId=await pickBackCameraId();
-    const cameraAttempts=[];
-    if(backCameraId)cameraAttempts.push(backCameraId);
-    cameraAttempts.push({facingMode:"environment"});
-    cameraAttempts.push({facingMode:{ideal:"environment"}});
+    // เปิดกล้องหลังตรง ๆ ก่อน เพื่อตัดเวลารอ enumerate กล้อง
+    // ถ้า LINE/iPhone เครื่องนั้นไม่ยอมค่อย fallback ไปหา cameraId
+    const cameraAttempts=[
+      {facingMode:"environment"},
+      {facingMode:{ideal:"environment"}}
+    ];
 
     for(const cameraConfig of cameraAttempts){
       try{
@@ -4017,12 +4019,35 @@ async function startLiveRepairScanner(){
         );
         scannerStarting=false;
         if(scannerFallbackTimer)clearTimeout(scannerFallbackTimer);
-        scannerFallbackTimer=setTimeout(showScannerFallbackHint,6000);
+        scannerFallbackTimer=setTimeout(showScannerFallbackHint,4500);
         tryEnableScannerCameraFeatures();
         return true;
       }catch(err){
         lastErr=err;
         console.warn("Camera start attempt failed:",err);
+      }
+    }
+
+    // fallback เฉพาะเครื่องที่ facingMode เปิดกล้องหลังไม่ได้
+    const backCameraId=await pickBackCameraId();
+    if(backCameraId){
+      try{
+        await releaseLiveScannerOnly();
+        scanner=createRepairScanner("reader");
+        await scanner.start(
+          backCameraId,
+          getRepairScanConfig(),
+          decodedText=>{handleRepairBarcodeDecoded(decodedText);},
+          ()=>{}
+        );
+        scannerStarting=false;
+        if(scannerFallbackTimer)clearTimeout(scannerFallbackTimer);
+        scannerFallbackTimer=setTimeout(showScannerFallbackHint,4500);
+        tryEnableScannerCameraFeatures();
+        return true;
+      }catch(err){
+        lastErr=err;
+        console.warn("CameraId fallback failed:",err);
       }
     }
   }finally{
@@ -4035,12 +4060,12 @@ async function startLiveRepairScanner(){
 
   if(isCameraPermissionError(lastErr)){
     setScannerNote(
-      "LINE ยังไม่ได้รับสิทธิ์ใช้กล้องค่ะ — iPhone ไปที่ การตั้งค่า > LINE > เปิด “กล้อง” แล้วกลับมากด “ลองเปิดกล้องอีกครั้ง” หรือใช้ “ถ่ายรูปบาร์โค้ด” / “กรอกรหัสแทน” ได้",
+      "LINE ยังไม่ได้รับสิทธิ์ใช้กล้องค่ะ — iPhone ไปที่ การตั้งค่า > LINE > เปิด “กล้อง” แล้วกลับมากด “ลองเปิดกล้องอีกครั้ง” หรือใช้ “ถ่ายรูป QR” / “กรอกรหัสแทน” ได้",
       {permission:true}
     );
   }else{
     setScannerNote(
-      "เปิดกล้องสดไม่สำเร็จค่ะ ลองกด “ลองเปิดกล้องอีกครั้ง” หรือใช้ “ถ่ายรูปบาร์โค้ด” / “กรอกรหัสแทน” ได้ทันที",
+      "เปิดกล้องสดไม่สำเร็จค่ะ ลองกด “ลองเปิดกล้องอีกครั้ง” หรือใช้ “ถ่ายรูป QR” / “กรอกรหัสแทน” ได้ทันที",
       {permission:true}
     );
   }

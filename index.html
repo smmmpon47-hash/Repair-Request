@@ -1814,7 +1814,7 @@
   <div class="modal">
     <h3>📷 สแกนรหัสเครื่องจักร</h3>
     <div class="scanner-help">
-      วางบาร์โค้ด <strong>แนวนอนให้เต็มกรอบ</strong><br>ถือห่างประมาณ 15–25 ซม. และอย่าให้แสงสะท้อน
+      วางบาร์โค้ด <strong>แนวนอนกลางกรอบ</strong><br>ให้เส้นบาร์กินพื้นที่ประมาณ 70–90% ของกรอบ • ถือห่างราว 15–25 ซม. และเลี่ยงแสงสะท้อน
     </div>
     <div id="reader"></div>
     <div class="scanner-tools">
@@ -3771,18 +3771,24 @@ let repairOcrBusy=false;
 function getRepairBarcodeFormats(){
   if(typeof Html5QrcodeSupportedFormats==="undefined")return null;
   const F=Html5QrcodeSupportedFormats;
+
+  // เครื่องจักรใช้บาร์โค้ด 1D แล้ว: ตัด QR ออกเพื่อลดงาน decoder
+  // และให้ CODE_128 / CODE_39 / CODE_93 มาก่อน เพราะรองรับรหัสตัวอักษร+ตัวเลขของโรงงาน
   return [
-    F.CODE_128,F.CODE_39,F.CODE_93,F.CODABAR,
-    F.EAN_13,F.EAN_8,F.ITF,F.UPC_A,F.UPC_E,F.QR_CODE
+    F.CODE_128,F.CODE_39,F.CODE_93,
+    F.CODABAR,F.ITF,F.EAN_13,F.EAN_8,F.UPC_A,F.UPC_E
   ].filter(v=>typeof v!=="undefined");
 }
 
 function createRepairScanner(elementId="reader"){
   const formats=getRepairBarcodeFormats();
   try{
-    return formats&&formats.length
-      ? new Html5Qrcode(elementId,{formatsToSupport:formats,verbose:false})
-      : new Html5Qrcode(elementId);
+    const config={
+      verbose:false,
+      experimentalFeatures:{useBarCodeDetectorIfSupported:true}
+    };
+    if(formats&&formats.length)config.formatsToSupport=formats;
+    return new Html5Qrcode(elementId,config);
   }catch(e){
     return new Html5Qrcode(elementId);
   }
@@ -3807,12 +3813,12 @@ function setScannerNote(message,{permission=false}={}){
 function resetScannerNote(){
   const note=document.getElementById("scannerFallbackNote");
   if(!note)return;
-  note.textContent="ระบบกำลังจับบาร์โค้ดอัตโนมัติ…";
+  note.textContent="กำลังอ่านบาร์โค้ด… วางเส้นบาร์แนวนอนให้กินพื้นที่เกือบเต็มกรอบ";
   note.classList.remove("show","permission");
 }
 
 function showScannerFallbackHint(){
-  setScannerNote("ยังไม่ติด? ลองขยับเข้า-ออกช้า ๆ หรือใช้ “ถ่ายรูปบาร์โค้ด” / “กรอกรหัสแทน” ได้เลย");
+  setScannerNote("ยังไม่ติด? ให้เส้นบาร์อยู่กลางกรอบและกินพื้นที่ประมาณ 70–90% แล้วขยับเข้า-ออกช้า ๆ หรือใช้ “ถ่ายรูปบาร์โค้ด” ได้เลย");
 }
 
 async function tryEnableScannerCameraFeatures(){
@@ -3971,14 +3977,16 @@ async function pickBackCameraId(){
 
 function getRepairScanConfig(){
   return {
-    fps:18,
+    // 1D barcode ต้องการหลายเฟรมและกรอบกว้างกว่าการสแกน QR
+    fps:24,
     qrbox:(viewfinderWidth,viewfinderHeight)=>{
-      const safeW=Math.max(180,viewfinderWidth-24);
-      const boxW=Math.min(safeW,Math.floor(viewfinderWidth*0.92),420);
-      const safeH=Math.max(90,viewfinderHeight-24);
-      const boxH=Math.min(safeH,Math.max(90,Math.floor(boxW*0.28)),145);
+      const safeW=Math.max(220,viewfinderWidth-16);
+      const boxW=Math.min(safeW,Math.floor(viewfinderWidth*0.96),520);
+      const safeH=Math.max(96,viewfinderHeight-20);
+      const boxH=Math.min(safeH,Math.max(96,Math.floor(boxW*0.22)),132);
       return {width:boxW,height:boxH};
     },
+    aspectRatio:1.7777778,
     disableFlip:false
   };
 }

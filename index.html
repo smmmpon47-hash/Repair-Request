@@ -1784,9 +1784,9 @@
     <div class="tech-verify-card">
       <div class="tech-verify-icon">▥</div>
       <div class="tech-verify-title">ยืนยันเครื่องก่อนเริ่มซ่อม</div>
-      <div class="tech-verify-sub">สแกน Barcode ที่เครื่อง เพื่อป้องกันการเริ่มงานผิดเครื่อง</div>
+      <div class="tech-verify-sub">สแกน QR Code ที่เครื่อง เพื่อป้องกันการเริ่มงานผิดเครื่อง</div>
       <div id="techVerifyMachine" class="tech-verify-machine">-</div>
-      <button id="techScanVerifyBtn" type="button" class="tech-verify-btn primary" onclick="openScanner('technician')">▥ สแกน Barcode เครื่อง</button>
+      <button id="techScanVerifyBtn" type="button" class="tech-verify-btn primary" onclick="openScanner('technician')">▥ สแกน QR Code เครื่อง</button>
       <div id="techVerifyOrText" style="font-size:.72rem;color:#89949a;margin:9px 0 1px;">หรือ</div>
       <button id="techManualVerifyBtn" type="button" class="tech-verify-btn light" onclick="openTechManualVerify()">กรอกรหัสเครื่องแทน</button>
       <button id="techNoBarcodeVerifyBtn" type="button" class="tech-verify-btn primary" style="display:none;" onclick="confirmNoBarcodeStart()">✓ ยืนยันเครื่องนี้และเริ่มซ่อม</button>
@@ -1798,7 +1798,7 @@
 <div id="techManualVerifyModal" class="modal-bg">
   <div class="modal">
     <h3>⌨️ ยืนยันรหัสเครื่อง</h3>
-    <div class="sub-title">กรอกเฉพาะเมื่อสแกน Barcode ไม่ได้ รหัสต้องตรงกับงานนี้</div>
+    <div class="sub-title">กรอกเฉพาะเมื่อสแกน QR Code ไม่ได้ รหัสต้องตรงกับงานนี้</div>
     <input id="techManualVerifyInput" type="text" placeholder="กรอกรหัสเครื่องจักร" autocomplete="off">
     <div class="manual-modal-actions">
       <button type="button" class="btn btn-cancel" onclick="closeModal('techManualVerifyModal')">ยกเลิก</button>
@@ -1814,13 +1814,13 @@
   <div class="modal">
     <h3>📷 สแกนรหัสเครื่องจักร</h3>
     <div class="scanner-help">
-      วางบาร์โค้ด <strong>แนวนอนกลางกรอบ</strong><br>ให้เส้นบาร์กินพื้นที่ประมาณ 70–90% ของกรอบ • ถือห่างราว 15–25 ซม. และเลี่ยงแสงสะท้อน
+      วาง <strong>QR Code ให้อยู่กลางกรอบ</strong><br>ให้เห็นครบทั้ง 4 มุม • ถือห่างประมาณ 15–25 ซม. และเลี่ยงแสงสะท้อน
     </div>
     <div id="reader"></div>
     <div class="scanner-tools">
       <button id="scannerTorchBtn" type="button" class="scanner-tool-btn" onclick="toggleScannerTorch()" style="display:none;">🔦 เปิดไฟช่วยสแกน</button>
       <button id="scannerRetryBtn" type="button" class="scanner-tool-btn" onclick="retryScannerCamera()" style="display:none;">🔄 ลองเปิดกล้องอีกครั้ง</button>
-      <button id="scannerPhotoBtn" type="button" class="scanner-tool-btn" onclick="openBarcodePhotoCapture()">📷 ถ่ายรูปให้อ่านบาร์/ตัวหนังสือ</button>
+      <button id="scannerPhotoBtn" type="button" class="scanner-tool-btn" onclick="openBarcodePhotoCapture()">📷 ถ่ายรูป QR Code</button>
       <button id="scannerManualBtn" type="button" class="scanner-tool-btn primary" onclick="scannerManualFallback()">⌨️ กรอกรหัสแทน</button>
     </div>
     <input id="barcodePhotoInput" type="file" accept="image/*" capture="environment" style="display:none;" onchange="scanBarcodePhoto(this)">
@@ -3772,12 +3772,8 @@ function getRepairBarcodeFormats(){
   if(typeof Html5QrcodeSupportedFormats==="undefined")return null;
   const F=Html5QrcodeSupportedFormats;
 
-  // เครื่องจักรใช้บาร์โค้ด 1D แล้ว: ตัด QR ออกเพื่อลดงาน decoder
-  // และให้ CODE_128 / CODE_39 / CODE_93 มาก่อน เพราะรองรับรหัสตัวอักษร+ตัวเลขของโรงงาน
-  return [
-    F.CODE_128,F.CODE_39,F.CODE_93,
-    F.CODABAR,F.ITF,F.EAN_13,F.EAN_8,F.UPC_A,F.UPC_E
-  ].filter(v=>typeof v!=="undefined");
+  // หน้าเครื่องจักรเปลี่ยนเป็น QR Code แล้ว: อ่านเฉพาะ QR เพื่อลดงาน decoder และให้จับไวที่สุด
+  return [F.QR_CODE].filter(v=>typeof v!=="undefined");
 }
 
 function createRepairScanner(elementId="reader"){
@@ -3813,12 +3809,12 @@ function setScannerNote(message,{permission=false}={}){
 function resetScannerNote(){
   const note=document.getElementById("scannerFallbackNote");
   if(!note)return;
-  note.textContent="กำลังอ่านบาร์โค้ด… วางเส้นบาร์แนวนอนให้กินพื้นที่เกือบเต็มกรอบ";
+  note.textContent="กำลังอ่าน QR Code… วาง QR ให้อยู่กลางกรอบและเห็นครบทั้ง 4 มุม";
   note.classList.remove("show","permission");
 }
 
 function showScannerFallbackHint(){
-  setScannerNote("ยังไม่ติด? ให้เส้นบาร์อยู่กลางกรอบและกินพื้นที่ประมาณ 70–90% แล้วขยับเข้า-ออกช้า ๆ หรือใช้ “ถ่ายรูปบาร์โค้ด” ได้เลย");
+  setScannerNote("ยังไม่ติด? ให้ QR อยู่กลางกรอบ เห็นครบทั้ง 4 มุม แล้วขยับเข้า-ออกช้า ๆ หรือใช้ “ถ่ายรูป QR” ได้เลย");
 }
 
 async function tryEnableScannerCameraFeatures(){
@@ -3977,16 +3973,13 @@ async function pickBackCameraId(){
 
 function getRepairScanConfig(){
   return {
-    // 1D barcode ต้องการหลายเฟรมและกรอบกว้างกว่าการสแกน QR
-    fps:24,
+    // QR ใช้กรอบสี่เหลี่ยมและอ่านเฉพาะ QR_CODE เพื่อให้จับเร็วและนิ่งกว่าเดิม
+    fps:20,
     qrbox:(viewfinderWidth,viewfinderHeight)=>{
-      const safeW=Math.max(220,viewfinderWidth-16);
-      const boxW=Math.min(safeW,Math.floor(viewfinderWidth*0.96),520);
-      const safeH=Math.max(96,viewfinderHeight-20);
-      const boxH=Math.min(safeH,Math.max(96,Math.floor(boxW*0.22)),132);
-      return {width:boxW,height:boxH};
+      const minSide=Math.min(viewfinderWidth,viewfinderHeight);
+      const box=Math.max(190,Math.min(Math.floor(minSide*0.78),340));
+      return {width:box,height:box};
     },
-    aspectRatio:1.7777778,
     disableFlip:false
   };
 }

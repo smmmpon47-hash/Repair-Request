@@ -3778,6 +3778,7 @@ async function runFinishJobInBackground(snapshot){
         snapshot.repairDetail,
         snapshot.elapsedSeconds
       );
+      await completeFinishSendOverlay(jobId);
       showToast("✓ "+jobId+" ส่งตรวจรับแล้ว");
       sendReporterAcceptanceNotificationInBackground(jobId);
       return;

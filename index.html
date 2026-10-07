@@ -1409,11 +1409,34 @@
     }
     .scan-loading-spinner{
       width:42px;height:42px;
-      margin:0 auto 15px;
+      margin:0 auto 12px;
       border:5px solid #dce9e8;
       border-top-color:#0f766e;
       border-radius:50%;
       animation:scanLoadSpin .72s linear infinite;
+    }
+    .scan-loading-percent{
+      font-size:1.55rem;
+      font-weight:950;
+      color:#0f766e;
+      line-height:1;
+      margin:2px 0 10px;
+      letter-spacing:-.03em;
+    }
+    .scan-loading-progress{
+      width:100%;
+      height:9px;
+      background:#e8f0f0;
+      border-radius:999px;
+      overflow:hidden;
+      margin:0 auto 14px;
+    }
+    .scan-loading-progress-bar{
+      width:0%;
+      height:100%;
+      background:linear-gradient(90deg,#13a37b,#0f766e);
+      border-radius:999px;
+      transition:width .18s ease-out;
     }
     .scan-loading-title{
       font-size:1.08rem;
@@ -1542,11 +1565,11 @@
     <button type="button" class="mock-scan-card" onclick="openScanner()">
       <div class="mock-scan-icon">▥</div>
       <div>
-        <div class="mock-scan-title">สแกนบาร์โค้ดเครื่องจักร</div>
+        <div class="mock-scan-title">สแกน QR Code เครื่องจักร</div>
         <div class="mock-scan-sub">แตะเพื่อสแกน</div>
       </div>
     </button>
-    <button type="button" class="mock-manual-link" onclick="openManualMachineModal()">สแกนไม่ติด? กรอกรหัสเครื่องแทน</button>
+    <button type="button" class="mock-manual-link" onclick="openManualMachineModal()">สแกน QR ไม่ติด? กรอกรหัสเครื่องแทน</button>
     <button type="button" class="mock-manual-link" style="padding-top:2px;color:#0f806d;font-weight:700;" onclick="openNoBarcodeMachineModal()">ไม่มีบาร์โค้ด? กรอกชื่อเครื่องจักรเอง</button>
 
     <div class="mock-info-card">
@@ -1839,6 +1862,8 @@
   <div class="scan-loading-card">
     <div class="scan-loading-check">✓</div>
     <div class="scan-loading-spinner"></div>
+    <div id="scanLoadingPercent" class="scan-loading-percent">0%</div>
+    <div class="scan-loading-progress"><div id="scanLoadingProgressBar" class="scan-loading-progress-bar"></div></div>
     <div id="scanLoadingTitle" class="scan-loading-title">สแกนสำเร็จ กำลังโหลดข้อมูล...</div>
     <div id="scanLoadingSub" class="scan-loading-sub">รอสักครู่นะคะ ระบบกำลังตรวจสอบข้อมูลเครื่อง</div>
     <div id="scanLoadingCode" class="scan-loading-code" style="display:none;"></div>
@@ -3767,6 +3792,8 @@ let scannerTorchOn=false;
 let scannerStarting=false;
 let repairOcrScriptPromise=null;
 let repairOcrBusy=false;
+let scanLoadingProgressTimer=null;
+let scanLoadingProgressValue=0;
 
 function getRepairBarcodeFormats(){
   if(typeof Html5QrcodeSupportedFormats==="undefined")return null;
@@ -3877,6 +3904,45 @@ async function scannerNoBarcodeFallback(){
 }
 
 
+function setScanLoadingProgress(value){
+  const percentEl=document.getElementById("scanLoadingPercent");
+  const barEl=document.getElementById("scanLoadingProgressBar");
+  const clean=Math.max(0,Math.min(100,Math.round(Number(value)||0)));
+  scanLoadingProgressValue=clean;
+  if(percentEl)percentEl.textContent=clean+"%";
+  if(barEl)barEl.style.width=clean+"%";
+}
+
+function startScanLoadingProgress(){
+  if(scanLoadingProgressTimer){
+    clearInterval(scanLoadingProgressTimer);
+    scanLoadingProgressTimer=null;
+  }
+
+  setScanLoadingProgress(8);
+
+  // เป็น progress ของ UX ตามช่วงงาน ไม่ใช่เปอร์เซ็นต์จาก server โดยตรง
+  // เดินเร็วช่วงแรก แล้วช้าลงและรอไว้ที่ 92% จน backend ตอบจริง
+  scanLoadingProgressTimer=setInterval(()=>{
+    let next=scanLoadingProgressValue;
+    if(next<38)next+=10;
+    else if(next<62)next+=6;
+    else if(next<80)next+=4;
+    else if(next<90)next+=2;
+    else if(next<92)next+=1;
+    if(next>=92)next=92;
+    setScanLoadingProgress(next);
+  },260);
+}
+
+function completeScanLoadingProgress(){
+  if(scanLoadingProgressTimer){
+    clearInterval(scanLoadingProgressTimer);
+    scanLoadingProgressTimer=null;
+  }
+  setScanLoadingProgress(100);
+}
+
 function showScanLoading(title,sub,code){
   const overlay=document.getElementById("scanLoadingOverlay");
   const titleEl=document.getElementById("scanLoadingTitle");
@@ -3889,10 +3955,15 @@ function showScanLoading(title,sub,code){
     codeEl.textContent=value?"รหัส: "+value:"";
     codeEl.style.display=value?"inline-block":"none";
   }
+  startScanLoadingProgress();
   if(overlay)overlay.classList.add("show");
 }
 
 function hideScanLoading(){
+  if(scanLoadingProgressTimer){
+    clearInterval(scanLoadingProgressTimer);
+    scanLoadingProgressTimer=null;
+  }
   const overlay=document.getElementById("scanLoadingOverlay");
   if(overlay)overlay.classList.remove("show");
 }
@@ -3941,8 +4012,9 @@ async function handleRepairBarcodeDecoded(decodedText){
     }
 
     await Promise.all([closePromise,workPromise]);
+    completeScanLoadingProgress();
+    await new Promise(resolve=>setTimeout(resolve,120));
   }finally{
-    // ไม่หน่วง 900ms แบบเดิม — QR อ่านได้แล้วให้ไปต่อทันที
     hideScanLoading();
   }
 }

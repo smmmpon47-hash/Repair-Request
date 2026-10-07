@@ -1952,7 +1952,8 @@ let repairSyncInFlight = false;
 let reportedJobsLoaded = false;
 let requesterCreateRequestId = "";
 let requesterSubmitInFlight = false;
-const REPAIR_SYNC_INTERVAL_MS = 3000;
+// ลด polling จากทุก 3 วิ เพื่อลด request ชนกันตอนหลายคนเปิด LIFF พร้อมกัน
+const REPAIR_SYNC_INTERVAL_MS = 8000;
 const repairActionLocks = new Set();
 const failedFinishDrafts = new Map();
 let actionProgressTimer=null;
@@ -3342,36 +3343,81 @@ async function verifyAndStartTechnicianJob(code,method){
   await startTechnicianJobConfirmed(job.jobId,entered,method);
 }
 
-async function startTechnicianJobConfirmed(jobId,machineCode,verifyMethod){
-  const action="start";
-  if(!beginRepairAction(jobId,action,"กำลังเริ่มซ่อม..."))return;
-  const before=cloneTechnicianJob(jobId);
+async function runStartTechnicianJobInBackground(snapshot){
+  const jobId=String(snapshot.jobId||"");
   try{
-    showToast("กำลังเริ่มซ่อม...");
-    if(before)patchTechnicianJob(jobId,{status:"กำลังซ่อม",repairPaused:false});
-    const payload={action:"START_REPAIR_JOB",jobId:jobId,userId:lineUserId,machineCode:machineCode,verifyMethod:verifyMethod};
-    const res=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
+    const res=await fetch(
+      GAS_WEB_APP_URL,
+      {
+        method:"POST",
+        headers:{"Content-Type":"text/plain;charset=utf-8"},
+        body:JSON.stringify(snapshot.payload)
+      }
+    );
     const data=await res.json();
 
-    if(data.status==="success"){
-      showToast("✓ เริ่มซ่อมแล้ว");currentVerifyJobId="";
-      const existing=technicianJobsById[String(jobId||"")]||{};
+    if(data.status==="success"||data.status==="already_started"){
+      const existing=technicianJobsById[jobId]||{};
       patchTechnicianJob(jobId,{
         status:data.jobStatus||"กำลังซ่อม",
         startDate:existing.startDate||data.startDate||"",
         startTime:existing.startTime||data.startTime||"",
-        repairElapsedSeconds:Number(existing.repairElapsedSeconds||0),repairPaused:false
+        repairElapsedSeconds:Number(existing.repairElapsedSeconds||snapshot.elapsedSeconds||0),
+        repairPaused:false,
+        touchedToday:true
       });
+      showToast("✓ เริ่มซ่อมแล้ว");
       return;
     }
-    if(data.status==="already_started"){
-      currentVerifyJobId="";technicianJobsLoaded=false;loadTechnicianJobs(true);return;
-    }
-    if(before)patchTechnicianJob(jobId,before);
+
+    if(snapshot.before)patchTechnicianJob(jobId,snapshot.before);
     alert(data.message||"เริ่มงานไม่สำเร็จ");
   }catch(err){
-    console.error(err);if(before)patchTechnicianJob(jobId,before);alert("เกิดข้อผิดพลาดในการเริ่มงาน");
-  }finally{endRepairAction(jobId,action);}
+    console.error(err);
+    if(snapshot.before)patchTechnicianJob(jobId,snapshot.before);
+    alert("เกิดข้อผิดพลาดในการเริ่มงาน");
+  }finally{
+    endRepairAction(jobId,"start");
+  }
+}
+
+async function startTechnicianJobConfirmed(jobId,machineCode,verifyMethod){
+  const action="start";
+  if(!beginRepairAction(jobId,action,"กำลังเริ่มซ่อม..."))return false;
+
+  const before=cloneTechnicianJob(jobId);
+  const elapsedSeconds=getTimerSecondsForJob(jobId);
+
+  // Optimistic start: QR ตรงแล้วให้ช่างเริ่มทำงานทันที
+  // backend ยังตรวจ owner / state / machine ซ้ำเหมือนเดิม ถ้าไม่ผ่านจะคืน card กลับ
+  if(before){
+    patchTechnicianJob(jobId,{
+      status:"กำลังซ่อม",
+      repairPaused:false,
+      repairElapsedSeconds:elapsedSeconds,
+      touchedToday:true
+    });
+  }
+
+  currentVerifyJobId="";
+  showToast("✓ ยืนยันเครื่องแล้ว เริ่มซ่อมได้เลย");
+
+  const snapshot={
+    jobId:String(jobId||""),
+    before:before,
+    elapsedSeconds:elapsedSeconds,
+    payload:{
+      action:"START_REPAIR_JOB",
+      jobId:jobId,
+      userId:lineUserId,
+      machineCode:machineCode,
+      verifyMethod:verifyMethod
+    }
+  };
+
+  // ไม่ await server: คืนหน้าให้ช่างทันทีหลัง QR ตรง
+  void runStartTechnicianJobInBackground(snapshot);
+  return true;
 }
 
 /* =========================================================
@@ -3493,7 +3539,8 @@ async function previewAfterImage(event) {
 
   try{
     note&&note.classList.add("show");
-    afterImageBase64=await compressImageFile(file,720,.52);
+    // รูปหลักฐานหลังซ่อมไม่ต้องใหญ่เกินจำเป็น ลด payload ให้ส่งผ่าน LIFF -> Apps Script เร็วขึ้น
+    afterImageBase64=await compressImageFile(file,640,.45);
     img.src=afterImageBase64;
     img.style.display="block";
   }catch(err){

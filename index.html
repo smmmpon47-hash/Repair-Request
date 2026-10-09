@@ -2671,9 +2671,8 @@ async function submitRepair(){
     btn.textContent="กำลังส่ง...";
   }
 
-  // OPTIMISTIC UI: ผู้แจ้งไม่ต้องยืนรอหน้า form
-  reportedJobsLoaded=true;
-  showRequesterSubmissionPending(snapshot);
+  // อยู่หน้าแบบฟอร์มเดิมระหว่างส่ง เพื่อไม่ให้ผู้แจ้งรู้สึกว่าหน้าเด้งออก
+  // แสดง progress ทับหน้า แล้วค่อยไปหน้าสถานะเมื่อ backend ยืนยันสำเร็จจริง
   showToast("รับคำสั่งแล้ว กำลังส่งเข้าระบบ...");
   showFinishSendOverlay(
     "",
@@ -2701,8 +2700,13 @@ async function submitRepair(){
       result.status==="already_created"
     ){
       const jobId=String(result.jobId||"");
-      showRequesterSubmissionSaved(jobId,snapshot);
+
+      // ให้ผู้แจ้งเห็น 100% ก่อน แล้วค่อยพาไปหน้าสถานะงาน
       await completeFinishSendOverlay("requester-create");
+
+      reportedJobsLoaded=true;
+      switchTab("reported");
+      showRequesterSubmissionSaved(jobId,snapshot);
       showToast(jobId?"✓ แจ้งซ่อมแล้ว "+jobId:"✓ แจ้งซ่อมแล้ว");
 
       if(result.notificationDeferred===true&&jobId){

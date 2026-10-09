@@ -1535,6 +1535,43 @@
     .finish-waiting-parts-help{
       font-size:.72rem;color:#7b8790;line-height:1.45;text-align:center;margin:5px 0 2px;
     }
+
+    /* ===== CANCELLED / REMOVED JOB NOTICE ===== */
+    .removed-job-card{
+      width:min(100%,420px);
+      border:2px solid #efb3b3;
+      background:#fffafa;
+      text-align:center;
+      padding:24px 18px 18px;
+    }
+    .removed-job-icon{
+      width:72px;height:72px;border-radius:50%;
+      margin:0 auto 12px;
+      display:flex;align-items:center;justify-content:center;
+      background:#d93636;color:#fff;
+      font-size:38px;font-weight:900;line-height:1;
+      box-shadow:0 8px 20px rgba(217,54,54,.18);
+    }
+    .removed-job-title{
+      color:#b42020;font-size:1.18rem;font-weight:900;line-height:1.35;
+    }
+    .removed-job-id{
+      display:inline-block;margin-top:9px;
+      padding:6px 11px;border-radius:999px;
+      background:#ffe5e5;color:#a81f1f;
+      font-size:.83rem;font-weight:900;
+    }
+    .removed-job-message{
+      margin:13px auto 3px;
+      color:#6f4a4a;font-size:.84rem;line-height:1.55;
+      max-width:320px;
+    }
+    .removed-job-back{
+      width:100%;border:0;border-radius:11px;
+      margin-top:17px;padding:13px 12px;
+      background:#d93636;color:#fff;
+      font-family:inherit;font-size:.92rem;font-weight:900;cursor:pointer;
+    }
 </style>
 </head>
 
@@ -1709,6 +1746,19 @@
   </div>
 </div>
 
+
+<!-- =========================
+     CANCELLED / REMOVED JOB NOTICE
+========================== -->
+<div id="removedJobModal" class="modal-bg">
+  <div class="modal removed-job-card">
+    <div class="removed-job-icon">×</div>
+    <div class="removed-job-title">งานนี้ถูกยกเลิกแล้ว</div>
+    <div id="removedJobId" class="removed-job-id">JOB-----</div>
+    <div id="removedJobMessage" class="removed-job-message">งานนี้ถูกนำออกจากระบบแล้ว กรุณาไม่ต้องดำเนินการ</div>
+    <button type="button" class="removed-job-back" onclick="closeRemovedJobNotice()">กลับไปงานของฉัน</button>
+  </div>
+</div>
 
 <!-- =========================
      SEND FOR ACCEPTANCE MODAL
@@ -3188,6 +3238,28 @@ function renderTechnicianJob(job) {
 }
 
 /* =========================================================
+   CANCELLED / REMOVED JOB NOTICE
+========================================================= */
+function showRemovedJobNotice(jobId,message){
+  const modal=document.getElementById("removedJobModal");
+  const idEl=document.getElementById("removedJobId");
+  const messageEl=document.getElementById("removedJobMessage");
+
+  if(idEl)idEl.textContent=String(jobId||"งานนี้");
+  if(messageEl)messageEl.textContent=
+    String(message||"งานนี้ถูกยกเลิกหรือถูกนำออกจากระบบแล้ว กรุณาไม่ต้องดำเนินการ");
+
+  if(modal)modal.classList.add("show");
+}
+
+function closeRemovedJobNotice(){
+  closeModal("removedJobModal");
+  technicianJobsLoaded=false;
+  switchTab("technician");
+  loadTechnicianJobs(true);
+}
+
+/* =========================================================
    FLEX ACCEPT — 1 JOB = 1 TECH, DUPLICATE CLICK SILENT
 ========================================================= */
 async function acceptJobFromFlex(jobId) {
@@ -3206,6 +3278,12 @@ async function acceptJobFromFlex(jobId) {
     if(data.status==="already_taken"){
       alert("งานนี้ช่าง "+(data.techName||"คนอื่น")+" รับไปแล้ว");
       technicianJobsLoaded=false;loadTechnicianJobs(true);switchTab("technician");return;
+    }
+    if(data.status==="cancelled_or_removed"){
+      showRemovedJobNotice(jobId,data.message);
+      technicianJobsLoaded=false;
+      loadTechnicianJobs(true);
+      return;
     }
     if(data.status==="closed_for_accept"){
       showToast(data.message||"งานนี้ไม่เปิดให้รับแล้ว");
@@ -3226,6 +3304,12 @@ async function acceptHandoffFromFlex(jobId){
     const data=await res.json();
     if(data.status==="success"||data.status==="already_owned"){
       showToast("✓ รับงานต่อแล้ว");technicianJobsLoaded=false;loadTechnicianJobs(true).then(()=>focusTechnicianJob(jobId,false));return;
+    }
+    if(data.status==="cancelled_or_removed"){
+      showRemovedJobNotice(jobId,data.message);
+      technicianJobsLoaded=false;
+      loadTechnicianJobs(true);
+      return;
     }
     alert(data.message||"รับงานต่อไม่สำเร็จ");technicianJobsLoaded=false;loadTechnicianJobs(true);
   }catch(err){console.error(err);alert("เกิดข้อผิดพลาดในการรับงานต่อ");}

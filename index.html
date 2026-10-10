@@ -1965,6 +1965,20 @@
 ========================================================= */
 
 const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzavJ88xJPcMo3rBcE8FtA2mI0ctkSxnqN5Xj8ObEGPXqRC2kE2tMRig2CQ9PAhQ_yijQ/exec";
+
+/* WARM-UP: ปลุก Apps Script ล่วงหน้า (อ่านค่า version อย่างเดียว ไม่เขียนข้อมูล)
+   เรียกทันทีที่เปิดหน้า ขนานกับ liff.init และเมื่อกลับมาเปิดหลังพักหน้าจอนาน ๆ */
+let lastWarmAt=0;
+function warmRepairBackend(){
+  const now=Date.now();
+  if(now-lastWarmAt<150000)return;
+  lastWarmAt=now;
+  try{
+    fetch(GAS_WEB_APP_URL+"?action=getRepairSyncToken&userId=warmup&_="+now,{mode:"no-cors",cache:"no-store"}).catch(function(){});
+  }catch(e){}
+}
+warmRepairBackend();
+document.addEventListener("visibilitychange",function(){if(!document.hidden)warmRepairBackend();});
 const LIFF_ID = "2011319319-1bUfgtSJ";
 
 let lineUserId = "";

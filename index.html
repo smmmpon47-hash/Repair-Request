@@ -3701,15 +3701,15 @@ async function verifyAndStartTechnicianJob(code,method){
 async function runStartTechnicianJobInBackground(snapshot){
   const jobId=String(snapshot.jobId||"");
   try{
-    const res=await fetch(
+    const data=await fetchJson(
       GAS_WEB_APP_URL,
       {
         method:"POST",
         headers:{"Content-Type":"text/plain;charset=utf-8"},
         body:JSON.stringify(snapshot.payload)
-      }
+      },
+      {timeout:25000,retries:1}
     );
-    const data=await res.json();
 
     if(data.status==="success"||data.status==="already_started"){
       const existing=technicianJobsById[jobId]||{};
@@ -3730,7 +3730,7 @@ async function runStartTechnicianJobInBackground(snapshot){
   }catch(err){
     console.error(err);
     if(snapshot.before)patchTechnicianJob(jobId,snapshot.before);
-    alert("เกิดข้อผิดพลาดในการเริ่มงาน");
+    alert("เริ่มงานไม่สำเร็จ ("+(err&&err.name==="AbortError"?"เซิร์ฟเวอร์ตอบช้าเกิน 25 วินาที":(err&&err.message)||"เชื่อมต่อไม่ได้")+")\nกรุณารีเฟรชหน้าแล้วตรวจสอบสถานะงาน ก่อนกดซ้ำ");
   }finally{
     endRepairAction(jobId,"start");
   }

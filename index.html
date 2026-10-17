@@ -1978,8 +1978,57 @@ function warmRepairBackend(){
   }catch(e){}
 }
 warmRepairBackend();
-document.addEventListener("visibilitychange",function(){if(!document.hidden)warmRepairBackend();});
 const LIFF_ID = "2011319319-1bUfgtSJ";
+
+/* ROBUST FETCH: มี timeout + retry อัตโนมัติ กันค้างที่ 92% แล้วหลุดเมื่อ backend ตอบช้า
+   ใช้กับคำสั่งอ่านข้อมูล และคำสั่งรับงานที่ backend ตอบซ้ำได้อย่างปลอดภัย (already_owned) */
+async function fetchJson(url,opts,cfg){
+  cfg=cfg||{};
+  const timeout=cfg.timeout||12000;
+  const retries=cfg.retries==null?1:cfg.retries;
+  let last=null;
+  for(let i=0;i<=retries;i++){
+    const ctl=(typeof AbortController!=="undefined")?new AbortController():null;
+    const timer=ctl?setTimeout(function(){try{ctl.abort();}catch(e){}},timeout):null;
+    try{
+      const o=Object.assign({},opts||{});
+      if(ctl)o.signal=ctl.signal;
+      const res=await fetch(url,o);
+      const data=await res.json();
+      if(timer)clearTimeout(timer);
+      return data;
+    }catch(err){
+      if(timer)clearTimeout(timer);
+      last=err;
+      if(i<retries)await new Promise(function(r){setTimeout(r,700);});
+    }
+  }
+  throw last||new Error("เชื่อมต่อไม่สำเร็จ");
+}
+
+/* PROFILE CACHE: จำบทบาท/ข้อมูลผู้แจ้งล่าสุดในเครื่อง (อ่านอย่างเดียว ไม่ใช่ข้อมูลงาน)
+   ถ้า backend ตอบช้า จะเปิดหน้าด้วยค่าที่จำไว้ก่อน แล้วอัปเดตเมื่อ backend ตอบ */
+const PROFILE_CACHE_KEY="repairProfileCache_v1:";
+function readProfileCache(uid){
+  try{
+    if(!uid)return null;
+    const raw=localStorage.getItem(PROFILE_CACHE_KEY+uid);
+    if(!raw)return null;
+    const c=JSON.parse(raw);
+    if(!c||!c.ts||Date.now()-c.ts>7*86400000)return null;
+    return c;
+  }catch(e){return null;}
+}
+function saveProfileCache(uid,b){
+  try{
+    if(!uid||!b||b.status!=="success")return;
+    localStorage.setItem(PROFILE_CACHE_KEY+uid,JSON.stringify({
+      ts:Date.now(),isTechnician:b.isTechnician===true,technician:b.technician||null,
+      requester:Object.prototype.hasOwnProperty.call(b,"requester")?b.requester:undefined,
+      allowedLines:b.allowedLines||[]
+    }));
+  }catch(e){}
+}
 
 let lineUserId = "";
 let lineDisplayName = "";
@@ -2012,7 +2061,7 @@ let reportedJobsLoaded = false;
 let requesterCreateRequestId = "";
 let requesterSubmitInFlight = false;
 // ลด polling จากทุก 3 วิ เพื่อลด request ชนกันตอนหลายคนเปิด LIFF พร้อมกัน
-const REPAIR_SYNC_INTERVAL_MS = 8000;
+const REPAIR_SYNC_INTERVAL_MS = 20000;
 const repairActionLocks = new Set();
 const failedFinishDrafts = new Map();
 let actionProgressTimer=null;
@@ -2143,6 +2192,7 @@ function clearActionQueryParams(){
   }catch(e){}
 }
 
+let lateBootPromise = null;
 document.addEventListener("DOMContentLoaded", async () => {
   let bootstrap = null;
 
@@ -2180,11 +2230,24 @@ document.addEventListener("DOMContentLoaded", async () => {
         technician:{name:lineDisplayName||"ช่าง",floor:""}, jobs:[]
       };
     } else {
-      bootstrap = await loadRepairBootstrap();
+      const cachedProfile = readProfileCache(lineUserId);
+      const bootPromise = loadRepairBootstrap();
+      if (cachedProfile) {
+        // มีค่าที่จำไว้: รอ backend ไม่เกิน 4 วิ ถ้าไม่ทันเปิดหน้าด้วยค่าเดิมก่อน
+        bootstrap = await Promise.race([bootPromise, new Promise(function(r){setTimeout(function(){r(null);},4000);})]);
+        if (!bootstrap) {
+          bootstrap = Object.assign({status:"success",jobs:undefined,syncToken:""},cachedProfile);
+          if (bootstrap.isTechnician) bootstrap.jobs = undefined;
+          lateBootPromise = bootPromise;
+        }
+      } else {
+        bootstrap = await bootPromise;
+      }
     }
   }
 
   if(bootstrap&&bootstrap.syncToken) repairSyncToken=String(bootstrap.syncToken||"");
+  if (bootstrap && bootstrap.failed) { finishAppBoot(); scheduleBootRecovery(bootstrap); return; }
   const isTechnician = !!(bootstrap && bootstrap.isTechnician === true);
   currentTechnicianInfo = isTechnician ? (bootstrap.technician || null) : null;
   applyRoleUI(isTechnician, currentTechnicianInfo, bootstrap);
@@ -2219,6 +2282,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   startRepairAutoSync();
+  scheduleBootRecovery(bootstrap);
+  // ผู้แจ้ง: ถ้าช่อง LINE ยังล็อกเพราะโหลดข้อมูลผู้แจ้งไม่สำเร็จ ให้ลองโหลดซ้ำเป็นระยะจนกว่าจะปลดล็อก
+  (function(){
+    let tries=0;
+    const t=setInterval(function(){
+      if(currentUserRole!=="requester"||tries>=6){clearInterval(t);return;}
+      const sel=document.getElementById("requesterLineSelect");
+      if(sel&&sel.disabled&&!requesterIsRegistered&&lineUserId){tries++;loadRequesterProfile();}
+      else if(requesterIsRegistered){clearInterval(t);}
+    },6000);
+  })();
 
   // SPEED: เตรียมของไว้ล่วงหน้าตอนว่าง ๆ ให้กดแล้วขึ้นทันที
   setTimeout(()=>{
@@ -2230,37 +2304,69 @@ document.addEventListener("DOMContentLoaded", async () => {
   setTimeout(()=>{ loadQrLibrary().catch(()=>{}); },2500);
 });
 
+let bootRecoveryTried=0;
 async function loadRepairBootstrap(){
   if(!lineUserId) return null;
   try{
-    const res=await fetch(
-      GAS_WEB_APP_URL+"?action=getRepairBootstrap&userId="+encodeURIComponent(lineUserId)
+    const data=await fetchJson(
+      GAS_WEB_APP_URL+"?action=getRepairBootstrap&userId="+encodeURIComponent(lineUserId),
+      null,{timeout:9000,retries:1}
     );
-    const data=await res.json();
-    if(data && data.status === "success") return data;
+    if(data && data.status === "success"){ saveProfileCache(lineUserId,data); return data; }
     throw new Error((data&&data.message)||"โหลดข้อมูลเริ่มต้นไม่สำเร็จ");
   }catch(err){
     console.error("getRepairBootstrap error:",err);
-    // fallback รองรับ backend เก่าชั่วคราว
-    const roleInfo=await checkCurrentUserRole();
-    return {
-      status:"success",
-      role:roleInfo.isTechnician?"technician":"requester",
-      isTechnician:roleInfo.isTechnician===true,
-      technician:roleInfo.technician||null
-    };
+    const cached=readProfileCache(lineUserId);
+    if(cached){
+      return Object.assign({status:"success",fromCache:true,syncToken:""},cached);
+    }
+    // ไม่มีค่าที่จำไว้และ backend ไม่ตอบ: ไม่เดาบทบาท (เดิมเดาเป็นผู้แจ้งแล้วฟอร์มล็อก) แจ้งผู้ใช้และลองใหม่เอง
+    return { status:"error", failed:true, message:(err&&err.message)||"เชื่อมต่อไม่สำเร็จ" };
   }
+}
+
+function showBootError(){
+  if(document.getElementById("bootErrorBox"))return;
+  const d=document.createElement("div");
+  d.id="bootErrorBox";
+  d.style.cssText="position:fixed;left:12px;right:12px;bottom:16px;z-index:99999;background:#fff;border:1px solid #f0b9b4;border-radius:14px;padding:14px 16px;box-shadow:0 6px 24px rgba(0,0,0,.18);font-size:15px;color:#17323a";
+  d.innerHTML='<b style="color:#b91c1c">เชื่อมต่อเซิร์ฟเวอร์ช้า</b><div style="margin:4px 0 10px">กำลังลองเชื่อมต่อใหม่อัตโนมัติ หากนานเกินไปกดปุ่มด้านล่าง</div><button id="bootErrorBtn" style="height:42px;width:100%;border:0;border-radius:11px;background:#0f766e;color:#fff;font-weight:700;font-size:15px">ลองใหม่</button>';
+  document.body.appendChild(d);
+  document.getElementById("bootErrorBtn").onclick=function(){window.location.reload();};
+}
+
+/* ถ้าเปิดหน้าด้วยค่าที่จำไว้/ค่าเดา ให้ลองยืนยันกับ backend ซ้ำเป็นระยะ แล้วอัปเดตหน้า */
+function scheduleBootRecovery(bootstrap){
+  const needs=!!(lateBootPromise||(bootstrap&&(bootstrap.fromCache||bootstrap.failed)));
+  if(bootstrap&&bootstrap.failed)showBootError();
+  if(!needs)return;
+  const apply=function(b){
+    if(!b||b.status!=="success"||b.fromCache||b.failed)return false;
+    const wantTech=b.isTechnician===true;
+    const box=document.getElementById("bootErrorBox");if(box)box.remove();
+    if(currentUserRole==="unknown"||wantTech!==(currentUserRole==="technician")){window.location.reload();return true;}
+    if(b.syncToken)repairSyncToken=String(b.syncToken);
+    if(wantTech){ if(Array.isArray(b.jobs)){technicianJobsLoaded=false;applyTechnicianPayload(b);} }
+    else if(Object.prototype.hasOwnProperty.call(b,"requester")){ applyRequesterProfileData(b.requester,b.allowedLines||[]); }
+    return true;
+  };
+  const tryAgain=function(){
+    if(bootRecoveryTried>=8)return;
+    bootRecoveryTried++;
+    loadRepairBootstrap().then(function(b){ if(!apply(b))setTimeout(tryAgain,6000); }).catch(function(){setTimeout(tryAgain,6000);});
+  };
+  if(lateBootPromise){ lateBootPromise.then(function(b){ if(!apply(b))setTimeout(tryAgain,5000); }).catch(function(){setTimeout(tryAgain,5000);}); }
+  else setTimeout(tryAgain,4000);
 }
 
 async function checkCurrentUserRole() {
   if (!lineUserId) return { isTechnician: false, technician: null };
   try {    const url = GAS_WEB_APP_URL+"?action=checkTechnician&userId="+encodeURIComponent(lineUserId);
-    const res = await fetch(url);
-    const data = await res.json();
+    const data = await fetchJson(url,null,{timeout:8000,retries:0});
     return {isTechnician:data.isTechnician===true,technician:data.technician||null};
   } catch (err) {
     console.error("checkCurrentUserRole error:", err);
-    return { isTechnician: false, technician: null };
+    return { isTechnician: false, technician: null, failed: true };
   }
 }
 
@@ -2277,8 +2383,7 @@ async function checkRepairAutoSync(force=false){
   if(!lineUserId || repairSyncInFlight || (!force && document.hidden)) return;
   repairSyncInFlight=true;
   try{
-    const res=await fetch(GAS_WEB_APP_URL+"?action=getRepairSyncToken&userId="+encodeURIComponent(lineUserId));
-    const data=await res.json();
+    const data=await fetchJson(GAS_WEB_APP_URL+"?action=getRepairSyncToken&userId="+encodeURIComponent(lineUserId),null,{timeout:8000,retries:0});
     if(data.status!=="success" || !data.token) return;
     const token=String(data.token||"");
     if(!repairSyncToken){repairSyncToken=token;return;}
@@ -2515,8 +2620,7 @@ async function loadRequesterProfile(){
   document.getElementById("reporter").value="";document.getElementById("floor").value="";document.getElementById("line").value="";
   if(!lineUserId){nameEl.textContent="กรุณาเปิดผ่าน LINE";floorEl.textContent="-";noteEl.textContent="ไม่พบ LINE User ID — กรุณาเปิดระบบผ่าน LINE";populateRequesterLineOptions("",[]);return;}
   try{
-    const res=await fetch(GAS_WEB_APP_URL+"?action=getRequesterProfile&userId="+encodeURIComponent(lineUserId));
-    const data=await res.json();
+    const data=await fetchJson(GAS_WEB_APP_URL+"?action=getRequesterProfile&userId="+encodeURIComponent(lineUserId),null,{timeout:12000,retries:1});
     if(data&&data.registered===true&&data.name&&data.floor){applyRequesterProfileData(data,data.allowedLines||[]);return;}
     applyRequesterProfileData(data&&data.found?data:null,data&&data.allowedLines?data.allowedLines:[]);
   }catch(err){console.error(err);nameEl.textContent="ตรวจสอบข้อมูลไม่สำเร็จ";floorEl.textContent="-";noteEl.textContent="เชื่อมต่อข้อมูลผู้แจ้งไม่สำเร็จ กรุณาลองใหม่";populateRequesterLineOptions("",[]);}
@@ -3229,8 +3333,7 @@ async function loadTechnicianJobs(silent=false) {
   if(!silent&&!technicianJobsLoaded)box.innerHTML=`<div class="loading">กำลังโหลดงานของคุณ...</div>`;
   const seq=++technicianLoadSeq;
   try{
-    const res=await fetch(GAS_WEB_APP_URL+"?action=getMyTechnicianJobs&activeOnly=1&userId="+encodeURIComponent(lineUserId));
-    const data=await res.json();
+    const data=await fetchJson(GAS_WEB_APP_URL+"?action=getMyTechnicianJobs&activeOnly=1&userId="+encodeURIComponent(lineUserId),null,{timeout:15000,retries:1});
     // response เก่าที่ตอบช้ากว่า request ใหม่ ไม่ต้องเอามาทับ
     if(seq!==technicianLoadSeq)return;
     if(data.status&&data.status!=="success")throw new Error(data.message||"โหลดงานช่างไม่สำเร็จ");
@@ -3254,8 +3357,7 @@ async function loadTechnicianTodayJobs(silent=false){
   if(!lineUserId){box.innerHTML=`<div class="tech-empty">กรุณาเปิดผ่าน LINE</div>`;return;}
   if(!silent)box.innerHTML=`<div class="loading">กำลังโหลดงานวันนี้...</div>`;
   try{
-    const res=await fetch(GAS_WEB_APP_URL+"?action=getMyTechnicianTodayJobs&userId="+encodeURIComponent(lineUserId));
-    const data=await res.json();if(data.status!=="success")throw new Error(data.message||"โหลดงานวันนี้ไม่สำเร็จ");
+    const data=await fetchJson(GAS_WEB_APP_URL+"?action=getMyTechnicianTodayJobs&userId="+encodeURIComponent(lineUserId),null,{timeout:15000,retries:1});if(data.status!=="success")throw new Error(data.message||"โหลดงานวันนี้ไม่สำเร็จ");
     technicianTodayDate=data.date||"";technicianTodaySummary=data.summary||{total:0,finished:0,active:0,paused:0};technicianTodayJobs=Array.isArray(data.jobs)?data.jobs:[];technicianTodayLoaded=true;renderTechnicianToday();
   }catch(err){console.error(err);if(!silent)box.innerHTML=`<div class="tech-empty">โหลดงานวันนี้ไม่สำเร็จ</div>`;}
 }
@@ -3423,12 +3525,10 @@ async function acceptJobFromFlex(jobId) {
   if(!beginRepairAction(jobId,action,"กำลังรับงาน..."))return;
   try{
     showToast("กำลังรับงาน...");
-    const res=await fetch(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"acceptJobViaLIFF",jobId:jobId,userId:lineUserId})});
-    const data=await res.json();
+    const data=await fetchJson(GAS_WEB_APP_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({action:"acceptJobViaLIFF",jobId:jobId,userId:lineUserId})},{timeout:25000,retries:1});
     if(data.status==="success"||data.status==="already_owned"){
       showToast(data.status==="success"?"✓ รับงานแล้ว":"✓ งานนี้เป็นของคุณแล้ว");
-      technicianJobsLoaded=false;
-      loadTechnicianJobs(true).then(()=>focusTechnicianJob(jobId,false));
+      loadTechnicianJobsUntil(jobId).then(()=>focusTechnicianJob(jobId,false));
       return;
     }
     if(data.status==="already_taken"){
@@ -3448,6 +3548,18 @@ async function acceptJobFromFlex(jobId) {
   finally{endRepairAction(jobId,action);}
 }
 
+
+/* หลังรับงานสำเร็จ: โหลดรายการซ้ำจนเห็นงานนั้น (กันกรณีโหลดรอบแรกช้า/พลาดแล้วงานไม่เข้า "งานของฉัน") */
+async function loadTechnicianJobsUntil(jobId){
+  for(let i=0;i<5;i++){
+    technicianJobsLoaded=false;
+    await loadTechnicianJobs(true);
+    if(technicianJobsById&&technicianJobsById[String(jobId)])return true;
+    await new Promise(function(r){setTimeout(r,1500);});
+  }
+  showToast("รับงานแล้ว กำลังซิงค์รายการ ลองดึงลงเพื่อรีเฟรช");
+  return false;
+}
 
 async function acceptHandoffFromFlex(jobId){
   const action="acceptHandoff";

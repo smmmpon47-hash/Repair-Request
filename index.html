@@ -15,7 +15,9 @@
   <!-- ใช้ฟอนต์เดิม: Sarabun -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- ฟอนต์โหลดแบบไม่บล็อกการแสดงหน้า: ถ้าเครือข่ายเข้า Google Fonts ไม่ได้ จะใช้ฟอนต์สำรองของเครื่องแทน -->
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
   <style>
     * { box-sizing: border-box; }
 
@@ -2161,14 +2163,33 @@ let qrLibPromise=null;
 function loadQrLibrary(){
   if(typeof Html5Qrcode!=="undefined")return Promise.resolve(true);
   if(qrLibPromise)return qrLibPromise;
-  qrLibPromise=new Promise((resolve,reject)=>{
-    const s=document.createElement("script");
-    s.src="https://unpkg.com/html5-qrcode";
-    s.async=true;
-    s.onload=()=>resolve(true);
-    s.onerror=()=>{qrLibPromise=null;reject(new Error("โหลดตัวสแกนไม่สำเร็จ"));};
-    document.head.appendChild(s);
-  });
+  // ลองหลายแหล่งตามลำดับ (เครือข่ายบางที่บล็อกบางโดเมน) พร้อมกำหนดเวลาต่อแหล่ง
+  const sources=[
+    "https://unpkg.com/html5-qrcode@2.3.8",
+    "https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js",
+    "https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"
+  ];
+  function tryLoad(src){
+    return new Promise((resolve,reject)=>{
+      const s=document.createElement("script");
+      let done=false;
+      const fail=()=>{if(done)return;done=true;try{s.remove();}catch(e){}reject(new Error("load failed"));};
+      const timer=setTimeout(fail,8000);
+      s.src=src;
+      s.async=true;
+      s.onload=()=>{if(done)return;done=true;clearTimeout(timer);
+        if(typeof Html5Qrcode!=="undefined")resolve(true);else{try{s.remove();}catch(e){}reject(new Error("no lib"));}};
+      s.onerror=()=>{clearTimeout(timer);fail();};
+      document.head.appendChild(s);
+    });
+  }
+  qrLibPromise=(async()=>{
+    for(let i=0;i<sources.length;i++){
+      try{await tryLoad(sources[i]);return true;}catch(e){}
+    }
+    qrLibPromise=null;
+    throw new Error("โหลดตัวสแกนไม่สำเร็จ");
+  })();
   return qrLibPromise;
 }
 
